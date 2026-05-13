@@ -1,0 +1,31 @@
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables (Crucial for API keys/secrets)
+.env
+.env.*
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Database files (if using local SQLite for development)
+*.sqlite3
+*.db
+
+# Distribution / packages
+dist/
+build/
+*.egg-info/
+
+# Unit test / coverage reports
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE specific (Optional but recommended)
+.vscode/
+.idea/
