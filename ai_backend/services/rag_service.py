@@ -14,22 +14,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-class PdfData(BaseModel):
-    pdf_url: str
-    user_id: str
-
-
 # this is the pdf storing function that used to first load the pdf , then split it , generate the embedding and then store ot into the qdrant db
 
 
-@router.post("/rag-pdf")
-async def rag_storing_pdf(req: PdfData):
-    pdfUrl = req.pdf_url
-    user_id = req.user_id
-    print("url :", pdfUrl)
+def rag_storing_pdf(user_id: str, pdf_url: str):
+
+    print("url :", pdf_url)
     # loading the pdf---->
 
-    loader = PyPDFLoader(pdfUrl)
+    loader = PyPDFLoader(pdf_url)
     data = loader.load()
 
     collection_name = f"resume_{user_id}"
@@ -61,15 +54,8 @@ async def rag_storing_pdf(req: PdfData):
     return {"message": "Resume stored successfully", "collection": f"resume_{user_id}"}
 
 
-class for_retriveing(BaseModel):
-    user_id: str
-    message: str
+def retrive_resume_chanks(user_id: str, user_query: str):
 
-
-@router.post("/retrive-data")
-async def retrive_resume_chanks(req: for_retriveing):
-    user_id = req.user_id
-    message = req.message
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
@@ -78,7 +64,7 @@ async def retrive_resume_chanks(req: for_retriveing):
         url="http://localhost:6333",
         collection_name=f"resume_{user_id}",
     )
-    docs = vector_store.similarity_search(query=message, k=3)
+    docs = vector_store.similarity_search(query=user_query, k=3)
 
     retrieved_chunks = []
 
