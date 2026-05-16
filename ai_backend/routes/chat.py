@@ -4,7 +4,7 @@ from typing import Optional
 
 from services.rag_service import rag_storing_pdf, retrive_resume_chanks
 
-from prompts.prompt import resume_prompt
+from ai_backend.prompts.prompt import resume_prompt
 
 from config.ai_models import llm
 
