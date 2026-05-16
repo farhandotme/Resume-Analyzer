@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 from fastapi import APIRouter
 
-# from testing.alltext import alltext
+from testing.alltext import alltext
 
 from config.ai_models import llm
 
@@ -51,20 +51,20 @@ async def analize_resume(req: analize):
     resume_text = extract_pdf_data(pdf_url=pdf_url)
 
     # for now it is closed because it is for testing purpose--------->
-    queries = [
-        f"{job_title} required skills certifications experience 2026 hiring",
-        f"{job_title} resume ATS keywords format tips to get hired 2026",
-        f"{job_title} job market demand salary growth opportunities 2026",
-    ]
+    # queries = [
+    #     f"{job_title} required skills certifications experience 2026 hiring",
+    #     f"{job_title} resume ATS keywords format tips to get hired 2026",
+    #     f"{job_title} job market demand salary growth opportunities 2026",
+    # ]
 
-    all_text = ""
-    for query in queries:
-        response = tavily_client.search(query=query, max_results=2)
-        all_text += extract_search_text(response) + "\n"
+    all_text = alltext
+    # for query in queries:
+    #     response = tavily_client.search(query=query, max_results=2)
+    #     all_text += extract_search_text(response) + "\n"
     finalPrompt = scoring_resume(
         internet_data=all_text, resume_content=resume_text, job_title=job_title
     )
 
     response = llm.invoke(finalPrompt)
 
-    return response.content
+    return response
