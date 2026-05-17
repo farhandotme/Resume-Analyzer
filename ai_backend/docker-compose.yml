@@ -7,3 +7,10 @@ services:
     volumes:
       - ./qdrant_storage:/qdrant/storage:z # Persistent storage
     restart: always
+
+  valkey:
+    image: valkey/valkey
+    ports:
+      - "6379:6379"
+    volumes:
+      - "valkey_data:/bitnami/valkey/data"
