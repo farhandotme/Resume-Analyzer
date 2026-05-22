@@ -39,3 +39,24 @@ export const uploadResume = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const getAllResume = async (req: Request, res: Response) => {
+  try {
+    const resumes = await prisma.resume.findMany({
+      where: { userId: req.userId },
+      orderBy: { uploadedAt: "desc" },
+    });
+
+    return res.status(200).json({
+      success: true,
+      resumes,
+    });
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      success: false,
+      error: "Could not find resumes .Try again",
+    });
+  }
+};
