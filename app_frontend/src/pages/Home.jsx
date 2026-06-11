@@ -1,7 +1,7 @@
 import Navbar from '../components/Navbar';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import ResumeBackground from '../components/ResumeBackground.jsx'
+import ResumeBackground from '../components/HeroBackground.jsx'
 
 export default function Home() {
     return (
