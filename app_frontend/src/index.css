@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+body {
+  font-family: "Geometria", sans-serif;
+}
+
+::selection {
+  background-color: #534006;
+  color: white;
+}
+
 @font-face {
   font-family: "Geometria";
   src: url("/fonts/Geometria-Thin.ttf") format("truetype");
