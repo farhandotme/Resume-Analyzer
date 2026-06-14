@@ -3,7 +3,7 @@ import { ArrowRight, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 
 export default function Navbar() {
-  const [open, setOpen] = useState(false)
+    const [open, setOpen] = useState(false)
 
     return (
         <div className='relative z-20 w-full sm:w-[97%] md:w-[80%] lg:w-[70%] mx-auto'>

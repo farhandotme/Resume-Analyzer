@@ -92,22 +92,48 @@ function Spinner() {
 
 const STEP_LABELS = ['Your info', 'Verify', 'Password'];
 
+function StepCircle({ done, active, number }) {
+    if (done) {
+        return (
+            <svg width='24' height='24' viewBox='0 0 24 24' style={{ flexShrink: 0 }}>
+                <circle cx='12' cy='12' r='11.5' fill='none' stroke='#D9A919' strokeWidth='1'/>
+                <polyline points='7,12 10.5,15.5 17,9' fill='none' stroke='#D9A919' strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round'/>
+            </svg>
+        );
+    }
+    return (
+        <svg width='24' height='24' viewBox='0 0 24 24' style={{ flexShrink: 0 }}>
+            <circle cx='12' cy='12' r='12' fill={active ? '#D9A919' : '#1a1a1a'}/>
+            {!active && <circle cx='12' cy='12' r='11.5' fill='none' stroke='#2a2a2a' strokeWidth='1'/>}
+            <text
+                x='12' y='12'
+                textAnchor='middle'
+                dominantBaseline='central'
+                fontSize='11'
+                fontWeight='700'
+                fill={active ? '#000' : '#555'}
+                fontFamily='inherit'
+            >
+                {number}
+            </text>
+        </svg>
+    );
+}
+
 function StepIndicator({ step }) {
     return (
-        <div className='flex items-center justify-center gap-2 mb-6'>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '24px' }}>
             {STEP_LABELS.map((label, i) => {
                 const done = i < step;
                 const active = i === step;
                 return (
-                    <div key={i} className='flex items-center gap-1.5'>
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         {i > 0 && (
-                            <div className='w-8 h-px transition-all duration-500' style={{ background: done || active ? 'rgba(217,169,25,0.4)' : '#2a2a2a'}}/>
+                            <div style={{ width: '32px', height: '1px', background: done || active ? 'rgba(217,169,25,0.4)' : '#2a2a2a', transition: 'background 0.5s' }} />
                         )}
-                        <div className='flex items-center gap-1.5'>
-                            <div className='w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300' style={{ background: done ? 'transparent' : active ? '#D9A919' : '#1a1a1a', border: done ? '1px solid #D9A919' : active ? 'none' : '1px solid #2a2a2a', color: active ? '#000' : done ? '#D9A919' : '#555'}}>
-                                {done ? <CheckCircle2 size={13} /> : i + 1}
-                            </div>
-                            <span className='text-xs font-medium transition-colors duration-300' style={{ color: active ? '#D9A919' : '#555' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <StepCircle done={done} active={active} number={i + 1} />
+                            <span style={{ fontSize: '12px', fontWeight: 500, color: active ? '#D9A919' : '#555', transition: 'color 0.3s' }}>
                                 {label}
                             </span>
                         </div>
@@ -141,7 +167,7 @@ function Panel({ index, step, children }) {
 
     return (
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, opacity: isActive ? 1 : 0, transform: isActive ? 'translateX(0px)' : isPast ? 'translateX(-32px)' : 'translateX(32px)', transition: 'opacity 0.35s ease, transform 0.35s ease', pointerEvents: isActive ? 'auto' : 'none', visibility: isActive ? 'visible' : 'hidden'}}>{children}</div>
-    );
+    )
 }
 
 function StepInfo({ values, setValues, onNext }) {
@@ -282,22 +308,35 @@ function StepOtp({ email, onNext, onBack, active }) {
     const [activeError, setActiveError] = useState('');
     const [loading, setLoading] = useState(false);
     const [resendLoading, setResendLoading] = useState(false);
-    const [resendTimer, setResendTimer] = useState(30);
+    const [resendTimer, setResendTimer] = useState(0);  // start at 0
     const [resendSuccess, setResendSuccess] = useState(false);
 
     const inputRefs = useRef([]);
 
+    const prevActiveRef = useRef(false);
+
+    useEffect(() => {
+        if (active && !prevActiveRef.current) {
+            setResendTimer(60);
+            setOtp(Array(OTP_LENGTH).fill(''));
+            setActiveError('');
+            setResendSuccess(false);
+        }
+        prevActiveRef.current = active;
+    }, [active])
+
     useEffect(() => {
         if (active) {
-            setTimeout(() => inputRefs.current[0]?.focus(), 350);
+            const id = setTimeout(() => inputRefs.current[0]?.focus(), 350);
+            return () => clearTimeout(id);
         }
-    }, [active]);
+    }, [active])
 
     useEffect(() => {
         if (resendTimer === 0) return;
         const id = setTimeout(() => setResendTimer((t) => t - 1), 1000);
         return () => clearTimeout(id);
-    }, [resendTimer]);
+    }, [resendTimer])
 
     const handleChange = (i, val) => {
         if (!/^\d?$/.test(val)) return;
@@ -307,13 +346,14 @@ function StepOtp({ email, onNext, onBack, active }) {
         setActiveError('');
         setResendSuccess(false);
         if (val && i < OTP_LENGTH - 1) inputRefs.current[i + 1]?.focus();
-    };
+    }
 
     const handleKeyDown = (i, e) => {
+        if (activeError) setActiveError(''); 
         if (e.key === 'Backspace' && !otp[i] && i > 0) {
             inputRefs.current[i - 1]?.focus();
         }
-    };
+    }
 
     const handlePaste = (e) => {
         e.preventDefault();
@@ -328,7 +368,7 @@ function StepOtp({ email, onNext, onBack, active }) {
         });
         setOtp(next);
         inputRefs.current[Math.min(pasted.length, OTP_LENGTH - 1)]?.focus();
-    };
+    }
 
     const handleVerify = async () => {
         const code = otp.join('');
@@ -356,7 +396,7 @@ function StepOtp({ email, onNext, onBack, active }) {
         try {
             setResendLoading(true);
             await verifyEmail({ email });
-            setResendTimer(30);
+            setResendTimer(60);
             setResendSuccess(true);
             setActiveError('');
             setOtp(Array(OTP_LENGTH).fill(''));

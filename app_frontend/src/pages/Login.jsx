@@ -15,9 +15,9 @@ function Spinner() {
 function ApiErrorBanner({ error }) {
     return (
         <div style={{ maxHeight: error ? '60px' : '0', opacity: error ? 1 : 0, overflow: 'hidden', transition: 'max-height 0.3s ease, opacity 0.25s ease', marginBottom: error ? '16px' : '0' }}>
-            <div className='flex items-start gap-2 px-3.5 py-2.5 rounded-xl bg-[#1a0a0a] border border-[#3d1515] text-xs text-[#f87171]'>
-                <AlertCircle size={13} className='shrink-0 mt-0.5' />
-                {error}
+            <div className='flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#1a0a0a] border border-[#3d1515] text-xs text-[#f87171]'>
+                <AlertCircle size={13} className='shrink-0' />
+                <span className='translate-y-px'>{error}</span>
             </div>
         </div>
     );
