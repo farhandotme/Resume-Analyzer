@@ -18,7 +18,6 @@ export const verifyToken = (
 
     const token = authHeader.split(" ")[1];
 
-    // check token exists after split
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -26,8 +25,8 @@ export const verifyToken = (
       });
     }
 
-    // check JWT_SECRET exists
     const secret = process.env.JWT_SECRET;
+
     if (!secret) {
       return res.status(500).json({
         success: false,
@@ -35,13 +34,26 @@ export const verifyToken = (
       });
     }
 
-    // verify token
-    const decoded = jwt.verify(token, secret) as unknown as { userId: string };
+    // Verify token
+    const decoded = jwt.verify(token, secret) as {
+      userId: string;
+      iat: number;
+      exp: number;
+    };
 
+    // Store userId on request
     req.userId = decoded.userId;
+
+    console.log("===== Auth Middleware =====");
+    console.log("Header:", authHeader);
+    console.log("Token:", token);
+    console.log("Decoded:", decoded);
+    console.log("Assigned userId:", req.userId);
 
     next();
   } catch (error) {
+    console.error("Auth middleware error:", error);
+
     return res.status(401).json({
       success: false,
       error: "Invalid or expired token.",

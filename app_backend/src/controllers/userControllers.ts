@@ -137,7 +137,7 @@ export const setPassword = async (req: Request, res: Response) => {
 
     const token = jwt.sign(
       {
-        id: user.id,
+        userId: user.id,
       },
       process.env.JWT_SECRET as string,
       {
@@ -217,7 +217,6 @@ export const login = async (req: Request, res: Response) => {
     const token = jwt.sign(
       {
         userId: user.id,
-        email: user.email,
       },
       process.env.JWT_SECRET as string,
       {

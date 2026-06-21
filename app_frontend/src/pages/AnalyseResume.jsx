@@ -123,6 +123,7 @@ export default function ResumeUpload() {
                     },
                 },
             )
+            console.log(response)
 
             clearInterval(loadingIntervalRef.current)
             setAnalysisResult(response.data.data.data)

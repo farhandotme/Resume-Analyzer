@@ -129,6 +129,9 @@ export const analyzeResume = async (req: Request, res: Response) => {
       });
     }
 
+    console.log("===== Resume Controller =====");
+    console.log("req.userId:", req.userId);
+    console.log("Authorization:", req.headers.authorization);
     // Step 1 — save resume to database
     const resume = await prisma.resume.create({
       data: {
