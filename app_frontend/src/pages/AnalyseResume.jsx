@@ -1,116 +1,271 @@
-import { useState, useRef, useEffect } from 'react'
-import axios from 'axios'
-import { toast } from '../components/Toaster.jsx'
-import { supabase } from '../utils/supabase.js'
-import { useNavigate } from 'react-router-dom'
+import { useState, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import axios from 'axios';
+import { toast } from '../components/Toaster.jsx';
+import { supabase } from '../utils/supabase.js';
+import { useNavigate } from 'react-router-dom';
+import { FileText, Upload, X, AlertCircle, ArrowLeft, TrendingUp, Zap, AlertTriangle, Sparkles, Briefcase, DollarSign, Activity, Award, ShieldCheck, ShieldAlert } from 'lucide-react';
 
-const MAX_SIZE_BYTES = 1 * 1024 * 1024
-const MAX_SIZE_LABEL = '1 MB'
-const BUCKET_NAME = 'resume'
+const MAX_SIZE_BYTES = 1 * 1024 * 1024;
+const MAX_SIZE_LABEL = '1 MB';
+const BUCKET_NAME = 'resume';
 
-const LOADING_MESSAGES = [
-    'Reading your resume...',
-    'Matching skills to job requirements...',
-    'Calculating ATS score...',
-    'Generating action plan...',
-    'Almost done...'
-]
+const LOADING_MESSAGES = ['Reading your resume...', 'Matching skills to job requirements...', 'Calculating ATS score...', 'Generating action plan...', 'Almost done...'];
+
+const SCORE_ANIM_DURATION = 1400;
+
+function Spinner({ size = 15 }) {
+    return (
+        <svg className='animate-spin' width={size} height={size} viewBox='0 0 24 24' fill='none'>
+            <circle cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='3' strokeOpacity='0.3' />
+            <path d='M12 2a10 10 0 0 1 10 10' stroke='currentColor' strokeWidth='3' strokeLinecap='round' />
+        </svg>
+    );
+}
+
+function Background() {
+    return (
+        <div className='fixed inset-0 pointer-events-none z-0 overflow-hidden'>
+            <div className='absolute inset-0 bg-dot-pattern opacity-40' />
+            <div
+                className='absolute top-0 right-0'
+                style={{
+                    width: '40%',
+                    height: '60%',
+                    background: 'radial-gradient(circle at top right, rgba(217,169,25,0.12), transparent 70%)',
+                }}
+            />
+            <div
+                className='absolute bottom-0 left-0'
+                style={{
+                    width: '40%',
+                    height: '60%',
+                    background: 'radial-gradient(circle at bottom left, rgba(217,169,25,0.08), transparent 70%)',
+                }}
+            />
+        </div>
+    );
+}
+
+function scoreColor(ratio) {
+    if (ratio >= 0.75) return '#22c55e';
+    if (ratio >= 0.5) return '#D9A919';
+    return '#ef4444';
+}
+
+function priorityStyle(priority) {
+    if (priority === 'Critical')
+        return {
+            bg: 'bg-[#1f0a0a]',
+            color: 'text-[#fca5a5]',
+            border: 'border-[#3a1515]',
+        };
+    if (priority === 'Important')
+        return {
+            bg: 'bg-[#1f1a0a]',
+            color: 'text-[#fde68a]',
+            border: 'border-[#3a2f10]',
+        };
+    return {
+        bg: 'bg-[#0a1f17]',
+        color: 'text-[#6ee7b7]',
+        border: 'border-[#14352a]',
+    };
+}
+
+function importanceStyle(imp) {
+    if (imp === 'Must Have')
+        return {
+            bg: 'bg-[#1a1200]',
+            color: 'text-[#D9A919]',
+            border: 'border-[#65531e]',
+        };
+    return {
+        bg: 'bg-[#111]',
+        color: 'text-[#777]',
+        border: 'border-[#2a2a2a]',
+    };
+}
+
+function FadeSection({ children }) {
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{
+                once: true,
+                amount: 0.08,
+            }}
+            transition={{
+                duration: 0.5,
+                ease: 'easeOut',
+            }}
+        >
+            {children}
+        </motion.div>
+    );
+}
+
+function fixAccent(priority) {
+    if (priority === 'High') return '#ef4444';
+    if (priority === 'Medium') return '#D9A919';
+    return '#6b7280';
+}
+
+function easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+}
+
+function ScoreRing({ displayScore, color, size = 152, stroke = 10 }) {
+    const radius = (size - stroke) / 2;
+    const circumference = 2 * Math.PI * radius;
+    const fraction = Math.min(Math.max(displayScore, 0), 100) / 100;
+    const dashOffset = -circumference * (1 - fraction);
+
+    return (
+        <div className='relative' style={{ width: size, height: size }}>
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+                <circle cx={size / 2} cy={size / 2} r={radius} fill='none' stroke='#1f1f1f' strokeWidth={stroke} />
+                <circle
+                    cx={size / 2}
+                    cy={size / 2}
+                    r={radius}
+                    fill='none'
+                    stroke={color}
+                    strokeWidth={stroke}
+                    strokeLinecap='round'
+                    strokeDasharray={circumference}
+                    strokeDashoffset={dashOffset}
+                    transform={`rotate(-90 ${size / 2} ${size / 2})`}
+                />
+            </svg>
+            <div className='absolute inset-0 flex items-center justify-center'>
+                <span className='text-[46px] font-extrabold' style={{ color }}>
+                    {displayScore}
+                </span>
+            </div>
+        </div>
+    );
+}
 
 export default function ResumeUpload() {
-    const [file, setFile] = useState(null)
-    const [error, setError] = useState('')
-    const [uploading, setUploading] = useState(false)
-    const [uploadedUrl, setUploadedUrl] = useState('')
-    const [dragOver, setDragOver] = useState(false)
-    const [analyzing, setAnalyzing] = useState(false)
-    const [loadingMsgIndex, setLoadingMsgIndex] = useState(0)
-    const [analysisResult, setAnalysisResult] = useState(null)
-    const inputRef = useRef(null)
-    const loadingIntervalRef = useRef(null)
+    const [file, setFile] = useState(null);
+    const [error, setError] = useState('');
+    const [uploading, setUploading] = useState(false);
+    const [uploadedUrl, setUploadedUrl] = useState('');
+    const [dragOver, setDragOver] = useState(false);
+    const [analyzing, setAnalyzing] = useState(false);
+    const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
+    const [analysisResult, setAnalysisResult] = useState(null);
+    const inputRef = useRef(null);
+    const loadingIntervalRef = useRef(null);
 
-    const navigate = useNavigate()
+    const [progress, setProgress] = useState(0);
+    const rafRef = useRef(null);
+
+    const atsBig = analysisResult?.hero?.ats_score ?? 0;
+    const atsColor = atsBig >= 75 ? '#22c55e' : atsBig >= 50 ? '#D9A919' : '#ef4444';
+    const hasResult = analysisResult && !analyzing;
+
+    const navigate = useNavigate();
 
     useEffect(() => {
-        const token = localStorage.getItem('token')
+        if (!hasResult) {
+            return;
+        }
+
+        const start = performance.now();
+
+        function tick(now) {
+            const elapsed = now - start;
+            const t = Math.min(elapsed / SCORE_ANIM_DURATION, 1);
+            setProgress(easeOutCubic(t));
+            if (t < 1) {
+                rafRef.current = requestAnimationFrame(tick);
+            }
+        }
+
+        rafRef.current = requestAnimationFrame(tick);
+
+        return () => {
+            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        };
+    }, [hasResult, analysisResult]);
+
+    const isAnimatingScores = progress < 1;
+    const displayScore = Math.round(atsBig * progress);
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
 
         if (!token) {
-            toast('Please login to analyze your resume', 'error')
-            navigate('/login')
+            toast('Please login to analyze your resume', 'error');
+            navigate('/login');
         }
-    }, [navigate])
+    }, [navigate]);
 
     function validateFile(f) {
-        if (!f) return 'No file selected.'
-        if (f.type !== 'application/pdf') return 'Only PDF files are allowed.'
-        if (f.size > MAX_SIZE_BYTES)
-            return `File too large. Max is ${MAX_SIZE_LABEL}.`
-        return null
+        if (!f) return 'No file selected.';
+        if (f.type !== 'application/pdf') return 'Only PDF files are allowed.';
+        if (f.size > MAX_SIZE_BYTES) return `File too large. Max is ${MAX_SIZE_LABEL}.`;
+        return null;
     }
 
     function handleFileChange(f) {
-        setUploadedUrl('')
-        setAnalysisResult(null)
-        const err = validateFile(f)
+        setUploadedUrl('');
+        setAnalysisResult(null);
+        const err = validateFile(f);
         if (err) {
-            setError(err)
-            setFile(null)
-            return
+            setError(err);
+            setFile(null);
+            return;
         }
-        setError('')
-        setFile(f)
+        setError('');
+        setFile(f);
     }
 
     function handleDrop(e) {
-        e.preventDefault()
-        setDragOver(false)
-        handleFileChange(e.dataTransfer.files[0])
+        e.preventDefault();
+        setDragOver(false);
+        handleFileChange(e.dataTransfer.files[0]);
     }
 
     async function handleUpload() {
         if (!file) {
-            setError('Please select a PDF first.')
-            return
+            setError('Please select a PDF first.');
+            return;
         }
 
-        setUploading(true)
-        setError('')
+        setUploading(true);
+        setError('');
 
-        const filePath = `${Date.now()}_${file.name.replace(/\s+/g, '-')}`
+        const filePath = `${Date.now()}_${file.name.replace(/\s+/g, '-')}`;
 
-        const { data, error: uploadError } = await supabase.storage
-            .from(BUCKET_NAME)
-            .upload(filePath, file, {
-                contentType: 'application/pdf',
-                upsert: false,
-            })
+        const { data, error: uploadError } = await supabase.storage.from(BUCKET_NAME).upload(filePath, file, {
+            contentType: 'application/pdf',
+            upsert: false,
+        });
 
         if (uploadError) {
-            setError(`Upload failed: ${uploadError.message}`)
-            setUploading(false)
-            return
+            setError(`Upload failed: ${uploadError.message}`);
+            setUploading(false);
+            return;
         }
 
-        const { data: urlData } = supabase.storage
-            .from(BUCKET_NAME)
-            .getPublicUrl(data.path)
-        const publicUrl = urlData.publicUrl
-        setUploadedUrl(publicUrl)
-        setUploading(false)
-        console.log(publicUrl)
-
-        // ── Start analysis ────────────────────────────────────────────────────
-        setAnalyzing(true)
-        setLoadingMsgIndex(0)
+        const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(data.path);
+        const publicUrl = urlData.publicUrl;
+        setUploadedUrl(publicUrl);
+        setUploading(false);
+        setAnalyzing(true);
+        setLoadingMsgIndex(0);
 
         loadingIntervalRef.current = setInterval(() => {
-            setLoadingMsgIndex((prev) =>
-                prev < LOADING_MESSAGES.length - 1 ? prev + 1 : prev,
-            )
-        }, 2500)
+            setLoadingMsgIndex((prev) => (prev < LOADING_MESSAGES.length - 1 ? prev + 1 : prev));
+        }, 2500);
 
         try {
-            let token = localStorage.getItem('token')
-            console.log('token: ', token)
+            setProgress(0);
+            let token = localStorage.getItem('token');
             const response = await axios.post(
                 'http://localhost:3000/resume/analyze',
                 {
@@ -122,1141 +277,471 @@ export default function ResumeUpload() {
                         Authorization: `Bearer ${token}`,
                     },
                 },
-            )
-            console.log(response)
+            );
 
-            clearInterval(loadingIntervalRef.current)
-            setAnalysisResult(response.data.data.data)
+            clearInterval(loadingIntervalRef.current);
+            setAnalysisResult(response.data.data.data);
         } catch (err) {
-            clearInterval(loadingIntervalRef.current)
-            setError('Analysis failed. Please try again.')
-            console.error(err)
+            clearInterval(loadingIntervalRef.current);
+            setError('Analysis failed. Please try again.');
+            console.error(err);
         } finally {
-            setAnalyzing(false)
+            setAnalyzing(false);
         }
     }
 
     function handleRemove() {
-        setFile(null)
-        setError('')
-        setUploadedUrl('')
-        setAnalysisResult(null)
-        setAnalyzing(false)
-        clearInterval(loadingIntervalRef.current)
-        if (inputRef.current) inputRef.current.value = ''
+        setProgress(0);
+        setFile(null);
+        setError('');
+        setUploadedUrl('');
+        setAnalysisResult(null);
+        setAnalyzing(false);
+        clearInterval(loadingIntervalRef.current);
+        if (inputRef.current) inputRef.current.value = '';
     }
 
     function formatSize(bytes) {
-        if (bytes < 1024) return `${bytes} B`
-        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-        return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+        return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
     }
-
-    function scoreColor(ratio) {
-        if (ratio >= 0.75) return '#22c55e'
-        if (ratio >= 0.5) return '#f97316'
-        return '#ef4444'
-    }
-
-    function priorityStyle(priority) {
-        if (priority === 'Critical')
-            return { bg: '#3a0f0f', color: '#fca5a5', border: '#7f1d1d' }
-        if (priority === 'Important')
-            return { bg: '#1e1a0f', color: '#fde68a', border: '#78350f' }
-        return { bg: '#0d1a1a', color: '#6ee7b7', border: '#065f46' }
-    }
-
-    function importanceStyle(imp) {
-        if (imp === 'Must Have')
-            return { bg: '#1e0f2a', color: '#c4b5fd', border: '#5b21b6' }
-        return { bg: '#121218', color: '#64748b', border: '#2a2a35' }
-    }
-
-    const atsBig = analysisResult?.hero?.ats_score ?? 0
-    const atsColor =
-        atsBig >= 75 ? '#22c55e' : atsBig >= 50 ? '#f97316' : '#ef4444'
 
     return (
-        <div style={S.page}>
-            <div style={S.card}>
-                {/* ── Header ── */}
-                <div style={S.header}>
-                    <div style={S.iconWrap}>
-                        <svg
-                            width="26"
-                            height="26"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        >
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                            <polyline points="14 2 14 8 20 8" />
-                            <line x1="12" y1="12" x2="12" y2="18" />
-                            <line x1="9" y1="15" x2="15" y2="15" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h1 style={S.title}>Resume Analyzer</h1>
-                        <p style={S.subtitle}>
-                            Upload your PDF · Get instant ATS feedback
-                        </p>
-                    </div>
-                </div>
-
-                {/* ── Drop zone ── */}
-                {!file && !uploadedUrl && (
-                    <div
-                        style={{
-                            ...S.dropzone,
-                            ...(dragOver ? S.dropzoneActive : {}),
-                        }}
-                        onClick={() => inputRef.current?.click()}
-                        onDrop={handleDrop}
-                        onDragOver={(e) => {
-                            e.preventDefault()
-                            setDragOver(true)
-                        }}
-                        onDragLeave={() => setDragOver(false)}
-                    >
-                        <svg
-                            width="38"
-                            height="38"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#475569"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            style={{ marginBottom: '12px' }}
-                        >
-                            <polyline points="16 16 12 12 8 16" />
-                            <line x1="12" y1="12" x2="12" y2="21" />
-                            <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
-                        </svg>
-                        <p style={S.dropText}>Drag & drop your PDF here</p>
-                        <p style={S.dropSub}>
-                            or click to browse · PDF only · max {MAX_SIZE_LABEL}
-                        </p>
-                        <input
-                            ref={inputRef}
-                            type="file"
-                            accept=".pdf,application/pdf"
-                            style={{ display: 'none' }}
-                            onChange={(e) =>
-                                handleFileChange(e.target.files[0])
-                            }
-                        />
-                    </div>
-                )}
-
-                {/* ── File preview ── */}
-                {file && !uploadedUrl && (
-                    <div style={S.fileCard}>
-                        <div style={S.fileIcon}>
-                            <svg
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="#ef4444"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                <polyline points="14 2 14 8 20 8" />
-                            </svg>
-                        </div>
-                        <div style={S.fileInfo}>
-                            <p style={S.fileName}>{file.name}</p>
-                            <p style={S.fileSize}>
-                                {formatSize(file.size)} / {MAX_SIZE_LABEL}
-                            </p>
-                            <div style={S.sizeBarBg}>
-                                <div
-                                    style={{
-                                        ...S.sizeBarFill,
-                                        width: `${Math.min((file.size / MAX_SIZE_BYTES) * 100, 100)}%`,
-                                        background:
-                                            file.size > MAX_SIZE_BYTES * 0.8
-                                                ? '#f97316'
-                                                : '#6366f1',
-                                    }}
-                                />
-                            </div>
-                        </div>
-                        <button
-                            style={S.removeBtn}
-                            onClick={handleRemove}
-                            title="Remove"
-                        >
-                            <svg
-                                width="15"
-                                height="15"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2.5"
-                                strokeLinecap="round"
-                            >
-                                <line x1="18" y1="6" x2="6" y2="18" />
-                                <line x1="6" y1="6" x2="18" y2="18" />
-                            </svg>
-                        </button>
-                    </div>
-                )}
-
-                {/* ── Error ── */}
-                {error && (
-                    <div style={S.errorBox}>
-                        <svg
-                            width="15"
-                            height="15"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#ef4444"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                        >
-                            <circle cx="12" cy="12" r="10" />
-                            <line x1="12" y1="8" x2="12" y2="12" />
-                            <line x1="12" y1="16" x2="12.01" y2="16" />
-                        </svg>
-                        <span>{error}</span>
-                    </div>
-                )}
-
-                {/* ── Upload button ── */}
-                {file && !uploadedUrl && (
-                    <button
-                        style={{
-                            ...S.uploadBtn,
-                            ...(uploading ? S.uploadBtnDisabled : {}),
-                        }}
-                        onClick={handleUpload}
-                        disabled={uploading}
-                    >
-                        {uploading ? (
-                            <>
-                                <span style={S.spinner} /> Uploading…
-                            </>
-                        ) : (
-                            <>
-                                <svg
-                                    width="17"
-                                    height="17"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.5"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                >
-                                    <polyline points="16 16 12 12 8 16" />
-                                    <line x1="12" y1="12" x2="12" y2="21" />
-                                    <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
-                                </svg>{' '}
-                                Upload & Analyze
-                            </>
-                        )}
-                    </button>
-                )}
-
-                {/* ── Analyzing loader ── */}
-                {analyzing && (
-                    <div style={S.analyzingCard}>
-                        <div style={S.analyzingTop}>
-                            <span style={S.spinner} />
-                            <span style={S.analyzingTitle}>
-                                Analyzing your resume
-                            </span>
-                        </div>
-                        <p style={S.analyzingMsg}>
-                            {LOADING_MESSAGES[loadingMsgIndex]}
-                        </p>
-                        <div style={S.progressTrack}>
-                            <div
-                                style={{
-                                    ...S.progressBar,
-                                    width: `${((loadingMsgIndex + 1) / LOADING_MESSAGES.length) * 100}%`,
-                                    transition: 'width 2.4s ease',
-                                }}
-                            />
-                        </div>
-                        <div style={S.analyzingSteps}>
-                            {LOADING_MESSAGES.map((msg, i) => (
-                                <div key={i} style={S.analyzingStep}>
-                                    <div
-                                        style={{
-                                            ...S.stepDot,
-                                            background:
-                                                i <= loadingMsgIndex
-                                                    ? '#6366f1'
-                                                    : '#2a2a35',
-                                            boxShadow:
-                                                i === loadingMsgIndex
-                                                    ? '0 0 8px #6366f1'
-                                                    : 'none',
-                                        }}
-                                    />
-                                    <span
-                                        style={{
-                                            ...S.stepLabel,
-                                            color:
-                                                i <= loadingMsgIndex
-                                                    ? '#a5b4fc'
-                                                    : '#334155',
-                                        }}
-                                    >
-                                        {msg}
-                                    </span>
+        <div className='relative min-h-screen w-full bg-[#0A0A0A] text-white overflow-x-hidden'>
+            <Background />
+            <div className='relative z-10'>
+                {!hasResult && (
+                    <div className='relative z-10 flex items-start justify-center py-12 px-4 min-h-screen'>
+                        <div className='w-full max-w-xl mt-8'>
+                            <div className='flex items-center gap-4 mb-7'>
+                                <div className='w-12 h-12 rounded-2xl bg-[#1a1200] border border-[#65531e] flex items-center justify-center shrink-0'>
+                                    <FileText size={22} className='text-[#D9A919]' />
                                 </div>
-                            ))}
+                                <div>
+                                    <h1 className='text-2xl font-bold tracking-tight'>
+                                        Resume <span className='text-[#D9A919]'>Analyzer</span>
+                                    </h1>
+                                    <p className='text-sm text-[#8a8686] mt-0.5'>Upload your PDF · Get instant ATS feedback</p>
+                                </div>
+                            </div>
+
+                            <div className='bg-[#0e0e0e] border border-[#1f1f1f] rounded-2xl p-6 sm:p-7'>
+                                {!file && !uploadedUrl && (
+                                    <div
+                                        onClick={() => inputRef.current?.click()}
+                                        onDrop={handleDrop}
+                                        onDragOver={(e) => {
+                                            e.preventDefault();
+                                            setDragOver(true);
+                                        }}
+                                        onDragLeave={() => setDragOver(false)}
+                                        className={`rounded-xl border-2 border-dashed text-center py-12 px-6 cursor-pointer transition-all duration-200 ${
+                                            dragOver ? 'border-[#D9A919] bg-[#161200]' : 'border-[#2a2a2a] bg-[#111] hover:border-[#4a3a10] hover:bg-[#161200]'
+                                        }`}
+                                    >
+                                        <div className='w-14 h-14 mx-auto mb-4 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center'>
+                                            <Upload size={22} className='text-[#555]' />
+                                        </div>
+                                        <p className='text-[15px] font-semibold text-[#ddd] mb-1'>Drag & drop your PDF here</p>
+                                        <p className='text-xs text-[#555]'>or click to browse · PDF only · max {MAX_SIZE_LABEL}</p>
+                                        <input ref={inputRef} type='file' accept='.pdf,application/pdf' className='hidden' onChange={(e) => handleFileChange(e.target.files[0])} />
+                                    </div>
+                                )}
+
+                                {file && !uploadedUrl && (
+                                    <div className='flex items-center gap-3 bg-[#111] border border-[#2a2a2a] rounded-xl p-3.5 mb-4'>
+                                        <div className='w-10 h-10 rounded-lg bg-[#1f0a0a] border border-[#3a1515] flex items-center justify-center shrink-0'>
+                                            <FileText size={18} className='text-[#ef4444]' />
+                                        </div>
+                                        <div className='flex-1 min-w-0'>
+                                            <p className='text-sm font-semibold text-[#ddd] truncate'>{file.name}</p>
+                                            <p className='text-xs text-[#555] mb-1.5'>
+                                                {formatSize(file.size)} / {MAX_SIZE_LABEL}
+                                            </p>
+                                            <div className='h-1 rounded-full bg-[#222] overflow-hidden'>
+                                                <div
+                                                    className='h-full rounded-full transition-all duration-300'
+                                                    style={{
+                                                        width: `${Math.min((file.size / MAX_SIZE_BYTES) * 100, 100)}%`,
+                                                        background: file.size > MAX_SIZE_BYTES * 0.8 ? '#f97316' : '#D9A919',
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                        <button onClick={handleRemove} title='Remove' className='text-[#555] hover:text-[#D9A919] transition-colors duration-200 p-1.5 shrink-0'>
+                                            <X size={15} />
+                                        </button>
+                                    </div>
+                                )}
+
+                                {error && (
+                                    <div className='flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#1a0a0a] border border-[#3d1515] text-xs text-[#f87171] mb-4'>
+                                        <AlertCircle size={13} className='shrink-0' />
+                                        <span className='translate-y-px'>{error}</span>
+                                    </div>
+                                )}
+
+                                {file && !uploadedUrl && (
+                                    <button
+                                        onClick={handleUpload}
+                                        disabled={uploading}
+                                        className='w-full py-2.5 rounded-xl bg-[#D9A919] text-black font-semibold text-sm hover:shadow-[0_0_20px_rgba(217,169,25,0.35)] hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none cursor-pointer flex items-center justify-center gap-2'
+                                    >
+                                        {uploading ? (
+                                            <>
+                                                <Spinner />
+                                                Uploading…
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Upload size={16} />
+                                                Upload & Analyze
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+
+                                {analyzing && (
+                                    <div className='bg-[#111] border border-[#2a2a2a] rounded-xl p-5'>
+                                        <div className='flex items-center gap-2.5 mb-2 text-[#D9A919]'>
+                                            <Spinner />
+                                            <span className='text-sm font-semibold text-[#ddd]'>Analyzing your resume</span>
+                                        </div>
+                                        <p className='text-xs text-[#D9A919] mb-3.5 min-h-4'>{LOADING_MESSAGES[loadingMsgIndex]}</p>
+                                        <div className='h-0.75 bg-[#222] rounded-full overflow-hidden mb-5'>
+                                            <div
+                                                className='h-full rounded-full bg-[#D9A919] transition-all duration-2400 ease-out'
+                                                style={{
+                                                    width: `${((loadingMsgIndex + 1) / LOADING_MESSAGES.length) * 100}%`,
+                                                }}
+                                            />
+                                        </div>
+                                        <div className='flex flex-col gap-2.5'>
+                                            {LOADING_MESSAGES.map((msg, i) => (
+                                                <div key={i} className='flex items-center gap-2.5'>
+                                                    <div
+                                                        className='w-2 h-2 rounded-full shrink-0 transition-all duration-300'
+                                                        style={{
+                                                            background: i <= loadingMsgIndex ? '#D9A919' : '#2a2a2a',
+                                                            boxShadow: i === loadingMsgIndex ? '0 0 8px #D9A919' : 'none',
+                                                        }}
+                                                    />
+                                                    <span
+                                                        className='text-xs transition-colors duration-300'
+                                                        style={{
+                                                            color: i <= loadingMsgIndex ? '#D9A919' : '#444',
+                                                        }}
+                                                    >
+                                                        {msg}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}
 
-                {/* ══════════════════════════════════════════
-            ANALYSIS RESULT
-        ══════════════════════════════════════════ */}
-                {analysisResult && !analyzing && (
-                    <div style={S.resultWrap}>
-                        {/* ── Upload another ── */}
-                        <button style={S.resetBtn} onClick={handleRemove}>
-                            ← Analyze another resume
-                        </button>
-
-                        {/* ── Hero score ── */}
-                        <div style={S.heroCard}>
-                            <div
-                                style={{
-                                    ...S.atsCircle,
-                                    borderColor: atsColor,
-                                    color: atsColor,
-                                }}
-                            >
-                                {atsBig}
+                {hasResult && (
+                    <div className='relative z-10 w-[95%] mx-auto py-10'>
+                        <div className='flex items-center justify-between mb-9 flex-wrap gap-3'>
+                            <div className='flex items-center gap-3'>
+                                <div className='w-11 h-11 rounded-2xl bg-[#1a1200] border border-[#65531e] flex items-center justify-center shrink-0'>
+                                    <FileText size={20} className='text-[#D9A919]' />
+                                </div>
+                                <div>
+                                    <h1 className='text-2xl font-bold tracking-tight'>Resume Analysis Report</h1>
+                                    <p className='text-xs text-[#666]'>Generated by Resume Analyser AI</p>
+                                </div>
                             </div>
-                            <div style={S.heroRight}>
-                                <div style={S.heroRow}>
+                            <button
+                                onClick={handleRemove}
+                                className='inline-flex items-center gap-1.5 text-sm text-[#999] hover:text-[#D9A919] border border-[#2a2a2a] hover:border-[#4a3a10] rounded-lg px-4 py-2 transition-colors duration-200 cursor-pointer'
+                            >
+                                <ArrowLeft size={14} /> Analyze another resume
+                            </button>
+                        </div>
+                        <FadeSection>
+                            <div className='grid grid-cols-1 lg:grid-cols-3 gap-6 mb-7'>
+                                <div className='lg:col-span-1 bg-[#0e0e0e] border border-[#1f1f1f] rounded-2xl p-7 flex flex-col items-center justify-center text-center'>
+                                    <div className='mb-3'>
+                                        <ScoreRing displayScore={displayScore} color={atsColor} />
+                                    </div>
+                                    <p className='text-[12px] text-[#666] uppercase tracking-widest mb-4'>out of 100 · ATS Match Score</p>
                                     <span
+                                        className='text-sm font-bold border rounded-full px-3.5 py-1.5 uppercase tracking-wide mb-4'
                                         style={{
-                                            ...S.verdictBadge,
                                             color: atsColor,
                                             borderColor: atsColor,
                                         }}
                                     >
                                         {analysisResult.hero.verdict}
                                     </span>
-                                    <span style={S.hireBadge}>
-                                        {analysisResult.hero.hire_probability}{' '}
-                                        hire probability
-                                    </span>
+                                    <p className='text-[15px] text-[#999] leading-relaxed mb-4'>{analysisResult.hero.one_liner}</p>
+                                    <span className='text-sm text-[#777] bg-[#1a1a1a] border border-[#2a2a2a] rounded-full px-4 py-1.5'>{analysisResult.hero.hire_probability} hire probability</span>
                                 </div>
-                                <p style={S.heroOneLiner}>
-                                    {analysisResult.hero.one_liner}
-                                </p>
-                            </div>
-                        </div>
+                                <div className='lg:col-span-2 bg-[#0e0e0e] border border-[#1f1f1f] rounded-2xl p-7'>
+                                    <p className='text-xs font-bold text-[#D9A919] uppercase tracking-widest mb-1.5 flex items-center gap-1.5'>
+                                        <TrendingUp size={13} /> Score Breakdown
+                                    </p>
+                                    <p className='text-sm text-[#666] mb-10'>How each part of your resume contributed to the score above</p>
+                                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-6'>
+                                        {analysisResult.score_breakdown.map((item) => {
+                                            const ratio = item.score / item.out_of;
+                                            const color = scoreColor(ratio);
+                                            const displayedScore = Math.round(item.score * progress);
+                                            const displayedRatio = ratio * progress;
+                                            const displayedPercent = Math.round((displayedScore / item.out_of) * 100);
 
-                        {/* ── Score breakdown ── */}
-                        <p style={S.sectionLabel}>Score Breakdown</p>
-                        <div style={S.breakdownList}>
-                            {analysisResult.score_breakdown.map((item) => {
-                                const ratio = item.score / item.out_of
-                                return (
-                                    <div
-                                        key={item.label}
-                                        style={S.breakdownRow}
-                                    >
-                                        <div style={S.breakdownHead}>
-                                            <span style={S.breakdownName}>
-                                                {item.label}
-                                            </span>
-                                            <span
-                                                style={{
-                                                    ...S.breakdownScore,
-                                                    color: scoreColor(ratio),
-                                                }}
-                                            >
-                                                {item.score}
-                                                <span style={S.outOf}>
-                                                    /{item.out_of}
-                                                </span>
-                                            </span>
-                                        </div>
-                                        <div style={S.barBg}>
-                                            <div
-                                                style={{
-                                                    ...S.barFill,
-                                                    width: `${ratio * 100}%`,
-                                                    background:
-                                                        scoreColor(ratio),
-                                                }}
-                                            />
-                                        </div>
-                                        <p style={S.breakdownReason}>
-                                            {item.reason}
-                                        </p>
+                                            return (
+                                                <div key={item.label}>
+                                                    <div className='flex justify-between items-baseline mb-2'>
+                                                        <span className='text-sm text-[#ccc] font-medium'>{item.label}</span>
+                                                        <span className='text-base font-bold' style={{ color }}>
+                                                            {displayedScore}
+                                                            <span className='text-xs text-[#666] font-normal'> / {item.out_of} pts</span>
+                                                            <span className='ml-2 text-xs font-medium text-[#888]'>({displayedPercent}%)</span>
+                                                        </span>
+                                                    </div>
+                                                    <div className='h-2 bg-[#222] rounded-full overflow-hidden mb-2'>
+                                                        <div
+                                                            className='h-full rounded-full origin-left'
+                                                            style={{
+                                                                width: `${displayedRatio * 100}%`,
+                                                                background: color,
+                                                                boxShadow: isAnimatingScores ? `0 0 8px ${color}` : 'none',
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <p className='text-xs text-[#555] leading-snug'>{item.reason}</p>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-                                )
-                            })}
-                        </div>
-
-                        {/* ── Candidate snapshot ── */}
-                        <p style={S.sectionLabel}>Candidate Snapshot</p>
-                        <div style={S.snapshotGrid}>
-                            {[
-                                {
-                                    label: 'Level',
-                                    value: analysisResult.candidate.level,
-                                },
-                                {
-                                    label: 'Ready to Apply',
-                                    value: analysisResult.candidate
-                                        .ready_to_apply
-                                        ? 'Yes ✓'
-                                        : 'Not Yet',
-                                },
-                                {
-                                    label: 'Salary Range',
-                                    value: analysisResult.market.salary_range,
-                                },
-                                {
-                                    label: 'Market Demand',
-                                    value: analysisResult.market.demand,
-                                },
-                            ].map((item) => (
-                                <div key={item.label} style={S.snapshotCard}>
-                                    <p style={S.snapshotLabel}>{item.label}</p>
-                                    <p style={S.snapshotValue}>{item.value}</p>
                                 </div>
-                            ))}
-                        </div>
-                        <div style={S.assetRow}>
-                            <div style={S.assetCard}>
-                                <p style={S.assetLabel}>💪 Strongest Asset</p>
-                                <p style={S.assetText}>
-                                    {analysisResult.candidate.strongest_asset}
-                                </p>
                             </div>
-                            <div
-                                style={{
-                                    ...S.assetCard,
-                                    borderColor: '#3a1515',
-                                }}
-                            >
-                                <p
-                                    style={{
-                                        ...S.assetLabel,
-                                        color: '#fca5a5',
-                                    }}
-                                >
-                                    🚧 Biggest Blocker
-                                </p>
-                                <p style={S.assetText}>
-                                    {analysisResult.candidate.biggest_blocker}
-                                </p>
-                            </div>
-                        </div>
 
-                        {/* ── Top skills market needs ── */}
-                        <p style={S.sectionLabel}>Skills the Market Wants</p>
-                        <div style={S.tagRow}>
-                            {analysisResult.market.top_skills.map((s) => {
-                                const imp = importanceStyle(s.importance)
-                                return (
-                                    <span
-                                        key={s.skill}
-                                        style={{
-                                            ...S.tag,
-                                            background: imp.bg,
-                                            color: imp.color,
-                                            border: `1px solid ${imp.border}`,
-                                        }}
-                                    >
-                                        {s.skill} · {s.importance}
-                                    </span>
-                                )
-                            })}
-                        </div>
+                            <FadeSection>
+                                <p className='text-xs font-bold text-[#D9A919] uppercase tracking-widest ml-1.5 mb-3.5'>Candidate Snapshot</p>
 
-                        {/* ── Missing skills ── */}
-                        <p style={S.sectionLabel}>Missing Skills</p>
-                        <div style={S.tagRow}>
-                            {analysisResult.skills.missing.map((s) => {
-                                const p = priorityStyle(s.priority)
-                                return (
-                                    <span
-                                        key={s.skill}
-                                        style={{
-                                            ...S.tag,
-                                            background: p.bg,
-                                            color: p.color,
-                                            border: `1px solid ${p.border}`,
-                                        }}
-                                    >
-                                        {s.skill} · {s.priority}
-                                    </span>
-                                )
-                            })}
-                        </div>
+                                <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-7 items-start'>
+                                    {[
+                                        {
+                                            icon: Award,
+                                            label: 'Experience Level',
+                                            value: analysisResult.candidate.level,
+                                        },
+                                        {
+                                            icon: ShieldCheck,
+                                            label: 'Ready to Apply Now?',
+                                            value: analysisResult.candidate.ready_to_apply ? 'Yes ✓' : 'Not Yet',
+                                        },
+                                        {
+                                            icon: DollarSign,
+                                            label: 'Expected Salary Range',
+                                            value: analysisResult.market.salary_range,
+                                        },
+                                        {
+                                            icon: Activity,
+                                            label: 'Current Market Demand',
+                                            value: analysisResult.market.demand,
+                                        },
+                                    ].map((item) => (
+                                        <div key={item.label} className='bg-[#0e0e0e] border border-[#1f1f1f] rounded-xl p-5'>
+                                            <div className='flex items-center gap-2 mb-4'>
+                                                <item.icon size={18} className='text-[#D9A919] shrink-0' />
+                                                <p className='text-xs text-[#555] uppercase tracking-wide leading-none'>{item.label}</p>
+                                            </div>
 
-                        {/* ── ATS keywords missing ── */}
-                        {analysisResult.skills.ats_keywords_missing?.length >
-                            0 && (
-                            <>
-                                <p style={S.sectionLabel}>
-                                    ATS Keywords to Add
-                                </p>
-                                <div style={S.tagRow}>
-                                    {analysisResult.skills.ats_keywords_missing.map(
-                                        (kw) => (
-                                            <span
-                                                key={kw}
-                                                style={{
-                                                    ...S.tag,
-                                                    background: '#0d1220',
-                                                    color: '#93c5fd',
-                                                    border: '1px solid #1e3a5f',
-                                                }}
-                                            >
-                                                {kw}
-                                            </span>
-                                        ),
-                                    )}
+                                            <p className='text-lg font-semibold text-[#eee] leading-snug wrap-break-word'>{item.value}</p>
+                                        </div>
+                                    ))}
                                 </div>
-                            </>
-                        )}
 
-                        {/* ── ATS filter ── */}
-                        <p style={S.sectionLabel}>ATS Filter Check</p>
-                        <div
-                            style={{
-                                ...S.atsFilterCard,
-                                borderColor: analysisResult.ats_filter.will_pass
-                                    ? '#166534'
-                                    : '#7f1d1d',
-                            }}
-                        >
-                            <div style={S.atsFilterTop}>
-                                <span
-                                    style={{
-                                        ...S.atsBadge,
-                                        background: analysisResult.ats_filter
-                                            .will_pass
-                                            ? '#0d1f14'
-                                            : '#1e0f0f',
-                                        color: analysisResult.ats_filter
-                                            .will_pass
-                                            ? '#86efac'
-                                            : '#fca5a5',
-                                    }}
-                                >
-                                    {analysisResult.ats_filter.will_pass
-                                        ? '✓ Will Pass ATS'
-                                        : '✗ Will Likely Fail ATS'}
-                                </span>
-                            </div>
-                            {analysisResult.ats_filter.format_issues.map(
-                                (issue, i) => (
-                                    <div key={i} style={S.issueRow}>
-                                        <p style={S.issueText}>
-                                            ⚠ {issue.issue}
-                                        </p>
-                                        <p style={S.issueFix}>→ {issue.fix}</p>
+                                <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+                                    <div className='lg:col-span-2 flex flex-col gap-6'>
+                                        <div className='grid grid-cols-1 sm:grid-cols-2 gap-5'>
+                                            <div className='bg-[#0e0e0e] border border-[#1a2e1a] rounded-xl p-5'>
+                                                <p className='text-sm text-[#86efac] font-semibold mb-2'>💪 What's working well for you</p>
+                                                <p className='text-sm text-[#999] leading-relaxed'>{analysisResult.candidate.strongest_asset}</p>
+                                            </div>
+                                            <div className='bg-[#0e0e0e] border border-[#3a1515] rounded-xl p-5'>
+                                                <p className='text-sm text-[#fca5a5] font-semibold mb-2'>🚧 What's holding you back</p>
+                                                <p className='text-sm text-[#999] leading-relaxed'>{analysisResult.candidate.biggest_blocker}</p>
+                                            </div>
+                                        </div>
+
+                                        <FadeSection>
+                                            <div className='flex flex-col gap-5'>
+                                                <div className='bg-[#0e0e0e] border border-[#1f1f1f] rounded-xl p-6'>
+                                                    <p className='text-xs font-bold text-[#D9A919] uppercase tracking-widest mb-1.5 flex items-center gap-1.5'>
+                                                        <Zap size={13} /> Will Your Resume Pass the Robot Filter?
+                                                    </p>
+                                                    <p className='text-sm text-[#666] mb-4'>Most companies use software (an "ATS") to auto-reject resumes before a human ever sees them</p>
+                                                    <span
+                                                        className='inline-flex items-center gap-1.5 text-base font-semibold rounded-lg px-4 py-2 mb-4'
+                                                        style={{
+                                                            background: analysisResult.ats_filter.will_pass ? '#0a1a10' : '#1f0a0a',
+                                                            color: analysisResult.ats_filter.will_pass ? '#86efac' : '#fca5a5',
+                                                        }}
+                                                    >
+                                                        {analysisResult.ats_filter.will_pass ? <ShieldCheck size={16} /> : <ShieldAlert size={16} />}
+                                                        {analysisResult.ats_filter.will_pass ? 'Yes — it will pass' : 'No — it will likely get rejected'}
+                                                    </span>
+                                                    <div className='flex flex-col gap-3'>
+                                                        {analysisResult.ats_filter.format_issues.map((issue, i) => (
+                                                            <div key={i} className='bg-[#111] border border-[#2a2a2a] rounded-lg p-4'>
+                                                                <p className='text-sm text-[#fcd34d] mb-1'>⚠ Problem: {issue.issue}</p>
+                                                                <p className='text-sm text-[#666]'>✓ Fix: {issue.fix}</p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <div className='bg-[#0e0e0e] border border-[#1f1f1f] rounded-xl p-6'>
+                                                    <p className='text-xs font-bold text-[#D9A919] uppercase tracking-widest mb-1.5 flex items-center gap-1.5'>
+                                                        <AlertTriangle size={13} /> Things to Fix in Your Resume
+                                                    </p>
+                                                    <p className='text-sm text-[#666] mb-2'>Ordered by what will make the biggest difference — scan top to bottom</p>
+                                                    <div className='flex flex-col'>
+                                                        {analysisResult.resume_fixes.map((fix, i) => {
+                                                            const accent = fixAccent(fix.priority);
+                                                            const isLast = i === analysisResult.resume_fixes.length - 1;
+                                                            return (
+                                                                <div key={i} className={`flex gap-4 py-4 ${!isLast ? 'border-b border-[#1f1f1f]' : ''}`}>
+                                                                    <div
+                                                                        className='shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 mt-0.5'
+                                                                        style={{
+                                                                            borderColor: accent,
+                                                                            color: accent,
+                                                                        }}
+                                                                    >
+                                                                        {i + 1}
+                                                                    </div>
+
+                                                                    <div className='flex-1 min-w-0'>
+                                                                        <div className='flex items-center gap-2 mb-1 flex-wrap'>
+                                                                            <span className='text-[11px] font-bold text-[#D9A919] uppercase tracking-wide'>{fix.section}</span>
+                                                                            <span
+                                                                                className='text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded'
+                                                                                style={{
+                                                                                    color: accent,
+                                                                                    background: `${accent}1a`,
+                                                                                }}
+                                                                            >
+                                                                                {fix.priority}
+                                                                            </span>
+                                                                        </div>
+                                                                        <p className='text-[15px] text-[#eee] font-medium leading-snug mb-1.5'>{fix.fix}</p>
+                                                                        <p className='text-xs text-[#666] leading-snug flex items-start gap-1.5'>
+                                                                            <span className='text-[#444] shrink-0'>↳</span>
+                                                                            <span>{fix.why}</span>
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                                <div className='p-6 rounded-xl bg-[#161200] border border-[#3a2f10]'>
+                                                    <p className='text-xs font-bold text-[#D9A919] uppercase tracking-widest mb-2.5'>Bottom Line</p>
+                                                    <p className='text-base text-[#e5d9b0] leading-relaxed'>{analysisResult.final_verdict}</p>
+                                                </div>
+
+                                                {analysisResult.motivation && (
+                                                    <div className='p-5 rounded-xl bg-[#0e0e0e] border border-[#1f1f1f]'>
+                                                        <p className='text-sm text-[#666] italic leading-relaxed'>"{analysisResult.motivation}"</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </FadeSection>
                                     </div>
-                                ),
-                            )}
-                        </div>
+                                    <div className='lg:col-span-1 flex flex-col gap-6'>
+                                        <div className='bg-[#0e0e0e] border border-[#1f1f1f] rounded-xl p-6'>
+                                            <p className='text-xs font-bold text-[#D9A919] uppercase tracking-widest mb-1.5 flex items-center gap-1.5'>
+                                                <Briefcase size={13} /> Skills Employers Are Looking For
+                                            </p>
+                                            <p className='text-sm text-[#666] mb-4'>"Must Have" means you really should learn this soon</p>
+                                            <div className='flex flex-wrap gap-2.5'>
+                                                {analysisResult.market.top_skills.map((s) => {
+                                                    const imp = importanceStyle(s.importance);
+                                                    return (
+                                                        <span key={s.skill} className={`text-sm px-3.5 py-1.5 rounded-full font-medium border ${imp.bg} ${imp.color} ${imp.border}`}>
+                                                            {s.skill} · {s.importance}
+                                                        </span>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                        <div className='bg-[#0e0e0e] border border-[#1f1f1f] rounded-xl p-6'>
+                                            <p className='text-xs font-bold text-[#D9A919] uppercase tracking-widest mb-1.5'>Skills Missing From Your Resume</p>
+                                            <p className='text-sm text-[#666] mb-4'>"Critical" should be fixed before applying anywhere</p>
+                                            <div className='flex flex-wrap gap-2.5'>
+                                                {analysisResult.skills.missing.map((s) => {
+                                                    const p = priorityStyle(s.priority);
+                                                    return (
+                                                        <span key={s.skill} className={`text-sm px-3.5 py-1.5 rounded-full font-medium border ${p.bg} ${p.color} ${p.border}`}>
+                                                            {s.skill} · {s.priority}
+                                                        </span>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                        {analysisResult.skills.ats_keywords_missing?.length > 0 && (
+                                            <div className='bg-[#0e0e0e] border border-[#1f1f1f] rounded-xl p-6'>
+                                                <p className='text-xs font-bold text-[#D9A919] uppercase tracking-widest mb-1.5'>Words to Add to Your Resume</p>
+                                                <p className='text-sm text-[#666] mb-4'>Add these exact words so the robot filter recognizes your skills</p>
+                                                <div className='flex flex-wrap gap-2.5'>
+                                                    {analysisResult.skills.ats_keywords_missing.map((kw) => (
+                                                        <span key={kw} className='text-sm px-3.5 py-1.5 rounded-full font-medium border bg-[#0a1018] text-[#93c5fd] border-[#1e3a5f]'>
+                                                            {kw}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
 
-                        {/* ── Resume fixes ── */}
-                        <p style={S.sectionLabel}>Resume Fixes</p>
-                        {analysisResult.resume_fixes.map((fix, i) => (
-                            <div key={i} style={S.fixCard}>
-                                <div style={S.fixHead}>
-                                    <span
-                                        style={{
-                                            ...S.fixPriority,
-                                            color:
-                                                fix.priority === 'High'
-                                                    ? '#fca5a5'
-                                                    : '#fde68a',
-                                            borderColor:
-                                                fix.priority === 'High'
-                                                    ? '#7f1d1d'
-                                                    : '#78350f',
-                                            background:
-                                                fix.priority === 'High'
-                                                    ? '#3a0f0f'
-                                                    : '#1e1a0f',
-                                        }}
-                                    >
-                                        {fix.priority}
-                                    </span>
-                                    <span style={S.fixSection}>
-                                        {fix.section}
-                                    </span>
+                                        <FadeSection>
+                                            <div className='bg-[#0e0e0e] border border-[#1f1f1f] rounded-xl p-6'>
+                                                <p className='text-xs font-bold text-[#D9A919] uppercase tracking-widest mb-1.5 flex items-center gap-1.5'>
+                                                    <Sparkles size={13} /> What to Do Next
+                                                </p>
+                                                <p className='text-sm text-[#666] mb-4'>Step-by-step, in order of priority</p>
+                                                <div className='flex flex-col gap-3.5'>
+                                                    {analysisResult.action_plan.map((a, i) => (
+                                                        <div key={i} className='bg-[#111] border border-[#2a2a2a] rounded-lg p-4'>
+                                                            <div className='flex items-center gap-2 mb-2'>
+                                                                <span className='text-[11px] font-bold text-[#D9A919] bg-[#1a1200] border border-[#3a2f10] rounded-md px-2 py-1 whitespace-nowrap'>
+                                                                    {a.timeline}
+                                                                </span>
+                                                                <span
+                                                                    className='text-[11px] font-semibold'
+                                                                    style={{
+                                                                        color: a.impact === 'High' ? '#86efac' : '#fde68a',
+                                                                    }}
+                                                                >
+                                                                    {a.impact} impact
+                                                                </span>
+                                                            </div>
+                                                            <p className='text-sm text-[#999] leading-relaxed'>{a.action}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </FadeSection>
+                                    </div>
                                 </div>
-                                <p style={S.fixText}>{fix.fix}</p>
-                                <p style={S.fixWhy}>Why: {fix.why}</p>
-                            </div>
-                        ))}
-
-                        {/* ── Action plan ── */}
-                        <p style={S.sectionLabel}>Action Plan</p>
-                        {analysisResult.action_plan.map((a, i) => (
-                            <div key={i} style={S.actionRow}>
-                                <div style={S.actionLeft}>
-                                    <span style={S.actionTimeline}>
-                                        {a.timeline}
-                                    </span>
-                                    <span
-                                        style={{
-                                            ...S.actionImpact,
-                                            color:
-                                                a.impact === 'High'
-                                                    ? '#86efac'
-                                                    : '#fde68a',
-                                        }}
-                                    >
-                                        {a.impact}
-                                    </span>
-                                </div>
-                                <p style={S.actionText}>{a.action}</p>
-                            </div>
-                        ))}
-
-                        {/* ── Final verdict ── */}
-                        <div style={S.verdictCard}>
-                            <p style={S.verdictEyebrow}>Final Verdict</p>
-                            <p style={S.verdictText}>
-                                {analysisResult.final_verdict}
-                            </p>
-                        </div>
-
-                        {/* ── Motivation ── */}
-                        {analysisResult.motivation && (
-                            <div style={S.motivationCard}>
-                                <p style={S.motivationText}>
-                                    "{analysisResult.motivation}"
-                                </p>
-                            </div>
-                        )}
+                            </FadeSection>
+                        </FadeSection>
                     </div>
                 )}
+
+                <style>{`
+                @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+            `}</style>
             </div>
-
-            <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-      `}</style>
         </div>
-    )
-}
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-const S = {
-    page: {
-        minHeight: '100vh',
-        background: '#0a0a0f',
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        padding: '40px 16px',
-        fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-    },
-    card: {
-        background: '#111118',
-        border: '1px solid #1e1e2a',
-        borderRadius: '20px',
-        padding: '36px 32px',
-        width: '100%',
-        maxWidth: '520px',
-        boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
-    },
-    header: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '14px',
-        marginBottom: '28px',
-    },
-    iconWrap: {
-        background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-        borderRadius: '14px',
-        width: '52px',
-        height: '52px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: '#fff',
-        flexShrink: 0,
-    },
-    title: {
-        margin: 0,
-        fontSize: '20px',
-        fontWeight: '700',
-        color: '#f1f5f9',
-        letterSpacing: '-0.4px',
-    },
-    subtitle: { margin: '3px 0 0', fontSize: '13px', color: '#475569' },
-
-    dropzone: {
-        border: '2px dashed #1e1e2a',
-        borderRadius: '14px',
-        padding: '44px 24px',
-        textAlign: 'center',
-        cursor: 'pointer',
-        transition: 'border-color 0.2s, background 0.2s',
-        marginBottom: '20px',
-        background: '#0d0d14',
-    },
-    dropzoneActive: { borderColor: '#6366f1', background: '#14141f' },
-    dropText: {
-        margin: '0 0 4px',
-        fontSize: '15px',
-        fontWeight: '600',
-        color: '#cbd5e1',
-    },
-    dropSub: { margin: 0, fontSize: '12.5px', color: '#334155' },
-
-    fileCard: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        background: '#0d0d14',
-        border: '1px solid #1e1e2a',
-        borderRadius: '12px',
-        padding: '14px',
-        marginBottom: '16px',
-    },
-    fileIcon: {
-        flexShrink: 0,
-        background: '#1e0f0f',
-        borderRadius: '8px',
-        width: '40px',
-        height: '40px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        border: '1px solid #3a1a1a',
-    },
-    fileInfo: { flex: 1, minWidth: 0 },
-    fileName: {
-        margin: '0 0 2px',
-        fontSize: '13.5px',
-        fontWeight: '600',
-        color: '#e2e8f0',
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-    },
-    fileSize: { margin: '0 0 6px', fontSize: '11.5px', color: '#475569' },
-    sizeBarBg: {
-        height: '3px',
-        borderRadius: '99px',
-        background: '#1e1e2a',
-        overflow: 'hidden',
-    },
-    sizeBarFill: {
-        height: '100%',
-        borderRadius: '99px',
-        transition: 'width 0.3s ease',
-    },
-    removeBtn: {
-        background: 'transparent',
-        border: 'none',
-        cursor: 'pointer',
-        color: '#334155',
-        padding: '6px',
-        borderRadius: '6px',
-        display: 'flex',
-        alignItems: 'center',
-        flexShrink: 0,
-    },
-
-    errorBox: {
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '8px',
-        background: '#1a0a0a',
-        border: '1px solid #3a1515',
-        borderRadius: '8px',
-        padding: '12px 14px',
-        marginBottom: '16px',
-        fontSize: '13px',
-        color: '#fca5a5',
-    },
-
-    uploadBtn: {
-        width: '100%',
-        padding: '14px',
-        background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-        border: 'none',
-        borderRadius: '12px',
-        color: '#fff',
-        fontSize: '15px',
-        fontWeight: '600',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '8px',
-        marginBottom: '0',
-        transition: 'opacity 0.2s',
-    },
-    uploadBtnDisabled: { opacity: 0.55, cursor: 'not-allowed' },
-    spinner: {
-        width: '15px',
-        height: '15px',
-        border: '2px solid rgba(255,255,255,0.25)',
-        borderTopColor: '#fff',
-        borderRadius: '50%',
-        animation: 'spin 0.7s linear infinite',
-        display: 'inline-block',
-        flexShrink: 0,
-    },
-
-    // ── Analyzing loader ──────────────────────────────────────────────────────
-    analyzingCard: {
-        marginTop: '20px',
-        padding: '24px',
-        background: '#0d0d14',
-        border: '1px solid #2a2a3d',
-        borderRadius: '14px',
-    },
-    analyzingTop: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-        marginBottom: '8px',
-    },
-    analyzingTitle: { fontSize: '15px', fontWeight: '600', color: '#e2e8f0' },
-    analyzingMsg: {
-        margin: '0 0 14px',
-        fontSize: '13px',
-        color: '#6366f1',
-        minHeight: '18px',
-    },
-    progressTrack: {
-        height: '3px',
-        background: '#1e1e2a',
-        borderRadius: '99px',
-        overflow: 'hidden',
-        marginBottom: '20px',
-    },
-    progressBar: {
-        height: '100%',
-        background: 'linear-gradient(90deg, #6366f1, #8b5cf6)',
-        borderRadius: '99px',
-    },
-    analyzingSteps: { display: 'flex', flexDirection: 'column', gap: '10px' },
-    analyzingStep: { display: 'flex', alignItems: 'center', gap: '10px' },
-    stepDot: {
-        width: '8px',
-        height: '8px',
-        borderRadius: '50%',
-        flexShrink: 0,
-        transition: 'background 0.3s, box-shadow 0.3s',
-    },
-    stepLabel: { fontSize: '12.5px', transition: 'color 0.3s' },
-
-    // ── Result ────────────────────────────────────────────────────────────────
-    resultWrap: { marginTop: '24px', animation: 'fadeIn 0.4s ease' },
-
-    resetBtn: {
-        background: 'transparent',
-        border: '1px solid #1e1e2a',
-        borderRadius: '8px',
-        color: '#475569',
-        fontSize: '12.5px',
-        padding: '7px 12px',
-        cursor: 'pointer',
-        marginBottom: '20px',
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '4px',
-    },
-
-    heroCard: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '20px',
-        background: '#0d0d14',
-        border: '1px solid #2a2a3d',
-        borderRadius: '14px',
-        padding: '20px',
-        marginBottom: '8px',
-    },
-    atsCircle: {
-        width: '76px',
-        height: '76px',
-        borderRadius: '50%',
-        border: '3px solid',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '28px',
-        fontWeight: '800',
-        flexShrink: 0,
-    },
-    heroRight: { flex: 1, minWidth: 0 },
-    heroRow: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        marginBottom: '8px',
-        flexWrap: 'wrap',
-    },
-    verdictBadge: {
-        fontSize: '12px',
-        fontWeight: '700',
-        border: '1px solid',
-        borderRadius: '99px',
-        padding: '3px 10px',
-        textTransform: 'uppercase',
-        letterSpacing: '0.5px',
-    },
-    hireBadge: {
-        fontSize: '12px',
-        color: '#64748b',
-        background: '#1a1a22',
-        border: '1px solid #2a2a35',
-        borderRadius: '99px',
-        padding: '3px 10px',
-    },
-    heroOneLiner: {
-        margin: 0,
-        fontSize: '13px',
-        color: '#94a3b8',
-        lineHeight: '1.5',
-    },
-
-    sectionLabel: {
-        fontSize: '11px',
-        fontWeight: '700',
-        color: '#6366f1',
-        textTransform: 'uppercase',
-        letterSpacing: '1px',
-        margin: '24px 0 12px',
-    },
-
-    breakdownList: { display: 'flex', flexDirection: 'column', gap: '14px' },
-    breakdownRow: {},
-    breakdownHead: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'baseline',
-        marginBottom: '5px',
-    },
-    breakdownName: { fontSize: '13.5px', color: '#cbd5e1', fontWeight: '500' },
-    breakdownScore: { fontSize: '16px', fontWeight: '700' },
-    outOf: { fontSize: '12px', color: '#334155', fontWeight: '400' },
-    barBg: {
-        height: '4px',
-        background: '#1e1e2a',
-        borderRadius: '99px',
-        overflow: 'hidden',
-        marginBottom: '4px',
-    },
-    barFill: {
-        height: '100%',
-        borderRadius: '99px',
-        transition: 'width 0.8s ease',
-    },
-    breakdownReason: { margin: 0, fontSize: '11.5px', color: '#334155' },
-
-    snapshotGrid: {
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '10px',
-        marginBottom: '10px',
-    },
-    snapshotCard: {
-        background: '#0d0d14',
-        border: '1px solid #1e1e2a',
-        borderRadius: '10px',
-        padding: '12px 14px',
-    },
-    snapshotLabel: {
-        margin: '0 0 4px',
-        fontSize: '11px',
-        color: '#475569',
-        textTransform: 'uppercase',
-        letterSpacing: '0.5px',
-    },
-    snapshotValue: {
-        margin: 0,
-        fontSize: '14px',
-        fontWeight: '600',
-        color: '#e2e8f0',
-    },
-
-    assetRow: { display: 'flex', gap: '10px', marginBottom: '4px' },
-    assetCard: {
-        flex: 1,
-        background: '#0d0d14',
-        border: '1px solid #1e2a1e',
-        borderRadius: '10px',
-        padding: '12px 14px',
-    },
-    assetLabel: {
-        margin: '0 0 4px',
-        fontSize: '11px',
-        color: '#86efac',
-        fontWeight: '600',
-    },
-    assetText: {
-        margin: 0,
-        fontSize: '12.5px',
-        color: '#94a3b8',
-        lineHeight: '1.5',
-    },
-
-    tagRow: {
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '8px',
-        marginBottom: '4px',
-    },
-    tag: {
-        fontSize: '12px',
-        padding: '5px 12px',
-        borderRadius: '99px',
-        fontWeight: '500',
-    },
-
-    atsFilterCard: {
-        background: '#0d0d14',
-        border: '1px solid',
-        borderRadius: '12px',
-        padding: '16px',
-    },
-    atsFilterTop: { marginBottom: '12px' },
-    atsBadge: {
-        fontSize: '13px',
-        fontWeight: '600',
-        padding: '5px 12px',
-        borderRadius: '8px',
-        display: 'inline-block',
-    },
-    issueRow: { marginBottom: '10px', paddingLeft: '4px' },
-    issueText: { margin: '0 0 3px', fontSize: '13px', color: '#fcd34d' },
-    issueFix: { margin: 0, fontSize: '12.5px', color: '#64748b' },
-
-    fixCard: {
-        background: '#0d0d14',
-        border: '1px solid #1e1e2a',
-        borderRadius: '12px',
-        padding: '16px',
-        marginBottom: '10px',
-    },
-    fixHead: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        marginBottom: '8px',
-    },
-    fixPriority: {
-        fontSize: '11px',
-        fontWeight: '700',
-        border: '1px solid',
-        borderRadius: '99px',
-        padding: '2px 9px',
-        textTransform: 'uppercase',
-        letterSpacing: '0.5px',
-    },
-    fixSection: { fontSize: '13px', fontWeight: '600', color: '#a5b4fc' },
-    fixText: {
-        margin: '0 0 6px',
-        fontSize: '13px',
-        color: '#cbd5e1',
-        lineHeight: '1.55',
-    },
-    fixWhy: {
-        margin: 0,
-        fontSize: '12px',
-        color: '#475569',
-        fontStyle: 'italic',
-    },
-
-    actionRow: {
-        display: 'flex',
-        gap: '14px',
-        alignItems: 'flex-start',
-        marginBottom: '12px',
-        padding: '12px',
-        background: '#0d0d14',
-        border: '1px solid #1e1e2a',
-        borderRadius: '10px',
-    },
-    actionLeft: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '4px',
-        flexShrink: 0,
-        minWidth: '80px',
-    },
-    actionTimeline: {
-        fontSize: '10.5px',
-        fontWeight: '700',
-        color: '#a5b4fc',
-        background: '#1a1a2e',
-        border: '1px solid #3a3a55',
-        borderRadius: '6px',
-        padding: '3px 7px',
-        textAlign: 'center',
-        whiteSpace: 'nowrap',
-    },
-    actionImpact: {
-        fontSize: '10.5px',
-        fontWeight: '600',
-        textAlign: 'center',
-    },
-    actionText: {
-        margin: 0,
-        fontSize: '13px',
-        color: '#94a3b8',
-        lineHeight: '1.55',
-    },
-
-    verdictCard: {
-        marginTop: '20px',
-        padding: '18px 20px',
-        background: 'linear-gradient(135deg, #13131f, #1a1a2e)',
-        border: '1px solid #3a3a55',
-        borderRadius: '14px',
-    },
-    verdictEyebrow: {
-        margin: '0 0 8px',
-        fontSize: '10.5px',
-        fontWeight: '700',
-        color: '#6366f1',
-        textTransform: 'uppercase',
-        letterSpacing: '1px',
-    },
-    verdictText: {
-        margin: 0,
-        fontSize: '14px',
-        color: '#c7d2fe',
-        lineHeight: '1.65',
-    },
-
-    motivationCard: {
-        marginTop: '12px',
-        padding: '16px 20px',
-        background: '#0d0d14',
-        border: '1px solid #1e1e2a',
-        borderRadius: '12px',
-    },
-    motivationText: {
-        margin: 0,
-        fontSize: '13px',
-        color: '#64748b',
-        lineHeight: '1.65',
-        fontStyle: 'italic',
-    },
+    );
 }
