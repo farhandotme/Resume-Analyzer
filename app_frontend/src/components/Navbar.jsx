@@ -57,7 +57,7 @@ export default function Navbar() {
                         </button>
                     ) : (
                         <>
-                            <Link to='/login' className={linkClass('/login')}>
+                            <Link to='/login' onClick={() => localStorage.removeItem('redirectAfterLogin')} className={linkClass('/login')}>
                                 Login
                             </Link>
                             <Link
@@ -93,7 +93,14 @@ export default function Navbar() {
                         </button>
                     ) : (
                         <>
-                            <Link to='/login' onClick={() => setOpen(false)} className={mobileLinkClass('/login')}>
+                            <Link
+                                to='/login'
+                                onClick={() => {
+                                    localStorage.removeItem('redirectAfterLogin');
+                                    setOpen(false);
+                                }}
+                                className={mobileLinkClass('/login')}
+                            >
                                 Login
                             </Link>
                             <Link
