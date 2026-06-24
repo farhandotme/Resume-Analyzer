@@ -11,11 +11,18 @@ export default function Navbar() {
 
     const handleLogout = () => {
         localStorage.removeItem('token');
+
+        localStorage.setItem(
+            'toastAfterRedirect',
+            JSON.stringify({
+                message: 'Logged out successfully.',
+                type: 'success',
+            }),
+        );
+
         window.location.href = '/';
     };
 
-    // Active route: gold + semibold text, nothing else. Inactive: muted grey,
-    // gold on hover with a faint background tint. Kept deliberately plain.
     const linkClass = (path) =>
         `text-base px-2 py-1 rounded-md duration-200 ${isActive(path) ? 'text-[#D9A919] font-semibold' : 'text-[#8a8686] font-medium hover:text-[#D9A919] hover:bg-white/[0.03]'}`;
 

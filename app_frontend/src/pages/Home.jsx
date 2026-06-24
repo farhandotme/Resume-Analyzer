@@ -1,18 +1,33 @@
 import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import { useEffect } from 'react';
 import { toast } from '../components/Toaster.jsx';
 import ResumeBackground from '../components/HeroBackground.jsx';
 
 export default function Home() {
     const navigate = useNavigate();
 
+    useEffect(() => {
+        const toastData = localStorage.getItem('toastAfterRedirect');
+
+        if (toastData) {
+            const { message, type } = JSON.parse(toastData);
+
+            setTimeout(() => {
+                toast(message, type);
+            }, 100);
+
+            localStorage.removeItem('toastAfterRedirect');
+        }
+    }, []);
+
     const handleAnalyzeResume = () => {
         const token = localStorage.getItem('token');
 
         if (!token) {
             localStorage.setItem('redirectAfterLogin', '/analyseresume');
-            toast('Please login to analyze your resume', 'error');
+            toast('Please login to analyze your resume.', 'error');
             navigate('/login');
             return;
         }
@@ -25,7 +40,7 @@ export default function Home() {
 
         if (!token) {
             localStorage.setItem('redirectAfterLogin', '/askaboutresume');
-            toast('Please login to ask about your resume', 'error');
+            toast('Please log in to chat about your resume.', 'error');
             navigate('/login');
             return;
         }

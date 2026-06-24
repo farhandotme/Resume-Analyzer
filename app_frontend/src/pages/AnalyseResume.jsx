@@ -233,6 +233,7 @@ export default function ResumeUpload() {
     async function handleUpload() {
         if (!file) {
             setError('Please select a PDF first.');
+            toast('Please select a PDF first.', 'error');
             return;
         }
 
@@ -248,6 +249,7 @@ export default function ResumeUpload() {
 
         if (uploadError) {
             setError(`Upload failed: ${uploadError.message}`);
+            toast('Failed to upload resume.', 'error');
             setUploading(false);
             return;
         }
@@ -255,6 +257,7 @@ export default function ResumeUpload() {
         const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(data.path);
         const publicUrl = urlData.publicUrl;
         setUploadedUrl(publicUrl);
+        toast('Resume uploaded successfully.', 'success');
         setUploading(false);
         setAnalyzing(true);
         setLoadingMsgIndex(0);
@@ -281,9 +284,11 @@ export default function ResumeUpload() {
 
             clearInterval(loadingIntervalRef.current);
             setAnalysisResult(response.data.data.data);
+            toast('Resume analyzed successfully.', 'success');
         } catch (err) {
             clearInterval(loadingIntervalRef.current);
             setError('Analysis failed. Please try again.');
+            toast('Failed to analyze resume.', 'error');
             console.error(err);
         } finally {
             setAnalyzing(false);

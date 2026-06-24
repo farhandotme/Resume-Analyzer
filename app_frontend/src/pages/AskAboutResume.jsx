@@ -138,6 +138,7 @@ export default function AskAboutResume() {
     async function handleUpload() {
         if (!file) {
             setError('Please select a PDF first.');
+            toast('Please select a PDF first.', 'error');
             return;
         }
 
@@ -153,14 +154,16 @@ export default function AskAboutResume() {
 
         if (uploadError) {
             setError(`Upload failed: ${uploadError.message}`);
+            toast('Failed to upload resume.', 'error');
             setUploading(false);
             return;
         }
 
         const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(data.path);
-        const publicUrl = urlData.publicUrl;
 
+        const publicUrl = urlData.publicUrl;
         setUploadedUrl(publicUrl);
+        toast('Resume uploaded successfully.', 'success');
         setUploading(false);
 
         setMessages([
@@ -242,6 +245,7 @@ export default function AskAboutResume() {
             ]);
         } catch (err) {
             console.error(err);
+            toast('Failed to get response from AI.', 'error');
             setMessages((prev) => [
                 ...prev,
                 {
