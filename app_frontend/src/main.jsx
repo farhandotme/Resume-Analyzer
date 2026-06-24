@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 import Lenis from 'lenis';
 import './index.css';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-
 import Home from './pages/Home.jsx';
 import Login from './pages/Login.jsx';
 import About from './pages/About.jsx';
@@ -11,6 +10,7 @@ import Signup from './pages/Signup.jsx';
 import NotFound from './pages/NotFound.jsx';
 import AnalyseResume from './pages/AnalyseResume.jsx';
 import Toaster from './components/Toaster.jsx';
+import AskAboutResume from './pages/AskAboutResume.jsx';
 
 const router = createBrowserRouter([
     {
@@ -32,6 +32,10 @@ const router = createBrowserRouter([
     {
         path: '/analyseresume',
         element: <AnalyseResume />,
+    },
+    {
+        path: '/askaboutresume',
+        element: <AskAboutResume />,
     },
     {
         path: '*',
