@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
 import { loginUser } from '../services/authApi';
-import { toast } from '../components/Toaster.jsx';
 
 function Spinner() {
     return (
@@ -58,8 +57,6 @@ export default function Login() {
             }
         } catch (error) {
             setApiError(error.response?.data?.message || error.response?.data?.error || 'Invalid email or password. Please try again.');
-
-            toast('Invalid email or password.', 'error');
         } finally {
             setLoading(false);
         }
