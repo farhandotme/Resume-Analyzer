@@ -32,7 +32,7 @@ services:
     volumes:
       - qdrant_data:/qdrant/storage
 
-  # ─── AI Backend (FastAPI) ─────────────────────────
+  # ─── AI Backend (FastAPI) ─────────────────────────--
 
   fastapi:
     build:
