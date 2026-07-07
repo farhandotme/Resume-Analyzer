@@ -346,6 +346,12 @@ export default function ResumeUpload() {
         <div className='relative min-h-screen w-full bg-[#0A0A0A] text-white overflow-x-hidden'>
             <Background />
             <div className='relative z-10'>
+                <div className='absolute top-6 left-6 z-20'>
+                    <button onClick={() => navigate('/')} className='group inline-flex items-center gap-2 text-[#999] hover:text-[#D9A919] transition-colors duration-200 cursor-pointer'>
+                        <ArrowLeft size={18} className='transition-transform duration-200 group-hover:-translate-x-1' />
+                        <span>Home</span>
+                    </button>
+                </div>
                 {!hasResult && (
                     <div className='relative z-10 flex items-start justify-center py-12 px-4 min-h-screen'>
                         <div className='w-full max-w-xl mt-8'>
@@ -362,185 +368,183 @@ export default function ResumeUpload() {
                             </div>
 
                             <div className='bg-[#0e0e0e] border border-[#1f1f1f] rounded-2xl p-6 sm:p-7'>
-                                <div className='bg-[#0e0e0e] border border-[#1f1f1f] rounded-2xl p-6 sm:p-7'>
-                                    <div className='mb-6'>
-                                        <label className='block text-sm font-semibold text-[#ddd] mb-3'>Target Roles</label>
+                                <div className='mb-6'>
+                                    <label className='block text-sm font-semibold text-[#ddd] mb-3'>Target Roles</label>
 
-                                        <div className='relative'>
-                                            <input
-                                                value={roleInput}
-                                                onChange={(e) => {
-                                                    setRoleInput(e.target.value);
-                                                    setSelectedRoleIndex(-1);
-                                                }}
-                                                placeholder='Search target roles...'
-                                                className='w-full bg-[#111] border border-[#2a2a2a] rounded-xl px-4 py-3 outline-none text-sm focus:border-[#D9A919]'
-                                                onKeyDown={(e) => {
-                                                    if (!filteredRoles.length) return;
+                                    <div className='relative'>
+                                        <input
+                                            value={roleInput}
+                                            onChange={(e) => {
+                                                setRoleInput(e.target.value);
+                                                setSelectedRoleIndex(-1);
+                                            }}
+                                            placeholder='Search target roles...'
+                                            className='w-full bg-[#111] border border-[#2a2a2a] rounded-xl px-4 py-3 outline-none text-sm focus:border-[#D9A919]'
+                                            onKeyDown={(e) => {
+                                                if (!filteredRoles.length) return;
 
-                                                    if (e.key === 'ArrowDown') {
-                                                        e.preventDefault();
-                                                        setSelectedRoleIndex((prev) => (prev < filteredRoles.length - 1 ? prev + 1 : 0));
+                                                if (e.key === 'ArrowDown') {
+                                                    e.preventDefault();
+                                                    setSelectedRoleIndex((prev) => (prev < filteredRoles.length - 1 ? prev + 1 : 0));
+                                                }
+
+                                                if (e.key === 'ArrowUp') {
+                                                    e.preventDefault();
+                                                    setSelectedRoleIndex((prev) => (prev > 0 ? prev - 1 : filteredRoles.length - 1));
+                                                }
+
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+
+                                                    if (selectedRoleIndex >= 0) {
+                                                        addRole(filteredRoles[selectedRoleIndex]);
                                                     }
+                                                }
 
-                                                    if (e.key === 'ArrowUp') {
-                                                        e.preventDefault();
-                                                        setSelectedRoleIndex((prev) => (prev > 0 ? prev - 1 : filteredRoles.length - 1));
-                                                    }
+                                                if (e.key === 'Escape') {
+                                                    setRoleInput('');
+                                                }
+                                            }}
+                                        />
 
-                                                    if (e.key === 'Enter') {
-                                                        e.preventDefault();
-
-                                                        if (selectedRoleIndex >= 0) {
-                                                            addRole(filteredRoles[selectedRoleIndex]);
-                                                        }
-                                                    }
-
-                                                    if (e.key === 'Escape') {
-                                                        setRoleInput('');
-                                                    }
-                                                }}
-                                            />
-
-                                            {filteredRoles.length > 0 && (
-                                                <div className='absolute left-0 right-0 mt-2 bg-[#111] border border-[#2a2a2a] rounded-xl overflow-hidden z-30 shadow-xl'>
-                                                    {filteredRoles.map((role, index) => (
-                                                        <button key={role} ref={(el) => (suggestionRefs.current[index] = el)} type='button' onClick={() => addRole(role)} className={`w-full text-left px-4 py-3 text-sm transition-colors ${selectedRoleIndex === index ? 'bg-[#1a1200] text-[#D9A919]' : 'text-[#ddd] hover:bg-[#1a1200] hover:text-[#D9A919]'}`}>
-                                                            {role}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <p className='text-xs text-[#666] mt-2'>Search and select up to 3 target roles.</p>
-
-                                        {targetRoles.length > 0 && (
-                                            <div className='flex flex-wrap gap-2 mt-4'>
-                                                {targetRoles.map((role) => (
-                                                    <div key={role} className='flex items-center gap-2 bg-[#1a1200] border border-[#65531e] text-[#D9A919] rounded-full px-4 py-2 text-sm'>
+                                        {filteredRoles.length > 0 && (
+                                            <div className='absolute left-0 right-0 mt-2 bg-[#111] border border-[#2a2a2a] rounded-xl overflow-hidden z-30 shadow-xl'>
+                                                {filteredRoles.map((role, index) => (
+                                                    <button key={role} ref={(el) => (suggestionRefs.current[index] = el)} type='button' onClick={() => addRole(role)} className={`w-full text-left px-4 py-3 text-sm transition-colors ${selectedRoleIndex === index ? 'bg-[#1a1200] text-[#D9A919]' : 'text-[#ddd] hover:bg-[#1a1200] hover:text-[#D9A919]'}`}>
                                                         {role}
-
-                                                        <button onClick={() => removeRole(role)} className='hover:text-white cursor-pointer'>
-                                                            <X size={14} />
-                                                        </button>
-                                                    </div>
+                                                    </button>
                                                 ))}
                                             </div>
                                         )}
                                     </div>
-                                    {!file && !uploadedUrl && (
-                                        <div
-                                            onClick={() => inputRef.current?.click()}
-                                            onDrop={handleDrop}
-                                            onDragOver={(e) => {
-                                                e.preventDefault();
-                                                setDragOver(true);
-                                            }}
-                                            onDragLeave={() => setDragOver(false)}
-                                            className={`rounded-xl border-2 border-dashed text-center py-12 px-6 cursor-pointer transition-all duration-200 ${dragOver ? 'border-[#D9A919] bg-[#161200]' : 'border-[#2a2a2a] bg-[#111] hover:border-[#4a3a10] hover:bg-[#161200]'}`}
-                                        >
-                                            <div className='w-14 h-14 mx-auto mb-4 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center'>
-                                                <Upload size={22} className='text-[#555]' />
-                                            </div>
-                                            <p className='text-[15px] font-semibold text-[#ddd] mb-1'>Drag & drop your PDF here</p>
-                                            <p className='text-xs text-[#555]'>or click to browse · PDF only · max {MAX_SIZE_LABEL}</p>
-                                            <input ref={inputRef} type='file' accept='.pdf,application/pdf' className='hidden' onChange={(e) => handleFileChange(e.target.files[0])} />
-                                        </div>
-                                    )}
 
-                                    {file && !uploadedUrl && (
-                                        <div className='flex items-center gap-3 bg-[#111] border border-[#2a2a2a] rounded-xl p-3.5 mb-4'>
-                                            <div className='w-10 h-10 rounded-lg bg-[#1f0a0a] border border-[#3a1515] flex items-center justify-center shrink-0'>
-                                                <FileText size={18} className='text-[#ef4444]' />
-                                            </div>
-                                            <div className='flex-1 min-w-0'>
-                                                <p className='text-sm font-semibold text-[#ddd] truncate'>{file.name}</p>
-                                                <p className='text-xs text-[#555] mb-1.5'>
-                                                    {formatSize(file.size)} / {MAX_SIZE_LABEL}
-                                                </p>
-                                                <div className='h-1 rounded-full bg-[#222] overflow-hidden'>
-                                                    <div
-                                                        className='h-full rounded-full transition-all duration-300'
-                                                        style={{
-                                                            width: `${Math.min((file.size / MAX_SIZE_BYTES) * 100, 100)}%`,
-                                                            background: file.size > MAX_SIZE_BYTES * 0.8 ? '#f97316' : '#D9A919',
-                                                        }}
-                                                    />
+                                    <p className='text-xs text-[#666] mt-2'>Search and select up to 3 target roles.</p>
+
+                                    {targetRoles.length > 0 && (
+                                        <div className='flex flex-wrap gap-2 mt-4'>
+                                            {targetRoles.map((role) => (
+                                                <div key={role} className='flex items-center gap-2 bg-[#1a1200] border border-[#65531e] text-[#D9A919] rounded-full px-4 py-2 text-sm'>
+                                                    {role}
+
+                                                    <button onClick={() => removeRole(role)} className='hover:text-white cursor-pointer'>
+                                                        <X size={14} />
+                                                    </button>
                                                 </div>
-                                            </div>
-                                            <button onClick={handleRemove} title='Remove' className='text-[#555] hover:text-[#D9A919] transition-colors duration-200 p-1.5 shrink-0'>
-                                                <X size={15} />
-                                            </button>
-                                        </div>
-                                    )}
-
-                                    {error && (
-                                        <div className='flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#1a0a0a] border border-[#3d1515] text-xs text-[#f87171] mb-4'>
-                                            <AlertCircle size={13} className='shrink-0' />
-                                            <span className='translate-y-px'>{error}</span>
-                                        </div>
-                                    )}
-
-                                    {file && !uploadedUrl && (
-                                        <button
-                                            onClick={handleUpload}
-                                            disabled={uploading}
-                                            className='w-full py-2.5 rounded-xl bg-[#D9A919] text-black font-semibold text-sm hover:shadow-[0_0_20px_rgba(217,169,25,0.35)] hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none cursor-pointer flex items-center justify-center gap-2'
-                                        >
-                                            {uploading ? (
-                                                <>
-                                                    <Spinner />
-                                                    Uploading…
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Upload size={16} />
-                                                    Upload & Analyze
-                                                </>
-                                            )}
-                                        </button>
-                                    )}
-
-                                    {analyzing && (
-                                        <div className='bg-[#111] border border-[#2a2a2a] rounded-xl p-5'>
-                                            <div className='flex items-center gap-2.5 mb-2 text-[#D9A919]'>
-                                                <Spinner />
-                                                <span className='text-sm font-semibold text-[#ddd]'>Analyzing your resume</span>
-                                            </div>
-                                            <p className='text-xs text-[#D9A919] mb-3.5 min-h-4'>{LOADING_MESSAGES[loadingMsgIndex]}</p>
-                                            <div className='h-0.75 bg-[#222] rounded-full overflow-hidden mb-5'>
-                                                <div
-                                                    className='h-full rounded-full bg-[#D9A919] transition-all duration-2400 ease-out'
-                                                    style={{
-                                                        width: `${((loadingMsgIndex + 1) / LOADING_MESSAGES.length) * 100}%`,
-                                                    }}
-                                                />
-                                            </div>
-                                            <div className='flex flex-col gap-2.5'>
-                                                {LOADING_MESSAGES.map((msg, i) => (
-                                                    <div key={i} className='flex items-center gap-2.5'>
-                                                        <div
-                                                            className='w-2 h-2 rounded-full shrink-0 transition-all duration-300'
-                                                            style={{
-                                                                background: i <= loadingMsgIndex ? '#D9A919' : '#2a2a2a',
-                                                                boxShadow: i === loadingMsgIndex ? '0 0 8px #D9A919' : 'none',
-                                                            }}
-                                                        />
-                                                        <span
-                                                            className='text-xs transition-colors duration-300'
-                                                            style={{
-                                                                color: i <= loadingMsgIndex ? '#D9A919' : '#444',
-                                                            }}
-                                                        >
-                                                            {msg}
-                                                        </span>
-                                                    </div>
-                                                ))}
-                                            </div>
+                                            ))}
                                         </div>
                                     )}
                                 </div>
+                                {!file && !uploadedUrl && (
+                                    <div
+                                        onClick={() => inputRef.current?.click()}
+                                        onDrop={handleDrop}
+                                        onDragOver={(e) => {
+                                            e.preventDefault();
+                                            setDragOver(true);
+                                        }}
+                                        onDragLeave={() => setDragOver(false)}
+                                        className={`rounded-xl border-2 border-dashed text-center py-12 px-6 cursor-pointer transition-all duration-200 ${dragOver ? 'border-[#D9A919] bg-[#161200]' : 'border-[#2a2a2a] bg-[#111] hover:border-[#4a3a10] hover:bg-[#161200]'}`}
+                                    >
+                                        <div className='w-14 h-14 mx-auto mb-4 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center'>
+                                            <Upload size={22} className='text-[#555]' />
+                                        </div>
+                                        <p className='text-[15px] font-semibold text-[#ddd] mb-1'>Drag & drop your PDF here</p>
+                                        <p className='text-xs text-[#555]'>or click to browse · PDF only · max {MAX_SIZE_LABEL}</p>
+                                        <input ref={inputRef} type='file' accept='.pdf,application/pdf' className='hidden' onChange={(e) => handleFileChange(e.target.files[0])} />
+                                    </div>
+                                )}
+
+                                {file && !uploadedUrl && (
+                                    <div className='flex items-center gap-3 bg-[#111] border border-[#2a2a2a] rounded-xl p-3.5 mb-4'>
+                                        <div className='w-10 h-10 rounded-lg bg-[#1f0a0a] border border-[#3a1515] flex items-center justify-center shrink-0'>
+                                            <FileText size={18} className='text-[#ef4444]' />
+                                        </div>
+                                        <div className='flex-1 min-w-0'>
+                                            <p className='text-sm font-semibold text-[#ddd] truncate'>{file.name}</p>
+                                            <p className='text-xs text-[#555] mb-1.5'>
+                                                {formatSize(file.size)} / {MAX_SIZE_LABEL}
+                                            </p>
+                                            <div className='h-1 rounded-full bg-[#222] overflow-hidden'>
+                                                <div
+                                                    className='h-full rounded-full transition-all duration-300'
+                                                    style={{
+                                                        width: `${Math.min((file.size / MAX_SIZE_BYTES) * 100, 100)}%`,
+                                                        background: file.size > MAX_SIZE_BYTES * 0.8 ? '#f97316' : '#D9A919',
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                        <button onClick={handleRemove} title='Remove' className='text-[#555] hover:text-[#D9A919] transition-colors duration-200 p-1.5 shrink-0'>
+                                            <X size={15} />
+                                        </button>
+                                    </div>
+                                )}
+
+                                {error && (
+                                    <div className='flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#1a0a0a] border border-[#3d1515] text-xs text-[#f87171] mb-4'>
+                                        <AlertCircle size={13} className='shrink-0' />
+                                        <span className='translate-y-px'>{error}</span>
+                                    </div>
+                                )}
+
+                                {file && !uploadedUrl && (
+                                    <button
+                                        onClick={handleUpload}
+                                        disabled={uploading}
+                                        className='w-full py-2.5 rounded-xl bg-[#D9A919] text-black font-semibold text-sm hover:shadow-[0_0_20px_rgba(217,169,25,0.35)] hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none cursor-pointer flex items-center justify-center gap-2'
+                                    >
+                                        {uploading ? (
+                                            <>
+                                                <Spinner />
+                                                Uploading…
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Upload size={16} />
+                                                Upload & Analyze
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+
+                                {analyzing && (
+                                    <div className='bg-[#111] border border-[#2a2a2a] rounded-xl p-5'>
+                                        <div className='flex items-center gap-2.5 mb-2 text-[#D9A919]'>
+                                            <Spinner />
+                                            <span className='text-sm font-semibold text-[#ddd]'>Analyzing your resume</span>
+                                        </div>
+                                        <p className='text-xs text-[#D9A919] mb-3.5 min-h-4'>{LOADING_MESSAGES[loadingMsgIndex]}</p>
+                                        <div className='h-0.75 bg-[#222] rounded-full overflow-hidden mb-5'>
+                                            <div
+                                                className='h-full rounded-full bg-[#D9A919] transition-all duration-2400 ease-out'
+                                                style={{
+                                                    width: `${((loadingMsgIndex + 1) / LOADING_MESSAGES.length) * 100}%`,
+                                                }}
+                                            />
+                                        </div>
+                                        <div className='flex flex-col gap-2.5'>
+                                            {LOADING_MESSAGES.map((msg, i) => (
+                                                <div key={i} className='flex items-center gap-2.5'>
+                                                    <div
+                                                        className='w-2 h-2 rounded-full shrink-0 transition-all duration-300'
+                                                        style={{
+                                                            background: i <= loadingMsgIndex ? '#D9A919' : '#2a2a2a',
+                                                            boxShadow: i === loadingMsgIndex ? '0 0 8px #D9A919' : 'none',
+                                                        }}
+                                                    />
+                                                    <span
+                                                        className='text-xs transition-colors duration-300'
+                                                        style={{
+                                                            color: i <= loadingMsgIndex ? '#D9A919' : '#444',
+                                                        }}
+                                                    >
+                                                        {msg}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
