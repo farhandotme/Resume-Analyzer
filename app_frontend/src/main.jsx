@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createRoot } from 'react-dom/client';
 import { useEffect } from 'react';
 import Lenis from 'lenis';

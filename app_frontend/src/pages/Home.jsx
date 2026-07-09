@@ -1,18 +1,33 @@
 import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import { useEffect } from 'react';
 import { toast } from '../components/Toaster.jsx';
 import ResumeBackground from '../components/HeroBackground.jsx';
 
 export default function Home() {
     const navigate = useNavigate();
 
+    useEffect(() => {
+        const toastData = localStorage.getItem('toastAfterRedirect');
+
+        if (toastData) {
+            const { message, type } = JSON.parse(toastData);
+
+            setTimeout(() => {
+                toast(message, type);
+            }, 100);
+
+            localStorage.removeItem('toastAfterRedirect');
+        }
+    }, []);
+
     const handleAnalyzeResume = () => {
         const token = localStorage.getItem('token');
 
         if (!token) {
             localStorage.setItem('redirectAfterLogin', '/analyseresume');
-            toast('Please login to analyze your resume', 'error');
+            toast('Please login to analyze your resume.', 'error');
             navigate('/login');
             return;
         }
@@ -25,7 +40,7 @@ export default function Home() {
 
         if (!token) {
             localStorage.setItem('redirectAfterLogin', '/askaboutresume');
-            toast('Please login to ask about your resume', 'error');
+            toast('Please log in to chat about your resume.', 'error');
             navigate('/login');
             return;
         }
@@ -84,7 +99,7 @@ export default function Home() {
                     </button>
                     <button
                         onClick={handleAskResume}
-                        className='w-full sm:w-auto relative overflow-hidden group px-5 py-2.5 bg-[#0E0D09] border border-[#383733] rounded-xl text-gray-300 font-medium text-base md:text-lg hover:border-[#5a4a19] hover:shadow-[0_0_15px_rgba(217,169,25,0.4)] hover:-translate-y-0.5 transition-all duration-300'
+                        className='w-full sm:w-auto relative overflow-hidden group px-5 py-2.5 bg-[#0E0D09] border border-[#383733] rounded-xl text-gray-300 font-medium text-base md:text-lg hover:border-[#5a4a19] hover:shadow-[0_0_15px_rgba(217,169,25,0.4)] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer'
                     >
                         <span className='absolute top-0 -left-full h-full w-1/3 skew-x-12 bg-linear-to-r from-transparent via-[#D9A919]/50 to-transparent transition-all duration-700 group-hover:left-[130%]' />
                         <span className='relative z-10 flex justify-center items-center gap-1'>

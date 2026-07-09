@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { JOB_ROLES } from '../data/jobRoles.js';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { toast } from '../components/Toaster.jsx';
@@ -126,18 +127,7 @@ function ScoreRing({ displayScore, color, size = 152, stroke = 10 }) {
         <div className='relative' style={{ width: size, height: size }}>
             <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
                 <circle cx={size / 2} cy={size / 2} r={radius} fill='none' stroke='#1f1f1f' strokeWidth={stroke} />
-                <circle
-                    cx={size / 2}
-                    cy={size / 2}
-                    r={radius}
-                    fill='none'
-                    stroke={color}
-                    strokeWidth={stroke}
-                    strokeLinecap='round'
-                    strokeDasharray={circumference}
-                    strokeDashoffset={dashOffset}
-                    transform={`rotate(-90 ${size / 2} ${size / 2})`}
-                />
+                <circle cx={size / 2} cy={size / 2} r={radius} fill='none' stroke={color} strokeWidth={stroke} strokeLinecap='round' strokeDasharray={circumference} strokeDashoffset={dashOffset} transform={`rotate(-90 ${size / 2} ${size / 2})`} />
             </svg>
             <div className='absolute inset-0 flex items-center justify-center'>
                 <span className='text-[46px] font-extrabold' style={{ color }}>
@@ -157,7 +147,21 @@ export default function ResumeUpload() {
     const [analyzing, setAnalyzing] = useState(false);
     const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
     const [analysisResult, setAnalysisResult] = useState(null);
-    const inputRef = useRef(null);
+    const [roleInput, setRoleInput] = useState('');
+    const [targetRoles, setTargetRoles] = useState([]);
+    const [selectedRoleIndex, setSelectedRoleIndex] = useState(-1);
+    const suggestionRefs = useRef([]);
+    const filteredRoles = roleInput.trim() === '' ? [] : JOB_ROLES.filter((role) => role.toLowerCase().startsWith(roleInput.toLowerCase()) && !targetRoles.includes(role)).slice(0, 8);
+
+    useEffect(() => {
+        if (selectedRoleIndex >= 0) {
+            suggestionRefs.current[selectedRoleIndex]?.scrollIntoView({
+                block: 'nearest',
+            });
+        }
+    }, [selectedRoleIndex]);
+    const roleInputRef = useRef(null);
+    const fileInputRef = useRef(null);
     const loadingIntervalRef = useRef(null);
 
     const [progress, setProgress] = useState(0);
@@ -230,12 +234,50 @@ export default function ResumeUpload() {
         handleFileChange(e.dataTransfer.files[0]);
     }
 
-    async function handleUpload() {
-        if (!file) {
-            setError('Please select a PDF first.');
+    function addRole(role) {
+        if (targetRoles.includes(role)) {
+            toast('Role already added.', 'error');
             return;
         }
 
+        if (targetRoles.length >= 3) {
+            toast('You can select up to 3 target roles.', 'error');
+            return;
+        }
+
+        const newCount = targetRoles.length + 1;
+
+        setTargetRoles((prev) => [...prev, role]);
+        setRoleInput('');
+        setSelectedRoleIndex(-1);
+
+        requestAnimationFrame(() => {
+            if (newCount < 3) {
+                roleInputRef.current?.focus();
+            } else {
+                roleInputRef.current?.blur();
+            }
+        });
+    }
+
+    function removeRole(role) {
+        setTargetRoles((prev) => prev.filter((r) => r !== role));
+
+        requestAnimationFrame(() => {
+            roleInputRef.current?.focus();
+        });
+    }
+
+    async function handleUpload() {
+        if (!file) {
+            setError('Please select a PDF first.');
+            toast('Please select a PDF first.', 'error');
+            return;
+        }
+        if (targetRoles.length === 0) {
+            toast('Please add at least one target role.', 'error');
+            return;
+        }
         setUploading(true);
         setError('');
 
@@ -248,6 +290,7 @@ export default function ResumeUpload() {
 
         if (uploadError) {
             setError(`Upload failed: ${uploadError.message}`);
+            toast('Failed to upload resume.', 'error');
             setUploading(false);
             return;
         }
@@ -255,6 +298,7 @@ export default function ResumeUpload() {
         const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(data.path);
         const publicUrl = urlData.publicUrl;
         setUploadedUrl(publicUrl);
+        toast('Resume uploaded successfully.', 'success');
         setUploading(false);
         setAnalyzing(true);
         setLoadingMsgIndex(0);
@@ -270,7 +314,7 @@ export default function ResumeUpload() {
                 'http://localhost:3000/resume/analyze',
                 {
                     pdfUrl: publicUrl,
-                    jobTitle: 'Software Engineer',
+                    jobTitle: targetRoles.join(', '),
                 },
                 {
                     headers: {
@@ -281,10 +325,15 @@ export default function ResumeUpload() {
 
             clearInterval(loadingIntervalRef.current);
             setAnalysisResult(response.data.data.data);
+            toast('Resume analyzed successfully.', 'success');
         } catch (err) {
             clearInterval(loadingIntervalRef.current);
+
+            console.log('ERROR RESPONSE:', err.response);
+            console.log('ERROR DATA:', err.response?.data);
+
             setError('Analysis failed. Please try again.');
-            console.error(err);
+            toast('Failed to analyze resume.', 'error');
         } finally {
             setAnalyzing(false);
         }
@@ -297,8 +346,10 @@ export default function ResumeUpload() {
         setUploadedUrl('');
         setAnalysisResult(null);
         setAnalyzing(false);
+        setTargetRoles([]);
+        setRoleInput('');
         clearInterval(loadingIntervalRef.current);
-        if (inputRef.current) inputRef.current.value = '';
+        if (fileInputRef.current) fileInputRef.current.value = '';
     }
 
     function formatSize(bytes) {
@@ -311,6 +362,14 @@ export default function ResumeUpload() {
         <div className='relative min-h-screen w-full bg-[#0A0A0A] text-white overflow-x-hidden'>
             <Background />
             <div className='relative z-10'>
+                {!hasResult && (
+                    <div className='absolute top-6 left-6 z-20'>
+                        <button onClick={() => navigate('/')} className='group inline-flex items-center gap-2 text-[#999] hover:text-[#D9A919] transition-colors duration-200 cursor-pointer'>
+                            <ArrowLeft size={18} className='transition-transform duration-200 group-hover:-translate-x-1' />
+                            <span>Home</span>
+                        </button>
+                    </div>
+                )}
                 {!hasResult && (
                     <div className='relative z-10 flex items-start justify-center py-12 px-4 min-h-screen'>
                         <div className='w-full max-w-xl mt-8'>
@@ -327,25 +386,91 @@ export default function ResumeUpload() {
                             </div>
 
                             <div className='bg-[#0e0e0e] border border-[#1f1f1f] rounded-2xl p-6 sm:p-7'>
+                                <div className='mb-6'>
+                                    <label className='block text-sm font-semibold text-[#ddd] mb-3'>Target Roles</label>
+
+                                    <div className='relative'>
+                                        <input
+                                            ref={roleInputRef}
+                                            value={roleInput}
+                                            disabled={targetRoles.length >= 3}
+                                            onChange={(e) => {
+                                                setRoleInput(e.target.value);
+                                                setSelectedRoleIndex(-1);
+                                            }}
+                                            placeholder={targetRoles.length >= 3 ? 'Maximum 3 roles selected' : 'Search target roles...'}
+                                            className={`w-full rounded-xl px-4 py-3 outline-none text-sm border transition-colors ${targetRoles.length >= 3 ? 'bg-[#0d0d0d] border-[#1f1f1f] text-[#555] cursor-not-allowed' : 'bg-[#111] border-[#2a2a2a] focus:border-[#D9A919]'}`}
+                                            onKeyDown={(e) => {
+                                                if (!filteredRoles.length) return;
+
+                                                if (e.key === 'ArrowDown') {
+                                                    e.preventDefault();
+                                                    setSelectedRoleIndex((prev) => (prev < filteredRoles.length - 1 ? prev + 1 : 0));
+                                                }
+
+                                                if (e.key === 'ArrowUp') {
+                                                    e.preventDefault();
+                                                    setSelectedRoleIndex((prev) => (prev > 0 ? prev - 1 : filteredRoles.length - 1));
+                                                }
+
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+
+                                                    if (selectedRoleIndex >= 0) {
+                                                        addRole(filteredRoles[selectedRoleIndex]);
+                                                    }
+                                                }
+
+                                                if (e.key === 'Escape') {
+                                                    setRoleInput('');
+                                                }
+                                            }}
+                                        />
+
+                                        {targetRoles.length < 3 && filteredRoles.length > 0 && (
+                                            <div className='absolute left-0 right-0 mt-2 bg-[#111] border border-[#2a2a2a] rounded-xl overflow-hidden z-30 shadow-xl'>
+                                                {filteredRoles.map((role, index) => (
+                                                    <button key={role} ref={(el) => (suggestionRefs.current[index] = el)} type='button' onClick={() => addRole(role)} className={`w-full text-left px-4 py-3 text-sm transition-colors ${selectedRoleIndex === index ? 'bg-[#1a1200] text-[#D9A919]' : 'text-[#ddd] hover:bg-[#1a1200] hover:text-[#D9A919]'}`}>
+                                                        {role}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <p className='text-xs text-[#666] mt-2'>{targetRoles.length >= 3 ? 'Maximum roles selected. Remove one to add another.' : 'Search and select up to 3 target roles.'}</p>
+
+                                    {targetRoles.length > 0 && (
+                                        <div className='flex flex-wrap gap-2 mt-4'>
+                                            {targetRoles.map((role) => (
+                                                <div key={role} className='flex items-center gap-2 bg-[#1a1200] border border-[#65531e] text-[#D9A919] rounded-full px-4 py-2 text-sm'>
+                                                    {role}
+
+                                                    <button onClick={() => removeRole(role)} className='hover:text-white cursor-pointer'>
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                                 {!file && !uploadedUrl && (
                                     <div
-                                        onClick={() => inputRef.current?.click()}
+                                        onClick={() => fileInputRef.current?.click()}
                                         onDrop={handleDrop}
                                         onDragOver={(e) => {
                                             e.preventDefault();
                                             setDragOver(true);
                                         }}
                                         onDragLeave={() => setDragOver(false)}
-                                        className={`rounded-xl border-2 border-dashed text-center py-12 px-6 cursor-pointer transition-all duration-200 ${
-                                            dragOver ? 'border-[#D9A919] bg-[#161200]' : 'border-[#2a2a2a] bg-[#111] hover:border-[#4a3a10] hover:bg-[#161200]'
-                                        }`}
+                                        className={`rounded-xl border-2 border-dashed text-center py-12 px-6 cursor-pointer transition-all duration-200 ${dragOver ? 'border-[#D9A919] bg-[#161200]' : 'border-[#2a2a2a] bg-[#111] hover:border-[#4a3a10] hover:bg-[#161200]'}`}
                                     >
                                         <div className='w-14 h-14 mx-auto mb-4 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center'>
                                             <Upload size={22} className='text-[#555]' />
                                         </div>
                                         <p className='text-[15px] font-semibold text-[#ddd] mb-1'>Drag & drop your PDF here</p>
                                         <p className='text-xs text-[#555]'>or click to browse · PDF only · max {MAX_SIZE_LABEL}</p>
-                                        <input ref={inputRef} type='file' accept='.pdf,application/pdf' className='hidden' onChange={(e) => handleFileChange(e.target.files[0])} />
+                                        <input ref={fileInputRef} type='file' accept='.pdf,application/pdf' className='hidden' onChange={(e) => handleFileChange(e.target.files[0])} />
                                     </div>
                                 )}
 
@@ -457,10 +582,7 @@ export default function ResumeUpload() {
                                     <p className='text-xs text-[#666]'>Generated by Resume Analyser AI</p>
                                 </div>
                             </div>
-                            <button
-                                onClick={handleRemove}
-                                className='inline-flex items-center gap-1.5 text-sm text-[#999] hover:text-[#D9A919] border border-[#2a2a2a] hover:border-[#4a3a10] rounded-lg px-4 py-2 transition-colors duration-200 cursor-pointer'
-                            >
+                            <button onClick={handleRemove} className='inline-flex items-center gap-1.5 text-sm text-[#999] hover:text-[#D9A919] border border-[#2a2a2a] hover:border-[#4a3a10] rounded-lg px-4 py-2 transition-colors duration-200 cursor-pointer'>
                                 <ArrowLeft size={14} /> Analyze another resume
                             </button>
                         </div>
@@ -713,9 +835,7 @@ export default function ResumeUpload() {
                                                     {analysisResult.action_plan.map((a, i) => (
                                                         <div key={i} className='bg-[#111] border border-[#2a2a2a] rounded-lg p-4'>
                                                             <div className='flex items-center gap-2 mb-2'>
-                                                                <span className='text-[11px] font-bold text-[#D9A919] bg-[#1a1200] border border-[#3a2f10] rounded-md px-2 py-1 whitespace-nowrap'>
-                                                                    {a.timeline}
-                                                                </span>
+                                                                <span className='text-[11px] font-bold text-[#D9A919] bg-[#1a1200] border border-[#3a2f10] rounded-md px-2 py-1 whitespace-nowrap'>{a.timeline}</span>
                                                                 <span
                                                                     className='text-[11px] font-semibold'
                                                                     style={{
