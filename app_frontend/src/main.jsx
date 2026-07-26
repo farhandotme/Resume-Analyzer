@@ -12,6 +12,7 @@ import NotFound from './pages/NotFound.jsx';
 import AnalyseResume from './pages/AnalyseResume.jsx';
 import Toaster from './components/Toaster.jsx';
 import AskAboutResume from './pages/AskAboutResume.jsx';
+import ResumeStory from './pages/ResumeStory.jsx';
 
 const router = createBrowserRouter([
     {
@@ -42,6 +43,10 @@ const router = createBrowserRouter([
         path: '*',
         element: <NotFound />,
     },
+    {
+        path: '/resumestory',
+        element: <ResumeStory />
+    }
 ]);
 
 function Root() {
