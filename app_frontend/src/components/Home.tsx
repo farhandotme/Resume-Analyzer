@@ -1,0 +1,128 @@
+import { UploadCloud, CheckCircle2, AlertTriangle, FileText, Gauge, ChevronRight, SunMedium, ShieldCheck } from 'lucide-react'
+
+export default function Home() {
+    return (
+        <div className='min-h-screen w-full bg-white text-zinc-900 antialiased selection:bg-zinc-900 selection:text-white'>
+            <header className='fixed inset-x-0 top-0 z-50'>
+                <div className='mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8'>
+                    <div className='inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1.5'>
+                        <span className='h-1.5 w-1.5 rounded-full bg-zinc-900' />
+                        <span className='font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-600'>AI Resume Analysis</span>
+                    </div>
+                    <div className='flex items-center gap-2'>
+                        <button type='button' aria-label='GitHub Repository' className='flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900'>
+                            <svg className='h-4.5 w-4.5' viewBox='0 0 24 24' fill='currentColor' xmlns='http://www.w3.org/2000/svg'>
+                                <path d='M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.69-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.03 11.03 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.07.78 2.16 0 1.56-.01 2.81-.01 3.2 0 .31.21.67.8.56A10.99 10.99 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z' />
+                            </svg>
+                        </button>
+                        <button type='button' aria-label='Toggle Theme' className='flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900'>
+                            <SunMedium size={18} strokeWidth={1.8} />
+                        </button>
+                    </div>
+                </div>
+            </header>
+            <section className='relative flex min-h-screen items-center overflow-hidden'>
+                <div
+                    className='pointer-events-none absolute inset-0 opacity-[0.4]'
+                    style={{
+                        backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px)',
+                        backgroundSize: '24px 24px',
+                        maskImage: 'radial-gradient(ellipse 60% 60% at 50% 20%, black 40%, transparent 100%)',
+                    }}
+                />
+                <div className='relative mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 items-center gap-16 px-6 pt-20 lg:grid-cols-2 lg:gap-10 lg:px-8 lg:pt-0'>
+                    <div className='flex flex-col justify-center pb-10 lg:pb-0'>
+                        <h1 className='text-4xl font-semibold tracking-tight text-zinc-900 sm:text-5xl lg:text-[3.5rem] lg:leading-[1.08]' style={{ fontFamily: 'Geist, sans-serif' }}>
+                            Better <span className='text-zinc-400 italic'>resume.</span>
+                            <br />
+                            Better <span className='text-zinc-400 italic'>interviews.</span>
+                            <br />
+                            Better <span className='text-zinc-400 italic'>career.</span>
+                        </h1>
+                        <p className='mt-6 max-w-122.5 text-[17px] leading-8 text-zinc-500'>Upload your resume to receive an ATS score, recruiter feedback, and AI-powered recommendations that help you stand out before you apply.</p>
+                        <div className='mt-10 rounded-2xl border-2 border-dashed border-zinc-200 bg-white/50 p-8 text-center transition-all duration-200 hover:border-zinc-400 hover:bg-zinc-50/50'>
+                            <div className='mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-zinc-50 ring-1 ring-zinc-200'>
+                                <UploadCloud className='h-6 w-6 text-zinc-600' />
+                            </div>
+                            <h3 className='text-base font-semibold text-zinc-900'>Upload your resume</h3>
+                            <p className='mt-1 text-sm text-zinc-500'>Drag and drop your PDF or DOCX file here, or click to browse.</p>
+                            <button type='button' className='group mt-6 inline-flex h-12 w-full max-w-70 items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-medium text-white transition-all hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2'>
+                                <span>Select File & Analyze</span>
+                                <ChevronRight className='h-4 w-4 transition-transform group-hover:translate-x-1' />
+                            </button>
+                        </div>
+                        <div className='mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-[13px] font-medium text-zinc-600'>
+                            <span className='flex items-center gap-2'>
+                                <ShieldCheck className='h-4 w-4 text-zinc-500' />
+                                Private by default
+                            </span>
+                            <span className='hidden h-4 w-px bg-zinc-200 sm:block' />
+                            <span className='flex items-center gap-2'>
+                                <Gauge className='h-4 w-4 text-zinc-500' />
+                                ATS-aware analysis
+                            </span>
+                            <span className='hidden h-4 w-px bg-zinc-200 sm:block' />
+                            <span className='flex items-center gap-2'>
+                                <CheckCircle2 className='h-4 w-4 text-zinc-500' />
+                                Recruiter-focused feedback
+                            </span>
+                        </div>
+                    </div>
+                    <div className='relative flex items-center justify-center lg:justify-end'>
+                        <div className='relative w-full max-w-md'>
+                            <div className='absolute -inset-10 -z-10 rounded-full bg-zinc-100 blur-3xl' />
+                            <div className='relative overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl shadow-zinc-200/60'>
+                                <div className='flex items-center justify-between border-b border-zinc-100 px-4 py-3'>
+                                    <div className='flex items-center gap-2'>
+                                        <FileText className='h-3.5 w-3.5 text-zinc-400' />
+                                        <span className='font-mono text-[11px] text-zinc-400'>resume.pdf</span>
+                                    </div>
+                                    <span className='flex items-center gap-2 rounded-full bg-zinc-100 px-2.5 py-1 font-mono text-[10px] font-medium text-zinc-500'>
+                                        <span className='relative flex h-2 w-2'>
+                                            <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60'></span>
+                                            <span className='relative inline-flex h-2 w-2 rounded-full bg-emerald-500'></span>
+                                        </span>
+                                        analyzing
+                                    </span>
+                                </div>
+                                <div className='relative h-137.5 overflow-hidden bg-zinc-50'>
+                                    <img src='/resume-preview.png' alt='Resume preview skeleton' className='absolute left-1/2 w-full -translate-x-1/2 object-top select-none' draggable={false} />
+                                    <div className='absolute inset-0 bg-white/5' />
+                                    <div className='pointer-events-none absolute inset-0 overflow-hidden'>
+                                        <div className='scan-highlight absolute inset-x-0 h-28'>
+                                            <div className='h-full w-full bg-linear-to-b from-transparent via-white/30 to-transparent' />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className='animate-float-a reveal-1 absolute -right-8 -top-6 w-40 rounded-xl border border-zinc-200 bg-white p-3.5 shadow-lg shadow-zinc-200/70'>
+                                <div className='flex items-center justify-between'>
+                                    <span className='font-mono text-[10px] uppercase tracking-wide text-zinc-400'>ATS score</span>
+                                    <Gauge className='h-3.5 w-3.5 text-zinc-400' />
+                                </div>
+                                <div className='mt-1.5 font-mono text-2xl font-semibold text-zinc-900'>
+                                    94<span className='text-sm text-zinc-400'>/100</span>
+                                </div>
+                                <div className='mt-2 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100'>
+                                    <div className='h-full w-[94%] rounded-full bg-zinc-900' />
+                                </div>
+                            </div>
+                            <div className='animate-float-b reveal-2 absolute -left-10 top-1/3 w-44 rounded-xl border border-zinc-200 bg-white p-3.5 shadow-lg shadow-zinc-200/70'>
+                                <div className='flex items-center gap-1.5'>
+                                    <CheckCircle2 className='h-3.5 w-3.5 text-zinc-900' />
+                                    <span className='text-[12px] font-medium text-zinc-800'>Keyword match</span>
+                                </div>
+                                <div className='mt-1 font-mono text-lg font-semibold text-zinc-900'>87%</div>
+                                <p className='mt-0.5 text-[11px] leading-snug text-zinc-400'>Aligned to job description</p>
+                            </div>
+                            <div className='animate-float-a reveal-3 absolute -bottom-6 right-2 flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 shadow-lg shadow-zinc-200/70'>
+                                <AlertTriangle className='h-3.5 w-3.5 text-zinc-500' />
+                                <span className='text-[11.5px] font-medium text-zinc-700'>3 issues found</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    )
+}
