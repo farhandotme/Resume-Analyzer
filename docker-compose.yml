@@ -54,6 +54,8 @@ services:
 
   # ─── Celery Worker ────────────────────────────────
 
+  #simple changes
+
   celery:
     build:
       context: ./ai_backend
