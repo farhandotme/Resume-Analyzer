@@ -1,14 +1,11 @@
-import { Routes, Route } from 'react-router-dom';
-import Home from './components/Home';
-import Story from './components/Story';
+import Landing from './features/landing/Landing'
 
-function App() {
+export default function App() {
     return (
-        <Routes>
-            <Route path='/' element={<Home />} />
-            <Route path='/story' element={<Story />} />
-        </Routes>
-    );
+        <div>
+            <Landing />
+        </div>
+    )
 }
 
 export default App;
