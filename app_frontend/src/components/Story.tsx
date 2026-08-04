@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { StoryProvider, useStory } from './StoryContext';
 import StoryProgress from './StoryProgress';
 import Story1 from './Story1';
+import Story2 from './Story2';
 
-const STORY_DURATIONS = [15000, 5000, 4000, 3500, 4500, 4000, 5000, 4500];
+const STORY_DURATIONS = [15000, 4000, 4000, 3500, 4500, 4000, 5000, 4500];
 
 const StoryContent = () => {
     const { paused, setPaused } = useStory();
@@ -25,10 +26,8 @@ const StoryContent = () => {
                         setCurrentStory((s) => s + 1);
                         return 0;
                     }
-
                     return 100;
                 }
-
                 return prev + 1;
             });
         }, STORY_DURATIONS[currentStory] / 100);
@@ -48,7 +47,6 @@ const StoryContent = () => {
                 if (holdTimer.current !== null) {
                     clearTimeout(holdTimer.current);
                 }
-
                 if (paused) {
                     setPaused(false);
                 }
@@ -57,7 +55,6 @@ const StoryContent = () => {
                 if (holdTimer.current !== null) {
                     clearTimeout(holdTimer.current);
                 }
-
                 if (paused) {
                     setPaused(false);
                 }
@@ -73,7 +70,6 @@ const StoryContent = () => {
                         }
                     }}
                 />
-
                 <button
                     className='h-full w-1/2 bg-transparent outline-none'
                     onClick={() => {
@@ -85,8 +81,8 @@ const StoryContent = () => {
                 />
             </div>
             <StoryProgress totalStories={totalStories} currentStory={currentStory} progress={progress} />
-
             {currentStory === 0 && <Story1 progress={progress} />}
+            {currentStory === 1 && <Story2 />}
         </main>
     );
 };
