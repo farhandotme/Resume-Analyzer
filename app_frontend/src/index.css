@@ -1,5 +1,13 @@
 @import 'tailwindcss';
 
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+.font-display {
+    font-family: 'Fraunces', serif;
+}
+
 @font-face {
     font-family: 'Geist';
     src: url('./assets/fonts/Geist-Regular.woff2') format('woff2');

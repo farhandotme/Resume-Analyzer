@@ -3,7 +3,7 @@ import { StoryProvider, useStory } from './StoryContext';
 import StoryProgress from './StoryProgress';
 import Story1 from './Story1';
 
-const STORY_DURATIONS = [3000, 5000, 4000, 3500, 4500, 4000, 5000, 4500];
+const STORY_DURATIONS = [15000, 5000, 4000, 3500, 4500, 4000, 5000, 4500];
 
 const StoryContent = () => {
     const { paused, setPaused } = useStory();
