@@ -4,8 +4,9 @@ import StoryProgress from './StoryProgress';
 import Story1 from './Story1';
 import Story2 from './Story2';
 import Story3 from './Story3';
+import Story4 from './Story4';
 
-const STORY_DURATIONS = [7000, 3000, 5000, 0, 0, 0, 0, 0];
+const STORY_DURATIONS = [7000, 3000, 5000, 7000, 5000, 0, 0, 0];
 
 const StoryContent = () => {
     const { paused, setPaused } = useStory();
@@ -85,6 +86,7 @@ const StoryContent = () => {
             {currentStory === 0 && <Story1 progress={progress} />}
             {currentStory === 1 && <Story2 />}
             {currentStory === 2 && <Story3 />}
+            {currentStory === 3 && <Story4 />}
         </main>
     );
 };
