@@ -71,3 +71,15 @@ body {
     animation: revealCard 6s infinite;
     animation-delay: 1.2s;
 }
+
+.reveal-4 {
+    opacity: 0;
+    animation: revealCard 6s infinite;
+    animation-delay: 1.8s;
+}
+
+.reveal-5 {
+    opacity: 0;
+    animation: revealCard 6s infinite;
+    animation-delay: 2.4s;
+}

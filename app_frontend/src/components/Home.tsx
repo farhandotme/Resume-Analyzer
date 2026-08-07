@@ -1,4 +1,4 @@
-import { UploadCloud, CheckCircle2, AlertTriangle, FileText, Gauge, ChevronRight, SunMedium, Moon, ShieldCheck } from 'lucide-react';
+import { UploadCloud, CheckCircle2, FileText, Gauge, ChevronRight, SunMedium, Moon, ShieldCheck } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme.ts';
 
 export default function Home() {
@@ -101,27 +101,43 @@ export default function Home() {
                             </div>
                             <div className='animate-float-a reveal-1 absolute -right-8 -top-6 w-40 rounded-xl border border-zinc-200 bg-white p-3.5 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
                                 <div className='flex items-center justify-between'>
-                                    <span className='font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>ATS score</span>
+                                    <span className='font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>ATS Score</span>
                                     <Gauge className='h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500' />
                                 </div>
                                 <div className='mt-1.5 font-mono text-2xl font-semibold text-zinc-900 dark:text-zinc-100'>
                                     94<span className='text-sm text-zinc-400 dark:text-zinc-500'>/100</span>
                                 </div>
-                                <div className='mt-2 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800'>
+                                <div className='mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800'>
                                     <div className='h-full w-[94%] rounded-full bg-zinc-900 dark:bg-zinc-100' />
                                 </div>
                             </div>
-                            <div className='animate-float-b reveal-2 absolute -left-10 top-1/3 w-44 rounded-xl border border-zinc-200 bg-white p-3.5 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
-                                <div className='flex items-center gap-1.5'>
-                                    <CheckCircle2 className='h-3.5 w-3.5 text-zinc-900 dark:text-zinc-100' />
-                                    <span className='text-[12px] font-medium text-zinc-800 dark:text-zinc-200'>Keyword match</span>
+                            <div className='animate-float-b reveal-2 absolute -left-10 top-[32%] w-40 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
+                                <div className='flex items-center justify-between'>
+                                    <span className='font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>Hire Rate</span>
+                                    <CheckCircle2 className='h-3.5 w-3.5 text-emerald-500' />
                                 </div>
-                                <div className='mt-1 font-mono text-lg font-semibold text-zinc-900 dark:text-zinc-100'>87%</div>
-                                <p className='mt-0.5 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500'>Aligned to job description</p>
+                                <div className='mt-1 text-lg font-semibold text-zinc-900 dark:text-zinc-100'>Very High</div>
                             </div>
-                            <div className='animate-float-a reveal-3 absolute -bottom-6 right-2 flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
-                                <AlertTriangle className='h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400' />
-                                <span className='text-[11.5px] font-medium text-zinc-700 dark:text-zinc-300'>3 issues found</span>
+                            <div className='animate-float-a reveal-3 absolute -left-6 bottom-18 w-36 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
+                                <div className='font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>Best Skill</div>
+                                <div className='mt-1 text-[13px] font-semibold text-zinc-900 dark:text-zinc-100'>React</div>
+                            </div>
+                            <div className='animate-float-b reveal-5 absolute -bottom-6 right-0 w-40 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
+                                <div className='font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>Improve</div>
+                                <div className='mt-1 text-[13px] font-semibold text-zinc-900 dark:text-zinc-100'>Docker</div>
+                            </div>
+                            <div className='animate-float-c reveal-4 absolute -right-10 top-[46%] w-44 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
+                                <div className='flex items-center justify-between'>
+                                    <span className='font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>PDF Report</span>
+                                    <FileText className='h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400' />
+                                </div>
+                                <div className='mt-2 flex items-center gap-2'>
+                                    <span className='relative flex h-2 w-2'>
+                                        <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60' />
+                                        <span className='relative inline-flex h-2 w-2 rounded-full bg-emerald-500' />
+                                    </span>
+                                    <span className='text-[13px] font-semibold text-zinc-900 dark:text-zinc-100'>Generating...</span>
+                                </div>
                             </div>
                         </div>
                     </div>
