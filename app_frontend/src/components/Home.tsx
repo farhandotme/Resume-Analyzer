@@ -54,7 +54,7 @@ export default function Home() {
                             <br />
                             Better <span className='text-zinc-400 dark:text-zinc-500 italic'>career.</span>
                         </h1>
-                        <p className='mt-4 max-w-122.5 text-[17px] leading-8 text-zinc-500 dark:text-zinc-400'>Upload your resume to receive an ATS score, recruiter feedback, and AI-powered recommendations that help you stand out before you apply.</p>
+                        <p className='mt-4 max-w-122.5 text-[17px] leading-7 text-zinc-500 dark:text-zinc-400'>Upload your resume to receive an ATS score, recruiter feedback, and AI-powered recommendations that help you stand out before you apply.</p>
                         <div className='mt-6 rounded-2xl border-2 border-dashed border-zinc-200 bg-white/50 dark:border-zinc-800 dark:bg-zinc-900/40 p-8 text-center transition-all duration-200 hover:border-zinc-400 hover:bg-zinc-50/50 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/80'>
                             <div className='mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-zinc-50 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700'>
                                 <UploadCloud className='h-6 w-6 text-zinc-600 dark:text-zinc-300' />
@@ -103,14 +103,8 @@ export default function Home() {
                                         analyzing
                                     </span>
                                 </div>
-                                <div className='relative h-137.5 overflow-hidden bg-zinc-50 dark:bg-zinc-900/50'>
-                                    <img src='/resume-preview.png' alt='Resume preview skeleton' className='absolute left-1/2 w-full -translate-x-1/2 object-top select-none opacity-90 dark:opacity-75 dark:invert' draggable={false} />
-                                    <div className='absolute inset-0 bg-white/5 dark:bg-black/10' />
-                                    <div className='pointer-events-none absolute inset-0 overflow-hidden'>
-                                        <div className='scan-highlight absolute inset-x-0 h-28'>
-                                            <div className='h-full w-full bg-linear-to-b from-transparent via-white/30 dark:via-white/10 to-transparent' />
-                                        </div>
-                                    </div>
+                                <div className='relative h-144 overflow-hidden bg-zinc-50 dark:bg-zinc-900/50'>
+                                    <img src='/resume-preview.png' alt='Resume preview skeleton' className='absolute left-1/2 w-full -translate-x-1/2 select-none opacity-90 dark:opacity-75 dark:invert' draggable={false} />
                                 </div>
                             </div>
                             <div className='animate-float-a reveal-1 absolute -right-8 -top-6 w-40 rounded-xl border border-zinc-200 bg-white p-3.5 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
