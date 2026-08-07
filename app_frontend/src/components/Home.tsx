@@ -54,8 +54,8 @@ export default function Home() {
                             <br />
                             Better <span className='text-zinc-400 dark:text-zinc-500 italic'>career.</span>
                         </h1>
-                        <p className='mt-6 max-w-122.5 text-[17px] leading-8 text-zinc-500 dark:text-zinc-400'>Upload your resume to receive an ATS score, recruiter feedback, and AI-powered recommendations that help you stand out before you apply.</p>
-                        <div className='mt-10 rounded-2xl border-2 border-dashed border-zinc-200 bg-white/50 dark:border-zinc-800 dark:bg-zinc-900/40 p-8 text-center transition-all duration-200 hover:border-zinc-400 hover:bg-zinc-50/50 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/80'>
+                        <p className='mt-4 max-w-122.5 text-[17px] leading-8 text-zinc-500 dark:text-zinc-400'>Upload your resume to receive an ATS score, recruiter feedback, and AI-powered recommendations that help you stand out before you apply.</p>
+                        <div className='mt-6 rounded-2xl border-2 border-dashed border-zinc-200 bg-white/50 dark:border-zinc-800 dark:bg-zinc-900/40 p-8 text-center transition-all duration-200 hover:border-zinc-400 hover:bg-zinc-50/50 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/80'>
                             <div className='mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-zinc-50 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700'>
                                 <UploadCloud className='h-6 w-6 text-zinc-600 dark:text-zinc-300' />
                             </div>
@@ -69,7 +69,7 @@ export default function Home() {
                                 <ChevronRight className='h-4 w-4 transition-transform group-hover:translate-x-1' />
                             </button>
                         </div>
-                        <div className='mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-[13px] font-medium text-zinc-600 dark:text-zinc-400'>
+                        <div className='mt-6 pl-1 flex flex-wrap items-center gap-x-6 gap-y-3 text-[13px] font-medium text-zinc-600 dark:text-zinc-400'>
                             <span className='flex items-center gap-2'>
                                 <ShieldCheck className='h-4 w-4 text-zinc-500 dark:text-zinc-400' />
                                 Private by default
