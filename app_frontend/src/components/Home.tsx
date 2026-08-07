@@ -37,14 +37,6 @@ export default function Home() {
                 </div>
             </header>
             <section className='relative flex min-h-screen items-center overflow-hidden'>
-                <div
-                    className='pointer-events-none absolute inset-0 opacity-[0.4] dark:opacity-[0.2]'
-                    style={{
-                        backgroundImage: theme === 'dark' ? 'radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px)' : 'radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px)',
-                        backgroundSize: '24px 24px',
-                        maskImage: 'radial-gradient(ellipse 60% 60% at 50% 20%, black 40%, transparent 100%)',
-                    }}
-                />
                 <div className='relative mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 items-center gap-16 px-6 pt-20 lg:grid-cols-2 lg:gap-10 lg:px-8 lg:pt-0'>
                     <div className='flex flex-col justify-center pb-10 lg:pb-0'>
                         <h1 className='text-4xl font-semibold tracking-tight text-zinc-900 dark:text-white sm:text-5xl lg:text-[3.5rem] lg:leading-[1.08]' style={{ fontFamily: 'Geist, sans-serif' }}>
