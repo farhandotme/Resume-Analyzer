@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { StoryProvider, useStory } from './StoryContext';
 import StoryProgress from './StoryProgress';
 import Story1 from './Story1';
@@ -96,8 +97,11 @@ const StoryContent = () => {
 };
 
 const Story = () => {
+    const location = useLocation();
+    const analysisResult = location.state?.analysisResult;
+
     return (
-        <StoryProvider>
+        <StoryProvider initialAnalysisResult={analysisResult}>
             <StoryContent />
         </StoryProvider>
     );
