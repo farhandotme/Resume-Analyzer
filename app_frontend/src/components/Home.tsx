@@ -1,8 +1,50 @@
 import { UploadCloud, CheckCircle2, FileText, Gauge, ChevronRight, SunMedium, Moon, ShieldCheck } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { useTheme } from '../hooks/useTheme.ts';
 
 export default function Home() {
     const { theme, toggleTheme } = useTheme();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
+
+    const handleFile = (file: File) => {
+        if (file.type !== 'application/pdf') {
+            alert('Please select a PDF file.');
+            return;
+        }
+        setSelectedFile(file);
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        handleFile(file);
+    };
+
+    const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        setIsDragging(false);
+        
+        const file = event.dataTransfer.files?.[0];
+        if (!file) return;
+        handleFile(file);
+    };
+
+    const handleAnalyze = () => {
+        if (!selectedFile) return;
+        console.log('Analyzing:', selectedFile);
+    };
 
     return (
         <div className='min-h-screen w-full bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 antialiased selection:bg-zinc-900 selection:text-white dark:selection:bg-zinc-100 dark:selection:text-zinc-900 transition-colors duration-300'>
@@ -47,19 +89,83 @@ export default function Home() {
                             Better <span className='text-zinc-400 dark:text-zinc-500 italic'>career.</span>
                         </h1>
                         <p className='mt-4 max-w-122.5 text-[17px] leading-7 text-zinc-500 dark:text-zinc-400'>Upload your resume to receive an ATS score, recruiter feedback, and AI-powered recommendations that help you stand out before you apply.</p>
-                        <div className='mt-6 rounded-2xl border-2 border-dashed border-zinc-200 bg-white/50 dark:border-zinc-800 dark:bg-zinc-900/40 p-8 text-center transition-all duration-200 hover:border-zinc-400 hover:bg-zinc-50/50 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/80'>
-                            <div className='mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-zinc-50 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700'>
-                                <UploadCloud className='h-6 w-6 text-zinc-600 dark:text-zinc-300' />
-                            </div>
-                            <h3 className='text-base font-semibold text-zinc-900 dark:text-zinc-100'>Upload your resume</h3>
-                            <p className='mt-1 text-sm text-zinc-500 dark:text-zinc-400'>Drag and drop your PDF or DOCX file here, or click to browse.</p>
-                            <button
-                                type='button'
-                                className='group mt-6 inline-flex h-12 w-full max-w-70 items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-medium text-white transition-all hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 dark:focus:ring-zinc-100'
+                        <div
+                            onClick={() => {
+                                if (!selectedFile) {
+                                    fileInputRef.current?.click();
+                                }
+                            }}
+                            onDragOver={!selectedFile ? handleDragOver : undefined}
+                            onDragLeave={!selectedFile ? handleDragLeave : undefined}
+                            onDrop={!selectedFile ? handleDrop : undefined}
+                            className={`group mt-6 flex min-h-55 flex-col items-center justify-center rounded-2xl border-2 border-dashed px-8 py-7 text-center transition-all duration-200 ${
+                                selectedFile
+                                    ? 'cursor-default border-zinc-200 bg-white/50 dark:border-zinc-800 dark:bg-zinc-900/40'
+                                    : isDragging
+                                      ? 'cursor-copy border-zinc-500 bg-zinc-100/80 dark:border-zinc-500 dark:bg-zinc-800/80'
+                                      : 'cursor-pointer border-zinc-200 bg-white/50 hover:border-zinc-400 hover:bg-zinc-50/50 dark:border-zinc-800 dark:bg-zinc-900/40 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/80'
+                            }`}
+                        >
+                            <input
+                                ref={fileInputRef}
+                                type='file'
+                                accept='application/pdf,.pdf'
+                                onChange={handleFileChange}
+                                onClick={(event) => {
+                                    event.currentTarget.value = '';
+                                }}
+                                className='hidden'
+                            />
+                            <div
+                                className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full transition-all duration-200 ${
+                                    selectedFile ? 'bg-zinc-100 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700' : isDragging ? 'bg-zinc-200 ring-2 ring-zinc-300 dark:bg-zinc-700 dark:ring-zinc-600' : 'bg-zinc-50 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700'
+                                }`}
                             >
-                                <span>Select File & Analyze</span>
-                                <ChevronRight className='h-4 w-4 transition-transform group-hover:translate-x-1' />
-                            </button>
+                                {selectedFile ? <FileText className='h-6 w-6 text-zinc-600 dark:text-zinc-300' /> : <UploadCloud className='h-6 w-6 text-zinc-600 dark:text-zinc-300 transition-transform duration-300' />}
+                            </div>
+                            <div className='mt-4 w-full'>
+                                <h3 className='mx-auto max-w-[90%] truncate text-base font-semibold text-zinc-900 dark:text-zinc-100'>{selectedFile ? selectedFile.name : isDragging ? 'Drop your PDF here' : 'Upload your resume'}</h3>
+
+                                <p className='mt-1 text-sm text-zinc-500 dark:text-zinc-400'>{selectedFile ? 'PDF selected and ready to analyze.' : 'Drag and drop your PDF here, or click to browse.'}</p>
+                            </div>
+                            {selectedFile ? (
+                                <div className='mt-6 flex w-full max-w-60 flex-col gap-2.5'>
+                                    <button
+                                        type='button'
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            handleAnalyze();
+                                        }}
+                                        className='group/btn inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-medium text-white transition-all duration-200 hover:bg-zinc-800 focus:outline-none focus:ring-0 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200'
+                                    >
+                                        <span>Analyze Resume</span>
+                                        <ChevronRight className='h-4 w-4 transition-transform duration-300 ease-out group-hover/btn:translate-x-1.5' />
+                                    </button>
+                                    <button
+                                        type='button'
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            fileInputRef.current?.click();
+                                        }}
+                                        className='inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
+                                    >
+                                        <UploadCloud className='h-3.5 w-3.5' />
+                                        <span>Change PDF</span>
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    type='button'
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        fileInputRef.current?.click();
+                                    }}
+                                    className='group/btn mx-auto mt-6 inline-flex h-12 w-full max-w-60 cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-medium text-white transition-all duration-200 hover:bg-zinc-800 focus:outline-none focus:ring-0 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200'
+                                >
+                                    <span>Select PDF</span>
+                                    <ChevronRight className='h-4 w-4 transition-transform duration-300 ease-out group-hover/btn:translate-x-1.5' />
+                                </button>
+                            )}
                         </div>
                         <div className='mt-6 pl-1 flex flex-wrap items-center gap-x-6 gap-y-3 text-[13px] font-medium text-zinc-600 dark:text-zinc-400'>
                             <span className='flex items-center gap-2'>
