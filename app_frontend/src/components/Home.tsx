@@ -1,5 +1,5 @@
 import { UploadCloud, CheckCircle2, FileText, Gauge, ChevronRight, SunMedium, Moon, ShieldCheck } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../hooks/useTheme.ts';
 
 export default function Home() {
@@ -7,6 +7,14 @@ export default function Home() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
+
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, []);
 
     const handleFile = (file: File) => {
         if (file.type !== 'application/pdf') {
@@ -35,7 +43,7 @@ export default function Home() {
     const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
         event.preventDefault();
         setIsDragging(false);
-        
+
         const file = event.dataTransfer.files?.[0];
         if (!file) return;
         handleFile(file);
@@ -47,7 +55,7 @@ export default function Home() {
     };
 
     return (
-        <div className='min-h-screen w-full bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 antialiased selection:bg-zinc-900 selection:text-white dark:selection:bg-zinc-100 dark:selection:text-zinc-900 transition-colors duration-300'>
+        <div className='h-screen w-full overflow-hidden bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 antialiased selection:bg-zinc-900 selection:text-white dark:selection:bg-zinc-100 dark:selection:text-zinc-900 transition-colors duration-300'>
             <header className='fixed inset-x-0 top-0 z-50'>
                 <div className='mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8'>
                     <div className='inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/80 backdrop-blur-md px-3 py-1.5 dark:border-zinc-800 dark:bg-zinc-900/80'>
@@ -78,8 +86,8 @@ export default function Home() {
                     </div>
                 </div>
             </header>
-            <section className='relative flex min-h-screen items-center overflow-hidden'>
-                <div className='relative mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 items-center gap-16 px-6 pt-20 lg:grid-cols-2 lg:gap-10 lg:px-8 lg:pt-0'>
+            <section className='relative flex h-screen items-center overflow-hidden'>
+                <div className='relative mx-auto grid h-screen w-full max-w-7xl grid-cols-1 items-center gap-16 px-6 pt-20 lg:grid-cols-2 lg:gap-10 lg:px-8 lg:pt-0'>
                     <div className='flex flex-col justify-center pb-10 lg:pb-0'>
                         <h1 className='text-4xl font-semibold text-zinc-900 dark:text-white sm:text-5xl lg:text-[3.5rem] lg:leading-[1.08]' style={{ fontFamily: 'Geist, sans-serif' }}>
                             Better <span className='text-zinc-400 dark:text-zinc-500 italic'>resume.</span>
