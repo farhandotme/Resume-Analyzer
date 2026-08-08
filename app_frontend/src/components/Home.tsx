@@ -39,7 +39,7 @@ export default function Home() {
             <section className='relative flex min-h-screen items-center overflow-hidden'>
                 <div className='relative mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 items-center gap-16 px-6 pt-20 lg:grid-cols-2 lg:gap-10 lg:px-8 lg:pt-0'>
                     <div className='flex flex-col justify-center pb-10 lg:pb-0'>
-                        <h1 className='text-4xl font-semibold tracking-tight text-zinc-900 dark:text-white sm:text-5xl lg:text-[3.5rem] lg:leading-[1.08]' style={{ fontFamily: 'Geist, sans-serif' }}>
+                        <h1 className='text-4xl font-semibold text-zinc-900 dark:text-white sm:text-5xl lg:text-[3.5rem] lg:leading-[1.08]' style={{ fontFamily: 'Geist, sans-serif' }}>
                             Better <span className='text-zinc-400 dark:text-zinc-500 italic'>resume.</span>
                             <br />
                             Better <span className='text-zinc-400 dark:text-zinc-500 italic'>interviews.</span>
@@ -96,10 +96,10 @@ export default function Home() {
                                     </span>
                                 </div>
                                 <div className='relative h-144 overflow-hidden bg-zinc-50 dark:bg-zinc-900/50'>
-                                    <img src='/resume-preview.png' alt='Resume preview skeleton' className='absolute left-1/2 w-full -translate-x-1/2 select-none opacity-90 dark:opacity-75 dark:invert' draggable={false} />
+                                    <img src='/resume-preview.png' alt='Resume preview skeleton' className='absolute left-1/2 top-0 w-[calc(100%+2px)] -translate-x-1/2 -translate-y-px scale-[1.01] select-none opacity-90 dark:opacity-75 dark:invert' draggable={false} />
                                 </div>
                             </div>
-                            <div className='animate-float-a reveal-1 absolute -right-8 -top-6 w-40 rounded-xl border border-zinc-200 bg-white p-3.5 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
+                            <div className='animate-float-a absolute -right-8 -top-6 w-40 rounded-xl border border-zinc-200 bg-white p-3.5 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
                                 <div className='flex items-center justify-between'>
                                     <span className='font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>ATS Score</span>
                                     <Gauge className='h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500' />
@@ -111,22 +111,22 @@ export default function Home() {
                                     <div className='h-full w-[94%] rounded-full bg-zinc-900 dark:bg-zinc-100' />
                                 </div>
                             </div>
-                            <div className='animate-float-b reveal-2 absolute -left-10 top-[32%] w-40 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
+                            <div className='animate-float-b absolute -left-10 top-[32%] w-40 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
                                 <div className='flex items-center justify-between'>
                                     <span className='font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>Hire Rate</span>
                                     <CheckCircle2 className='h-3.5 w-3.5 text-emerald-500' />
                                 </div>
                                 <div className='mt-1 text-lg font-semibold text-zinc-900 dark:text-zinc-100'>Very High</div>
                             </div>
-                            <div className='animate-float-a reveal-3 absolute -left-6 bottom-18 w-36 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
+                            <div className='animate-float-a absolute -left-6 bottom-18 w-36 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
                                 <div className='font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>Best Skill</div>
                                 <div className='mt-1 text-[13px] font-semibold text-zinc-900 dark:text-zinc-100'>React</div>
                             </div>
-                            <div className='animate-float-b reveal-5 absolute -bottom-6 right-0 w-40 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
+                            <div className='animate-float-b absolute -bottom-6 right-0 w-40 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
                                 <div className='font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>Improve</div>
                                 <div className='mt-1 text-[13px] font-semibold text-zinc-900 dark:text-zinc-100'>Docker</div>
                             </div>
-                            <div className='animate-float-c reveal-4 absolute -right-10 top-[46%] w-44 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
+                            <div className='animate-float-c absolute -right-10 top-[46%] w-44 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
                                 <div className='flex items-center justify-between'>
                                     <span className='font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>PDF Report</span>
                                     <FileText className='h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400' />
