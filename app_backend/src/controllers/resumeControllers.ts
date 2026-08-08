@@ -6,42 +6,6 @@ const FASTAPI_URL = process.env.FASTAPI_URL;
 
 // uploading the resume
 
-export const uploadResume = async (req: Request, res: Response) => {
-  try {
-    const { pdfUrl } = req.body;
-
-    if (!pdfUrl) {
-      return res.status(400).json({
-        success: false,
-        error: "PDF URL is required.",
-      });
-    }
-
-    const resume = await prisma.resume.create({
-      data: {
-        userId: req.userId as string,
-        pdf_url: pdfUrl,
-      },
-    });
-
-    return res.status(201).json({
-      success: true,
-      message: "Resume saved successfully.",
-      resume: {
-        id: resume.id,
-        pdfUrl: resume.pdf_url,
-        uploadedAt: resume.uploadedAt,
-      },
-    });
-  } catch (error) {
-    console.error("Upload resume error:", error);
-    return res.status(500).json({
-      success: false,
-      error: "Could not save resume. Try again.",
-    });
-  }
-};
-
 // needs the pdfurl, job title ,and resumeId for analizing it
 export const analyzeResume = async (req: Request, res: Response) => {
   try {
@@ -118,44 +82,6 @@ export const analyzeResume = async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       error: "Analysis failed. Try again.",
-    });
-  }
-};
-
-// get the history of the analysis
-
-// get one full analysis result
-export const getOneAnalysis = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params as { id: string };
-
-    const analysis = await prisma.analysis.findUnique({
-      where: { id },
-    });
-
-    if (!analysis) {
-      return res.status(404).json({
-        success: false,
-        error: "Analysis not found.",
-      });
-    }
-
-    if (analysis.userId !== req.userId) {
-      return res.status(403).json({
-        success: false,
-        error: "You do not have permission to view this.",
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      analysis,
-    });
-  } catch (error) {
-    console.error("Get one analysis error:", error);
-    return res.status(500).json({
-      success: false,
-      error: "Could not fetch analysis. Try again.",
     });
   }
 };
