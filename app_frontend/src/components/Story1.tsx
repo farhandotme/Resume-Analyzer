@@ -2,13 +2,11 @@
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import { useStory } from './StoryContext';
 
 type Story1Props = {
     progress: number;
 };
-
-const NAME = 'Farid Hussain';
-const ROLE = 'A Frontend Developer';
 
 const EASE_CINE = [0.16, 1, 0.3, 1] as const;
 
@@ -35,6 +33,8 @@ const FilmGrain = () => (
 );
 
 const Story1 = ({ progress }: Story1Props) => {
+    const { analysisResult } = useStory();
+    const ROLE = analysisResult?.data?.data?.meta?.job_title ?? 'Your Role';
     const reduceMotion = useReducedMotion();
 
     let step = 0;
@@ -82,7 +82,7 @@ const Story1 = ({ progress }: Story1Props) => {
                         </motion.p>
 
                         <h1 className='font-display mt-4 text-[60px] font-medium tracking-tight text-zinc-900 sm:text-[88px]'>
-                            <CreditsText text={NAME} delayStart={0.5} />
+                            <CreditsText text='Your Resume' delayStart={0.5} />
                         </h1>
 
                         <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 56, opacity: 1 }} transition={{ delay: 1.3, duration: 0.6, ease: EASE_CINE }} className='mt-3 h-0.5 bg-zinc-900' />
