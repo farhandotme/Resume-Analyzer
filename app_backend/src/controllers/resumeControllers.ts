@@ -1,5 +1,4 @@
 import type { Request, Response } from "express";
-import prisma from "../config/db";
 import axios from "axios";
 
 const FASTAPI_URL = process.env.FASTAPI_URL;
@@ -17,17 +16,6 @@ export const analyzeResume = async (req: Request, res: Response) => {
         error: "pdfUrl and jobTitle are required.",
       });
     }
-
-    console.log("===== Resume Controller =====");
-    console.log("req.userId:", req.userId);
-    console.log("Authorization:", req.headers.authorization);
-    // Step 1 — save resume to database
-    const resume = await prisma.resume.create({
-      data: {
-        userId: req.userId as string,
-        pdf_url: pdfUrl,
-      },
-    });
 
     // Step 2 — send to FastAPI and get job_id
     const fastApiRes = await axios.post(`${FASTAPI_URL}/analyze`, {
@@ -59,22 +47,9 @@ export const analyzeResume = async (req: Request, res: Response) => {
       }, 3000);
     });
 
-    // Step 4 — save result to database
-    const analysis = await prisma.analysis.create({
-      data: {
-        userId: req.userId as string,
-        resumeId: resume.id,
-        jobTitle,
-        atsScore: result?.hero?.ats_score || 0,
-        fullResult: result,
-      },
-    });
-
     // Step 5 — return everything
     return res.status(200).json({
       success: true,
-      analysisId: analysis.id,
-      resumeId: resume.id,
       data: result,
     });
   } catch (error) {
@@ -102,17 +77,9 @@ export const chatResume = async (req: Request, res: Response) => {
       });
     }
 
-    const resume = await prisma.resume.create({
-      data: {
-        userId: req.userId as string,
-        pdf_url: pdfUrl,
-      },
-    });
-
     const fastApiRes = await axios.post(`${FASTAPI_URL}/chat`, {
       pdf_url: pdfUrl,
       message,
-      user_id: req.userId as string,
     });
 
     return res.status(200).json({
