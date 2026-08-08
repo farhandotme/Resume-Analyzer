@@ -1,6 +1,7 @@
 import { UploadCloud, CheckCircle2, FileText, Gauge, ChevronRight, SunMedium, Moon, ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../hooks/useTheme.ts';
+import { uploadResume } from '../services/uploadResume.ts';
 
 export default function Home() {
     const { theme, toggleTheme } = useTheme();
@@ -10,7 +11,6 @@ export default function Home() {
 
     useEffect(() => {
         document.body.style.overflow = 'hidden';
-
         return () => {
             document.body.style.overflow = '';
         };
@@ -49,9 +49,41 @@ export default function Home() {
         handleFile(file);
     };
 
-    const handleAnalyze = () => {
+    const handleAnalyze = async () => {
         if (!selectedFile) return;
-        console.log('Analyzing:', selectedFile);
+
+        try {
+            console.log('Uploading resume...');
+
+            const pdfUrl = await uploadResume(selectedFile);
+
+            console.log('Resume uploaded successfully');
+            console.log('PDF URL:', pdfUrl);
+
+            console.log('Starting resume analysis...');
+
+            const response = await fetch('http://localhost:3000/resume/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    pdfUrl,
+                    jobTitle: 'Software Engineer',
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Analysis request failed: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            console.log('Resume analysis completed');
+            console.log('Analysis result:', result);
+        } catch (error) {
+            console.error('Resume analysis failed:', error);
+        }
     };
 
     return (
