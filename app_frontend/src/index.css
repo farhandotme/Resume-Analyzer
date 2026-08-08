@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 body {
     font-family: 'Inter', sans-serif;
 }
@@ -36,36 +38,47 @@ body {
     font-style: normal;
 }
 
-@keyframes revealCard {
-    0% {
-        opacity: 0;
-        transform: translateY(8px) scale(0.98);
-    }
-
-    15% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-
+@keyframes floatA {
+    0%,
     100% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-4px);
     }
 }
 
-.reveal-1 {
-    opacity: 0;
-    animation: revealCard 6s infinite;
+@keyframes floatB {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(3px);
+    }
 }
 
-.reveal-2 {
-    opacity: 0;
-    animation: revealCard 6s infinite;
-    animation-delay: 0.6s;
+@keyframes floatC {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-3px);
+    }
 }
 
-.reveal-3 {
-    opacity: 0;
-    animation: revealCard 6s infinite;
-    animation-delay: 1.2s;
+.animate-float-a {
+    animation: floatA 5s ease-in-out infinite;
+}
+
+.animate-float-b {
+    animation: floatB 6s ease-in-out infinite;
+}
+
+.animate-float-c {
+    animation: floatC 5.5s ease-in-out infinite;
 }
