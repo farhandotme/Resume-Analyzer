@@ -1,17 +1,28 @@
 import { UploadCloud, CheckCircle2, FileText, Gauge, ChevronRight, SunMedium, Moon, ShieldCheck } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../hooks/useTheme.ts';
 import { uploadResume } from '../services/uploadResume.ts';
-import { useNavigate } from 'react-router-dom';
+import TargetRoleSelector from './TargetRoleSelector';
 
 export default function Home() {
     const { theme, toggleTheme } = useTheme();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [analysisResult, setAnalysisResult] = useState<any>(null);
     const [isDragging, setIsDragging] = useState(false);
+    const [targetRole, setTargetRole] = useState('');
+    const [isRoleSelected, setIsRoleSelected] = useState(false);
 
-    const navigate = useNavigate();
+    const headlinePhrases = ['resume.', 'interviews.', 'career.'];
+    const [headlineIndex, setHeadlineIndex] = useState(0);
+
+    useEffect(() => {
+        const interval = window.setInterval(() => {
+            setHeadlineIndex((current) => (current + 1) % headlinePhrases.length);
+        }, 3200);
+
+        return () => window.clearInterval(interval);
+    }, []);
 
     useEffect(() => {
         document.body.style.overflow = 'hidden';
@@ -54,7 +65,9 @@ export default function Home() {
     };
 
     const handleAnalyze = async () => {
-        if (!selectedFile) return;
+        const trimmedRole = targetRole.trim();
+
+        if (!selectedFile || !isRoleSelected) return;
 
         try {
             console.log('Uploading resume...');
@@ -73,7 +86,7 @@ export default function Home() {
                 },
                 body: JSON.stringify({
                     pdfUrl,
-                    jobTitle: 'Software Engineer',
+                    jobTitle: trimmedRole,
                 }),
             });
 
@@ -85,21 +98,13 @@ export default function Home() {
 
             console.log('Resume analysis completed');
             console.log('Analysis result:', result);
-
-            setAnalysisResult(result);
-
-            navigate('/story', {
-                state: {
-                    analysisResult: result,
-                },
-            });
         } catch (error) {
             console.error('Resume analysis failed:', error);
         }
     };
 
     return (
-        <div className='h-screen w-full overflow-hidden bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 antialiased selection:bg-zinc-900 selection:text-white dark:selection:bg-zinc-100 dark:selection:text-zinc-900 transition-colors duration-300'>
+        <div className='h-screen w-full overflow-hidden select-none bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 antialiased transition-colors duration-300'>
             <header className='fixed inset-x-0 top-0 z-50'>
                 <div className='mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8'>
                     <div className='inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/80 backdrop-blur-md px-3 py-1.5 dark:border-zinc-800 dark:bg-zinc-900/80'>
@@ -112,7 +117,7 @@ export default function Home() {
                             target='_blank'
                             rel='noopener noreferrer'
                             aria-label='GitHub Repository'
-                            className='flex h-10 w-10 items-center justify-center rounded-lg ring-1 ring-zinc-200 bg-white text-zinc-600 transition-all duration-200 hover:ring-zinc-300 hover:text-zinc-900 dark:ring-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:ring-zinc-700 dark:hover:text-zinc-100'
+                            className='flex h-10 w-10 items-center outline-none justify-center rounded-lg ring-1 ring-zinc-200 bg-white text-zinc-600 transition-all duration-200 hover:ring-zinc-300 hover:text-zinc-900 dark:ring-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:ring-zinc-700 dark:hover:text-zinc-100'
                         >
                             <svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='translate-x-px'>
                                 <path d='M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4' />
@@ -123,7 +128,7 @@ export default function Home() {
                             type='button'
                             aria-label='Toggle Theme'
                             onClick={toggleTheme}
-                            className='flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-zinc-100'
+                            className='flex h-10 w-10 cursor-pointer outline-none items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-zinc-100'
                         >
                             {theme === 'light' ? <Moon size={18} strokeWidth={1.8} /> : <SunMedium size={18} strokeWidth={1.8} />}
                         </button>
@@ -133,12 +138,27 @@ export default function Home() {
             <section className='relative flex h-screen items-center overflow-hidden'>
                 <div className='relative mx-auto grid h-screen w-full max-w-7xl grid-cols-1 items-center gap-16 px-6 pt-20 lg:grid-cols-2 lg:gap-10 lg:px-8 lg:pt-0'>
                     <div className='flex flex-col justify-center pb-10 lg:pb-0'>
-                        <h1 className='text-4xl font-semibold text-zinc-900 dark:text-white sm:text-5xl lg:text-[3.5rem] lg:leading-[1.08]' style={{ fontFamily: 'Geist, sans-serif' }}>
-                            Better <span className='text-zinc-400 dark:text-zinc-500 italic'>resume.</span>
-                            <br />
-                            Better <span className='text-zinc-400 dark:text-zinc-500 italic'>interviews.</span>
-                            <br />
-                            Better <span className='text-zinc-400 dark:text-zinc-500 italic'>career.</span>
+                        <h1 className='text-4xl font-semibold leading-[1.08] text-zinc-900 dark:text-white sm:text-5xl lg:text-[3.8rem]' style={{ fontFamily: 'Geist, sans-serif' }}>
+                            <span className='whitespace-nowrap'>
+                                Better{' '}
+                                <span className='relative inline-block h-[1.08em] min-w-[10ch] overflow-hidden align-bottom whitespace-nowrap'>
+                                    <AnimatePresence mode='wait'>
+                                        <motion.span
+                                            key={headlinePhrases[headlineIndex]}
+                                            initial={{ opacity: 0, y: 18 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -18 }}
+                                            transition={{
+                                                duration: 0.45,
+                                                ease: [0.22, 1, 0.36, 1],
+                                            }}
+                                            className='absolute left-0 top-0 whitespace-nowrap text-zinc-400 italic dark:text-zinc-500'
+                                        >
+                                            {headlinePhrases[headlineIndex]}
+                                        </motion.span>
+                                    </AnimatePresence>
+                                </span>
+                            </span>
                         </h1>
                         <p className='mt-4 max-w-122.5 text-[17px] leading-7 text-zinc-500 dark:text-zinc-400'>Upload your resume to receive an ATS score, recruiter feedback, and AI-powered recommendations that help you stand out before you apply.</p>
                         <div
@@ -175,35 +195,49 @@ export default function Home() {
                             >
                                 {selectedFile ? <FileText className='h-6 w-6 text-zinc-600 dark:text-zinc-300' /> : <UploadCloud className='h-6 w-6 text-zinc-600 dark:text-zinc-300 transition-transform duration-300' />}
                             </div>
-                            <div className='mt-4 w-full'>
+                            <div className='mt-3 w-full'>
                                 <h3 className='mx-auto max-w-[90%] truncate text-base font-semibold text-zinc-900 dark:text-zinc-100'>{selectedFile ? selectedFile.name : isDragging ? 'Drop your PDF here' : 'Upload your resume'}</h3>
 
-                                <p className='mt-1 text-sm text-zinc-500 dark:text-zinc-400'>{selectedFile ? 'PDF selected and ready to analyze.' : 'Drag and drop your PDF here, or click to browse.'}</p>
+                                <p className='mt-2 text-sm text-zinc-500 dark:text-zinc-400'>{selectedFile ? `Choose the role you're targeting — your analysis will be tailored to it.` : 'Drag and drop your PDF here, or click to browse.'}</p>
                             </div>
+                            {selectedFile && <TargetRoleSelector value={targetRole} onChange={setTargetRole} onSelectionChange={setIsRoleSelected} />}
                             {selectedFile ? (
-                                <div className='mt-6 flex w-full max-w-60 flex-col gap-2.5'>
-                                    <button
-                                        type='button'
-                                        onClick={(event) => {
-                                            event.stopPropagation();
-                                            handleAnalyze();
-                                        }}
-                                        className='group/btn inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-medium text-white transition-all duration-200 hover:bg-zinc-800 focus:outline-none focus:ring-0 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200'
-                                    >
-                                        <span>Analyze Resume</span>
-                                        <ChevronRight className='h-4 w-4 transition-transform duration-300 ease-out group-hover/btn:translate-x-1.5' />
-                                    </button>
+                                <div className='mt-3 flex w-full gap-2.5'>
                                     <button
                                         type='button'
                                         onClick={(event) => {
                                             event.stopPropagation();
                                             fileInputRef.current?.click();
                                         }}
-                                        className='inline-flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
+                                        className='inline-flex h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 text-sm font-medium text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
                                     >
                                         <UploadCloud className='h-3.5 w-3.5' />
                                         <span>Change PDF</span>
                                     </button>
+
+                                    <div className='group/analyze relative flex-1'>
+                                        <button
+                                            type='button'
+                                            disabled={!isRoleSelected}
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                handleAnalyze();
+                                            }}
+                                            className={`group/btn inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl px-5 font-medium transition-all duration-200 focus:outline-none ${
+                                                isRoleSelected ? 'cursor-pointer bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200' : 'cursor-not-allowed bg-zinc-200 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-600'
+                                            }`}
+                                        >
+                                            <span>Analyze Resume</span>
+
+                                            <ChevronRight className={`h-4 w-4 transition-transform duration-300 ease-out ${isRoleSelected ? 'group-hover/btn:translate-x-1.5' : ''}`} />
+                                        </button>
+
+                                        {!isRoleSelected && (
+                                            <div className='pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 translate-y-1 opacity-0 transition-all duration-150 group-hover/analyze:translate-y-0 group-hover/analyze:opacity-100'>
+                                                <div className='whitespace-nowrap rounded-lg bg-zinc-900 px-3 py-2 text-xs font-medium text-white shadow-lg dark:bg-zinc-100 dark:text-zinc-900'>Select a target role to continue</div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             ) : (
                                 <button
