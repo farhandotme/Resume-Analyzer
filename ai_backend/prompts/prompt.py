@@ -83,7 +83,7 @@ Return ONLY raw JSON. No markdown. No backticks. Nothing outside the JSON.
   }},
 
   "hero": {{
-    "name" : "<Candidate Name from the Resume>"
+    "name" : "<the candidate name comming from the resume>"
     "ats_score": <integer 0-100>,
     "verdict": "<one of: Strong | Good | Needs Work | Critical>",
     "verdict_emoji": "<one of: ✦ | → | ↗ | ⚠>",
