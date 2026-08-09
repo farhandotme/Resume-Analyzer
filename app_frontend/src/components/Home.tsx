@@ -1,7 +1,8 @@
-import { UploadCloud, CheckCircle2, FileText, Gauge, ChevronRight, SunMedium, Moon, ShieldCheck } from 'lucide-react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { UploadCloud, CheckCircle2, FileText, Gauge, ChevronRight, SunMedium, Moon, ShieldCheck, Loader2 } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import gsap from 'gsap';
 import { useTheme } from '../hooks/useTheme.ts';
 import { uploadResume } from '../services/uploadResume.ts';
 import TargetRoleSelector from './TargetRoleSelector';
@@ -13,11 +14,38 @@ export default function Home() {
     const [isDragging, setIsDragging] = useState(false);
     const [targetRole, setTargetRole] = useState('');
     const [isRoleSelected, setIsRoleSelected] = useState(false);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [isComplete, setIsComplete] = useState(false);
+    const [analysisStep, setAnalysisStep] = useState(0);
+    const [elapsedSeconds, setElapsedSeconds] = useState(0);
+    const [headlineIndex, setHeadlineIndex] = useState(0);
+    const navigate = useNavigate();
+    const prefersReducedMotion = Boolean(useReducedMotion());
+    const overlayRef = useRef<HTMLDivElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const canvasRafRef = useRef<number | null>(null);
 
     const headlinePhrases = ['resume.', 'interviews.', 'career.'];
-    const [headlineIndex, setHeadlineIndex] = useState(0);
+    const analysisSteps = ['Reading your resume', 'Understanding your experience', 'Matching your target role', 'Building your analysis'];
 
-    const navigate = useNavigate();
+    const analysisMessages = [
+        {
+            title: 'Reading your resume',
+            subtitle: 'Extracting your experience and skills',
+        },
+        {
+            title: 'Understanding your experience',
+            subtitle: 'Mapping your background and achievements',
+        },
+        {
+            title: 'Matching your target role',
+            subtitle: 'Comparing your profile with the role requirements',
+        },
+        {
+            title: 'Building your analysis',
+            subtitle: 'Turning everything into actionable insights',
+        },
+    ];
 
     useEffect(() => {
         const interval = window.setInterval(() => {
@@ -28,11 +56,187 @@ export default function Home() {
     }, []);
 
     useEffect(() => {
-        document.body.style.overflow = 'hidden';
+        if (isAnalyzing) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
         return () => {
             document.body.style.overflow = '';
         };
-    }, []);
+    }, [isAnalyzing]);
+
+    useEffect(() => {
+        if (!isAnalyzing) return;
+
+        const interval = window.setInterval(() => {
+            setAnalysisStep((current) => {
+                if (current >= analysisSteps.length - 1) {
+                    return current;
+                }
+                return current + 1;
+            });
+        }, 3000);
+
+        return () => window.clearInterval(interval);
+    }, [isAnalyzing]);
+
+    useEffect(() => {
+        if (!isAnalyzing) {
+            setElapsedSeconds(0);
+            return;
+        }
+
+        const interval = window.setInterval(() => {
+            setElapsedSeconds((current) => current + 1);
+        }, 1000);
+
+        return () => window.clearInterval(interval);
+    }, [isAnalyzing]);
+
+    useLayoutEffect(() => {
+        if (!isAnalyzing || !overlayRef.current) return;
+
+        const ctx = gsap.context(() => {
+            const targets = ['[data-gsap="status"]', '[data-gsap="panel"]', '[data-gsap="role"]', '[data-gsap="footer"]'];
+
+            if (prefersReducedMotion) {
+                gsap.set(targets, { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' });
+                return;
+            }
+
+            gsap.set('[data-gsap="status"]', { opacity: 0, y: -15 });
+            gsap.set('[data-gsap="panel"]', { opacity: 0, scale: 0.95, y: 20, filter: 'blur(10px)' });
+            gsap.set('[data-gsap="role"]', { opacity: 0, y: 15 });
+            gsap.set('[data-gsap="footer"]', { opacity: 0, y: 15 });
+
+            const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+            tl.to('[data-gsap="status"]', { opacity: 1, y: 0, duration: 0.6 })
+                .to('[data-gsap="panel"]', { opacity: 1, scale: 1, y: 0, filter: 'blur(0px)', duration: 0.8 }, '-=0.3')
+                .to('[data-gsap="role"]', { opacity: 1, y: 0, duration: 0.5 }, '-=0.4')
+                .to('[data-gsap="footer"]', { opacity: 1, y: 0, duration: 0.5 }, '-=0.3');
+        }, overlayRef);
+
+        return () => ctx.revert();
+    }, [isAnalyzing, prefersReducedMotion]);
+
+    useEffect(() => {
+        if (!isAnalyzing) return;
+
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const lineColor = 'rgba(244,244,245,0.14)';
+        const lineColorStrong = 'rgba(244,244,245,0.32)';
+        const scanColor = 'rgba(255,255,255,0.85)';
+
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        let width = 0;
+        let height = 0;
+
+        const lineWidths: number[] = Array.from({ length: 12 }, (_, i) => {
+            const seed = Math.sin(i * 12.9898) * 43758.5453;
+            return 0.35 + (seed - Math.floor(seed)) * 0.55;
+        });
+
+        const resize = () => {
+            const rect = canvas.getBoundingClientRect();
+            width = rect.width;
+            height = rect.height;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        };
+        resize();
+
+        let scanProgress = prefersReducedMotion ? 0.5 : 0;
+        let lastTime = performance.now();
+
+        const draw = (time: number) => {
+            const delta = time - lastTime;
+            lastTime = time;
+
+            ctx.clearRect(0, 0, width, height);
+
+            const paddingX = 14;
+            const paddingY = 16;
+            const lineHeight = (height - paddingY * 2) / lineWidths.length;
+            const lineThickness = Math.max(1.4, lineHeight * 0.26);
+
+            lineWidths.forEach((w, i) => {
+                const y = paddingY + i * lineHeight + lineHeight / 2;
+                const lineEndX = paddingX + (width - paddingX * 2) * w;
+
+                ctx.strokeStyle = lineColor;
+                ctx.lineWidth = lineThickness;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(paddingX, y);
+                ctx.lineTo(lineEndX, y);
+                ctx.stroke();
+
+                const scanY = scanProgress * height;
+                const distance = Math.abs(scanY - y);
+                const band = lineHeight * 1.4;
+
+                if (distance < band) {
+                    const strength = 1 - distance / band;
+                    ctx.strokeStyle = lineColorStrong;
+                    ctx.globalAlpha = strength;
+                    ctx.beginPath();
+                    ctx.moveTo(paddingX, y);
+                    ctx.lineTo(lineEndX, y);
+                    ctx.stroke();
+                    ctx.globalAlpha = 1;
+                }
+            });
+
+            if (!prefersReducedMotion) {
+                const scanY = scanProgress * height;
+                const gradient = ctx.createLinearGradient(0, scanY - 16, 0, scanY + 16);
+                gradient.addColorStop(0, 'rgba(0,0,0,0)');
+                gradient.addColorStop(0.5, scanColor);
+                gradient.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, scanY - 16, width, 32);
+
+                scanProgress += delta * 0.00035;
+                if (scanProgress > 1.2) scanProgress = -0.2;
+
+                canvasRafRef.current = requestAnimationFrame(draw);
+            }
+        };
+
+        if (prefersReducedMotion) {
+            draw(performance.now());
+        } else {
+            canvasRafRef.current = requestAnimationFrame(draw);
+        }
+
+        const handleResize = () => resize();
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            if (canvasRafRef.current) cancelAnimationFrame(canvasRafRef.current);
+        };
+    }, [isAnalyzing, theme, prefersReducedMotion]);
+
+    const playCompletionAnimation = () => {
+        return new Promise<void>((resolve) => {
+            if (!overlayRef.current || prefersReducedMotion) {
+                window.setTimeout(resolve, prefersReducedMotion ? 250 : 0);
+                return;
+            }
+
+            const tl = gsap.timeline({ onComplete: resolve });
+            tl.to('[data-gsap="panel"]', { scale: 1.04, duration: 0.25, ease: 'power2.out' }).to('[data-gsap="panel"]', { opacity: 0, scale: 0.95, filter: 'blur(8px)', duration: 0.4, ease: 'power2.in' }, '+=0.05').to(overlayRef.current, { opacity: 0, duration: 0.4, ease: 'power2.in' }, '<');
+        });
+    };
 
     const handleFile = (file: File) => {
         if (file.type !== 'application/pdf') {
@@ -72,14 +276,16 @@ export default function Home() {
 
         if (!selectedFile || !isRoleSelected) return;
 
+        setIsAnalyzing(true);
+        setIsComplete(false);
+        setAnalysisStep(0);
+
         try {
             console.log('Uploading resume...');
-
+            setAnalysisStep(0);
             const pdfUrl = await uploadResume(selectedFile);
 
-            console.log('Resume uploaded successfully');
-            console.log('PDF URL:', pdfUrl);
-
+            console.log('Resume uploaded successfully\nPDF URL:', pdfUrl);
             console.log('Starting resume analysis...');
 
             const response = await fetch('http://localhost:3000/resume/analyze', {
@@ -99,18 +305,80 @@ export default function Home() {
 
             const result = await response.json();
 
-            console.log('Resume analysis completed');
-            console.log('Analysis result:', result);
+            console.log('Resume analysis completed\nAnalysis result:', result);
 
+            setAnalysisStep(analysisSteps.length - 1);
+            setIsComplete(true);
+
+            await playCompletionAnimation();
             navigate('/story');
         } catch (error) {
             console.error('Resume analysis failed:', error);
+            setIsComplete(false);
+            setIsAnalyzing(false);
         }
     };
 
     return (
         <div className='h-screen w-full overflow-hidden select-none bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 antialiased transition-colors duration-300'>
-            <header className='fixed inset-x-0 top-0 z-50'>
+            <AnimatePresence mode='wait'>
+                {isAnalyzing && (
+                    <motion.div
+                        key='analysis'
+                        ref={overlayRef}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                        role='status'
+                        aria-live='polite'
+                        className='fixed inset-0 z-100 flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-zinc-950 px-6 text-zinc-100 font-sans'
+                    >
+                        <div data-gsap='status' className='absolute left-6 top-6 z-20 flex items-center gap-2'>
+                            <span className='h-1.5 w-1.5 rounded-full bg-zinc-400' />
+                            <span className='font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-400'>Resume Analysis</span>
+                        </div>
+                        <div className='pointer-events-none absolute left-1/2 top-[40%] h-75 w-75 -translate-x-1/2 rounded-full bg-zinc-400/4 blur-[80px]' />
+                        <div className='relative z-10 flex w-full max-w-2xl flex-col items-center'>
+                            <div data-gsap='panel' className='relative w-full max-w-md p-8'>
+                                <div className='mx-auto relative h-80 w-60 overflow-hidden rounded-xl bg-zinc-950 border border-zinc-800'>
+                                    <div className='absolute -left-px -top-px z-10 h-5 w-5 rounded-tl-xl border-l-2 border-t-2 border-zinc-400/60' />
+                                    <div className='absolute -right-px -top-px z-10 h-5 w-5 rounded-tr-xl border-r-2 border-t-2 border-zinc-400/60' />
+                                    <div className='absolute -bottom-px -left-px z-10 h-5 w-5 rounded-bl-xl border-b-2 border-l-2 border-zinc-400/60' />
+                                    <div className='absolute -bottom-px -right-px z-10 h-5 w-5 rounded-br-xl border-b-2 border-r-2 border-zinc-400/60' />
+                                    <canvas ref={canvasRef} className='h-full w-full' />
+                                </div>
+
+                                <div className='mt-8 text-center min-h-18'>
+                                    <AnimatePresence mode='wait'>
+                                        <motion.div key={analysisStep} initial={{ opacity: 0, y: 12, filter: 'blur(4px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, y: -12, filter: 'blur(4px)' }} transition={{ duration: 0.4, ease: 'easeOut' }}>
+                                            <h2 className='text-xl font-semibold tracking-tight text-white'>{analysisMessages[analysisStep].title}</h2>
+
+                                            <p className='mt-2 text-sm text-zinc-400'>{analysisMessages[analysisStep].subtitle}</p>
+                                        </motion.div>
+                                    </AnimatePresence>
+                                </div>
+                            </div>
+                            <div data-gsap='role' className='mt-2 flex items-center gap-2 text-center'>
+                                <span className='text-[12px] font-mono uppercase tracking-[0.16em] text-zinc-500'>Tailoring for</span>
+                                <span className='text-[14px] font-medium text-zinc-300'>{targetRole}</span>
+                            </div>
+                        </div>
+
+                        <div data-gsap='footer' className='absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500'>
+                            {isComplete ? (
+                                <span className='text-zinc-200'>Analysis complete</span>
+                            ) : (
+                                <>
+                                    <Loader2 className='h-3.5 w-3.5 animate-spin text-zinc-400' />
+                                    <span>Analyzing · {elapsedSeconds}s</span>
+                                </>
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+            <motion.header className={`fixed inset-x-0 top-0 z-50 ${isAnalyzing ? 'pointer-events-none' : ''}`} animate={{ opacity: isAnalyzing ? 0 : 1, scale: prefersReducedMotion ? 1 : isAnalyzing ? 0.98 : 1 }} transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }} aria-hidden={isAnalyzing}>
                 <div className='mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8'>
                     <div className='inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/80 backdrop-blur-md px-3 py-1.5 dark:border-zinc-800 dark:bg-zinc-900/80'>
                         <span className='h-1.5 w-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100' />
@@ -139,8 +407,13 @@ export default function Home() {
                         </button>
                     </div>
                 </div>
-            </header>
-            <section className='relative flex h-screen items-center overflow-hidden'>
+            </motion.header>
+            <motion.section
+                className={`relative flex h-screen items-center overflow-hidden ${isAnalyzing ? 'pointer-events-none' : ''}`}
+                animate={{ opacity: isAnalyzing ? 0 : 1, scale: prefersReducedMotion ? 1 : isAnalyzing ? 0.98 : 1 }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                aria-hidden={isAnalyzing}
+            >
                 <div className='relative mx-auto grid h-screen w-full max-w-7xl grid-cols-1 items-center gap-16 px-6 pt-20 lg:grid-cols-2 lg:gap-10 lg:px-8 lg:pt-0'>
                     <div className='flex flex-col justify-center pb-10 lg:pb-0'>
                         <h1 className='text-4xl font-semibold leading-[1.08] text-zinc-900 dark:text-white sm:text-5xl lg:text-[3.8rem]' style={{ fontFamily: 'Geist, sans-serif' }}>
@@ -286,8 +559,8 @@ export default function Home() {
                                     </div>
                                     <span className='flex items-center gap-2 rounded-full bg-zinc-100 px-2.5 py-1 font-mono text-[10px] font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'>
                                         <span className='relative flex h-2 w-2'>
-                                            <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60'></span>
-                                            <span className='relative inline-flex h-2 w-2 rounded-full bg-emerald-500'></span>
+                                            <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-zinc-400 opacity-60'></span>
+                                            <span className='relative inline-flex h-2 w-2 rounded-full bg-zinc-500'></span>
                                         </span>
                                         analyzing
                                     </span>
@@ -311,7 +584,7 @@ export default function Home() {
                             <div className='animate-float-b absolute -left-10 top-[32%] w-40 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
                                 <div className='flex items-center justify-between'>
                                     <span className='font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>Hire Rate</span>
-                                    <CheckCircle2 className='h-3.5 w-3.5 text-emerald-500' />
+                                    <CheckCircle2 className='h-3.5 w-3.5 text-zinc-900 dark:text-zinc-100' />
                                 </div>
                                 <div className='mt-1 text-lg font-semibold text-zinc-900 dark:text-zinc-100'>Very High</div>
                             </div>
@@ -330,8 +603,8 @@ export default function Home() {
                                 </div>
                                 <div className='mt-2 flex items-center gap-2'>
                                     <span className='relative flex h-2 w-2'>
-                                        <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60' />
-                                        <span className='relative inline-flex h-2 w-2 rounded-full bg-emerald-500' />
+                                        <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-zinc-400 opacity-60' />
+                                        <span className='relative inline-flex h-2 w-2 rounded-full bg-zinc-500' />
                                     </span>
                                     <span className='text-[13px] font-semibold text-zinc-900 dark:text-zinc-100'>Generating...</span>
                                 </div>
@@ -339,7 +612,7 @@ export default function Home() {
                         </div>
                     </div>
                 </div>
-            </section>
+            </motion.section>
         </div>
     );
 }
