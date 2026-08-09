@@ -1,6 +1,7 @@
 import { UploadCloud, CheckCircle2, FileText, Gauge, ChevronRight, SunMedium, Moon, ShieldCheck } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme.ts';
 import { uploadResume } from '../services/uploadResume.ts';
 import TargetRoleSelector from './TargetRoleSelector';
@@ -15,6 +16,8 @@ export default function Home() {
 
     const headlinePhrases = ['resume.', 'interviews.', 'career.'];
     const [headlineIndex, setHeadlineIndex] = useState(0);
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         const interval = window.setInterval(() => {
@@ -98,6 +101,8 @@ export default function Home() {
 
             console.log('Resume analysis completed');
             console.log('Analysis result:', result);
+
+            navigate('/story');
         } catch (error) {
             console.error('Resume analysis failed:', error);
         }
