@@ -22,6 +22,11 @@ def rag_storing_pdf(user_id: str, pdf_url: str):
     try:
         loader = PyMuPDFLoader(pdf_url)
         data = loader.load()
+        if data == "" or data == None or not data:
+            return {
+                "success": False,
+                "error": "data not found",
+            }
     except Exception as e:
         logger.error(f"PDF loading failed for url {pdf_url}: {e}")
         return {
