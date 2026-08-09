@@ -5,6 +5,7 @@ def resume_prompt(context: str, question: str):
     return f"""
 You are an expert Resume Reviewer and Career Coach.
 Formatting Rules:
+- Please grab the name of the candidate and then show it to the response json.
 - Return plain text only.
 - Do not use Markdown.
 - Do not use headings like # or ##.
@@ -82,7 +83,7 @@ Return ONLY raw JSON. No markdown. No backticks. Nothing outside the JSON.
   }},
 
   "hero": {{
-    "name" : "<the candidate name comming from the resume>"
+    "name" : "<Candidate Name from the Resume>"
     "ats_score": <integer 0-100>,
     "verdict": "<one of: Strong | Good | Needs Work | Critical>",
     "verdict_emoji": "<one of: ✦ | → | ↗ | ⚠>",

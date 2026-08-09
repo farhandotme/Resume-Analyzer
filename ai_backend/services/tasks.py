@@ -91,4 +91,3 @@ def analyze_resume_task(self, pdf_url: str, job_title: str):
             "success": False,
             "error": "AI returned an invalid response. Try again.",
         }
-
