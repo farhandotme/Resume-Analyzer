@@ -1,4 +1,4 @@
-import { UploadCloud, CheckCircle2, FileText, Gauge, ChevronRight, SunMedium, Moon, ShieldCheck, Cpu, Loader2 } from 'lucide-react';
+import { UploadCloud, CheckCircle2, FileText, Gauge, ChevronRight, SunMedium, Moon, ShieldCheck, Loader2 } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -6,8 +6,6 @@ import gsap from 'gsap';
 import { useTheme } from '../hooks/useTheme.ts';
 import { uploadResume } from '../services/uploadResume.ts';
 import TargetRoleSelector from './TargetRoleSelector';
-
-const ANALYSIS_HEADING = 'Understanding your resume';
 
 export default function Home() {
     const { theme, toggleTheme } = useTheme();
@@ -18,7 +16,16 @@ export default function Home() {
     const [isRoleSelected, setIsRoleSelected] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isComplete, setIsComplete] = useState(false);
+    const [analysisStep, setAnalysisStep] = useState(0);
+    const [elapsedSeconds, setElapsedSeconds] = useState(0);
+    const [headlineIndex, setHeadlineIndex] = useState(0);
+    const navigate = useNavigate();
+    const prefersReducedMotion = Boolean(useReducedMotion());
+    const overlayRef = useRef<HTMLDivElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const canvasRafRef = useRef<number | null>(null);
 
+    const headlinePhrases = ['resume.', 'interviews.', 'career.'];
     const analysisSteps = ['Reading your resume', 'Understanding your experience', 'Matching your target role', 'Building your analysis'];
 
     const analysisMessages = [
@@ -39,19 +46,6 @@ export default function Home() {
             subtitle: 'Turning everything into actionable insights',
         },
     ];
-
-    const [analysisStep, setAnalysisStep] = useState(0);
-    const [elapsedSeconds, setElapsedSeconds] = useState(0);
-
-    const headlinePhrases = ['resume.', 'interviews.', 'career.'];
-    const [headlineIndex, setHeadlineIndex] = useState(0);
-
-    const navigate = useNavigate();
-    const prefersReducedMotion = Boolean(useReducedMotion());
-
-    const overlayRef = useRef<HTMLDivElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const canvasRafRef = useRef<number | null>(null);
 
     useEffect(() => {
         const interval = window.setInterval(() => {
@@ -82,7 +76,7 @@ export default function Home() {
                 }
                 return current + 1;
             });
-        }, 1800);
+        }, 3000);
 
         return () => window.clearInterval(interval);
     }, [isAnalyzing]);
@@ -338,83 +332,52 @@ export default function Home() {
                         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                         role='status'
                         aria-live='polite'
-                        className='fixed inset-0 z-[100] flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-zinc-950 px-6 text-zinc-100 font-sans'
+                        className='fixed inset-0 z-100 flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-zinc-950 px-6 text-zinc-100 font-sans'
                     >
-                        {/* Background Grid & Monochrome Radial Orbs */}
-                        <div className='absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]' />
-                        <div className='pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/[0.02] blur-[120px]' />
-                        <div className='pointer-events-none absolute left-1/2 top-[40%] h-[300px] w-[300px] -translate-x-1/2 rounded-full bg-zinc-400/[0.04] blur-[80px]' />
-
+                        <div data-gsap='status' className='absolute left-6 top-6 z-20 flex items-center gap-2'>
+                            <span className='h-1.5 w-1.5 rounded-full bg-zinc-400' />
+                            <span className='font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-400'>Resume Analysis</span>
+                        </div>
+                        <div className='pointer-events-none absolute left-1/2 top-[40%] h-75 w-75 -translate-x-1/2 rounded-full bg-zinc-400/4 blur-[80px]' />
                         <div className='relative z-10 flex w-full max-w-2xl flex-col items-center'>
-                            {/* Top Badge */}
-                            <div data-gsap='status' className='mb-12 inline-flex items-center gap-2.5 rounded-full border border-zinc-800 bg-zinc-900/80 px-4 py-2 backdrop-blur-md shadow-lg'>
-                                <Cpu className='h-4 w-4 text-zinc-300' />
-                                <span className='font-mono text-[11px] font-medium uppercase tracking-widest text-zinc-300'>AI Engine Active</span>
-                            </div>
-
-                            {/* Central Glass Card */}
-                            <div data-gsap='panel' className='relative w-full max-w-md rounded-3xl border border-zinc-800 bg-zinc-900/50 p-8 shadow-2xl backdrop-blur-xl'>
-                                {/* White/Zinc Corner Accents */}
-                                <div className='absolute -left-[1px] -top-[1px] h-4 w-4 rounded-tl-3xl border-l-2 border-t-2 border-zinc-400/60' />
-                                <div className='absolute -right-[1px] -top-[1px] h-4 w-4 rounded-tr-3xl border-r-2 border-t-2 border-zinc-400/60' />
-                                <div className='absolute -bottom-[1px] -left-[1px] h-4 w-4 rounded-bl-3xl border-b-2 border-l-2 border-zinc-400/60' />
-                                <div className='absolute -bottom-[1px] -right-[1px] h-4 w-4 rounded-br-3xl border-b-2 border-r-2 border-zinc-400/60' />
-
-                                {/* Document Scanner Area */}
-                                <div className='mx-auto relative h-52 w-40 overflow-hidden rounded-xl bg-zinc-950 border border-zinc-800 shadow-inner'>
+                            <div data-gsap='panel' className='relative w-full max-w-md p-8'>
+                                <div className='mx-auto relative h-80 w-60 overflow-hidden rounded-xl bg-zinc-950 border border-zinc-800'>
+                                    <div className='absolute -left-px -top-px z-10 h-5 w-5 rounded-tl-xl border-l-2 border-t-2 border-zinc-400/60' />
+                                    <div className='absolute -right-px -top-px z-10 h-5 w-5 rounded-tr-xl border-r-2 border-t-2 border-zinc-400/60' />
+                                    <div className='absolute -bottom-px -left-px z-10 h-5 w-5 rounded-bl-xl border-b-2 border-l-2 border-zinc-400/60' />
+                                    <div className='absolute -bottom-px -right-px z-10 h-5 w-5 rounded-br-xl border-b-2 border-r-2 border-zinc-400/60' />
                                     <canvas ref={canvasRef} className='h-full w-full' />
                                 </div>
 
-                                {/* Dynamic Progress Bar */}
-                                <div className='mt-10 w-full'>
-                                    <div className='flex justify-between items-center mb-2.5 font-mono text-[10px] uppercase tracking-widest text-zinc-400'>
-                                        <span>Phase {analysisStep + 1} of 4</span>
-                                        <span className='text-zinc-200'>{Math.round(((analysisStep + 1) / 4) * 100)}%</span>
-                                    </div>
-                                    <div className='h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden'>
-                                        <motion.div className='h-full bg-white dark:bg-zinc-100' initial={{ width: 0 }} animate={{ width: `${((analysisStep + 1) / 4) * 100}%` }} transition={{ duration: 0.8, ease: 'easeInOut' }} />
-                                    </div>
-                                </div>
-
-                                {/* Step Messaging */}
-                                <div className='mt-8 text-center min-h-[4.5rem]'>
+                                <div className='mt-8 text-center min-h-18'>
                                     <AnimatePresence mode='wait'>
                                         <motion.div key={analysisStep} initial={{ opacity: 0, y: 12, filter: 'blur(4px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, y: -12, filter: 'blur(4px)' }} transition={{ duration: 0.4, ease: 'easeOut' }}>
                                             <h2 className='text-xl font-semibold tracking-tight text-white'>{analysisMessages[analysisStep].title}</h2>
+
                                             <p className='mt-2 text-sm text-zinc-400'>{analysisMessages[analysisStep].subtitle}</p>
                                         </motion.div>
                                     </AnimatePresence>
                                 </div>
                             </div>
-
-                            {/* Target Role Pill */}
-                            <div data-gsap='role' className='mt-10 flex flex-col items-center'>
-                                <span className='text-[10px] text-zinc-500 uppercase tracking-widest font-mono mb-3'>Tailoring Analysis For</span>
-                                <div className='inline-flex items-center gap-3 rounded-full border border-zinc-800 bg-zinc-900/60 px-5 py-2 shadow-lg backdrop-blur-sm'>
-                                    <span className='relative flex h-2 w-2'>
-                                        <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-zinc-400 opacity-75'></span>
-                                        <span className='relative inline-flex h-2 w-2 rounded-full bg-zinc-200'></span>
-                                    </span>
-                                    <span className='text-sm font-medium text-zinc-200'>{targetRole}</span>
-                                </div>
+                            <div data-gsap='role' className='mt-2 flex items-center gap-2 text-center'>
+                                <span className='text-[12px] font-mono uppercase tracking-[0.16em] text-zinc-500'>Tailoring for</span>
+                                <span className='text-[14px] font-medium text-zinc-300'>{targetRole}</span>
                             </div>
+                        </div>
 
-                            {/* Footer Status */}
-                            <div data-gsap='footer' className='absolute bottom-10 flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500'>
-                                {isComplete ? (
-                                    <span className='text-zinc-200'>Analysis complete</span>
-                                ) : (
-                                    <>
-                                        <Loader2 className='h-3.5 w-3.5 animate-spin text-zinc-400' />
-                                        <span>Analyzing · {elapsedSeconds}s</span>
-                                    </>
-                                )}
-                            </div>
+                        <div data-gsap='footer' className='absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500'>
+                            {isComplete ? (
+                                <span className='text-zinc-200'>Analysis complete</span>
+                            ) : (
+                                <>
+                                    <Loader2 className='h-3.5 w-3.5 animate-spin text-zinc-400' />
+                                    <span>Analyzing · {elapsedSeconds}s</span>
+                                </>
+                            )}
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
-
             <motion.header className={`fixed inset-x-0 top-0 z-50 ${isAnalyzing ? 'pointer-events-none' : ''}`} animate={{ opacity: isAnalyzing ? 0 : 1, scale: prefersReducedMotion ? 1 : isAnalyzing ? 0.98 : 1 }} transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }} aria-hidden={isAnalyzing}>
                 <div className='mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8'>
                     <div className='inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/80 backdrop-blur-md px-3 py-1.5 dark:border-zinc-800 dark:bg-zinc-900/80'>
