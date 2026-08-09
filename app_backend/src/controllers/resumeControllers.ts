@@ -38,11 +38,17 @@ export const analyzeResume = async (req: Request, res: Response) => {
             resolve(statusData.data);
           } else if (statusData.status === "failed") {
             clearInterval(interval);
+            // Pass the error message from FastAPI
             reject(new Error(statusData.error || "Analysis failed."));
           }
-        } catch (err) {
+        } catch (err: any) {
           clearInterval(interval);
-          reject(err);
+          // If axios error (e.g., 400/500 from FastAPI), extract the error
+          if (err.response?.data?.error) {
+            reject(new Error(err.response.data.error));
+          } else {
+            reject(err);
+          }
         }
       }, 3000);
     });
@@ -52,15 +58,33 @@ export const analyzeResume = async (req: Request, res: Response) => {
       success: true,
       data: result,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Analyze resume error:", error);
+
+    const errorMessage = error.message || "Analysis failed. Try again.";
+
+    // Check if it's a validation error (400) vs server error (500)
+    if (
+      errorMessage.includes("does not appear to be a resume") ||
+      errorMessage.includes("not a resume") ||
+      errorMessage.includes("data not found") ||
+      errorMessage.includes("no readable text") ||
+      errorMessage.includes("no extractable text") ||
+      errorMessage.includes("too short")
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: errorMessage,
+      });
+    }
+
+    // For other errors, return 500
     return res.status(500).json({
       success: false,
       error: "Analysis failed. Try again.",
     });
   }
 };
-
 export const chatResume = async (req: Request, res: Response) => {
   try {
     const { pdfUrl, message } = req.body;

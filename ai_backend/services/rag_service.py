@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -22,11 +23,67 @@ def rag_storing_pdf(user_id: str, pdf_url: str):
     try:
         loader = PyMuPDFLoader(pdf_url)
         data = loader.load()
+
+        # Check if data is empty
         if data == "" or data == None or not data:
             return {
                 "success": False,
                 "error": "data not found",
             }
+
+        # NEW: Check if pages have content BEFORE splitting
+        full_text = " ".join([doc.page_content for doc in data]).strip()
+
+        if not full_text:
+            return {
+                "success": False,
+                "error": "PDF contains no extractable text. It might be a scanned image.",
+            }
+
+        # Resume validation (your existing code)
+        text_lower = full_text.lower()
+
+        # Common resume sections
+        resume_sections = [
+            "experience",
+            "work experience",
+            "professional experience",
+            "education",
+            "skills",
+            "summary",
+            "objective",
+            "projects",
+            "certifications",
+            "achievements",
+            "employment history",
+            "work history",
+        ]
+
+        # Check for resume sections
+        has_section = any(section in text_lower for section in resume_sections)
+
+        # Check for contact info (email or phone)
+        email_pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
+        phone_pattern = r"(\+?\d{1,3}[-.\s]?)?(\(?\d{3}\)?[-.\s]?)?\d{3}[-.\s]?\d{4}"
+
+        has_email = bool(re.search(email_pattern, full_text))
+        has_phone = bool(re.search(phone_pattern, full_text))
+
+        # If no resume sections AND no contact info, reject
+        if not has_section and not (has_email or has_phone):
+            return {
+                "success": False,
+                "error": "This document does not appear to be a resume. Please upload a valid resume with sections like Experience, Education, or Skills.",
+            }
+
+        # Optional: Check minimum word count
+        word_count = len(full_text.split())
+        if word_count < 50:
+            return {
+                "success": False,
+                "error": "This document does not appear to be a resume. Content is too short.",
+            }
+
     except Exception as e:
         logger.error(f"PDF loading failed for url {pdf_url}: {e}")
         return {
