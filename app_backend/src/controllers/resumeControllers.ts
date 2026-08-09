@@ -5,7 +5,7 @@ const FASTAPI_URL = process.env.FASTAPI_URL;
 
 // uploading the resume
 
-// needs the pdfurl, job title ,and resumeId for analizing it
+// needs the pdfurl, job title ,and resumeId for analyzing it
 export const analyzeResume = async (req: Request, res: Response) => {
   try {
     const { pdfUrl, jobTitle } = req.body;
