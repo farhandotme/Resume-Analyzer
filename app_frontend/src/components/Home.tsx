@@ -22,7 +22,6 @@ type ResumeDocumentRefs = {
 function ResumeDocument({ refs }: { refs?: ResumeDocumentRefs }) {
     return (
         <>
-            {/* Added w-fit so bounding boxes accurately wrap the content */}
             <div ref={refs?.nameRef} className='mb-5 w-fit space-y-1.5'>
                 <div className='h-2 w-24 rounded-full bg-zinc-600' />
                 <div className='h-1.5 w-32 rounded-full bg-zinc-800' />
@@ -430,11 +429,64 @@ export default function Home() {
                             <span className='h-1.5 w-1.5 rounded-full bg-zinc-400' />
                             <span className='font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-400'>Resume Analysis</span>
                         </div>
-                        <div className='pointer-events-none absolute left-1/2 top-[40%] h-75 w-75 -translate-x-1/2 rounded-full bg-zinc-400/4 blur-[80px]' />
+
+                        <style>{`
+                            @keyframes key-light-drift {
+                                0%   { transform: translate(-50%, -50%) translate(0px, 0px) scale(1); opacity: 0.5; }
+                                20%  { transform: translate(-50%, -50%) translate(16px, 10px) scale(1.035); opacity: 0.68; }
+                                45%  { transform: translate(-50%, -50%) translate(-10px, 18px) scale(1.06); opacity: 0.85; }
+                                70%  { transform: translate(-50%, -50%) translate(-18px, -6px) scale(1.02); opacity: 0.6; }
+                                100% { transform: translate(-50%, -50%) translate(0px, 0px) scale(1); opacity: 0.5; }
+                            }
+                            @keyframes ambient-pool-drift {
+                                0%   { transform: translate(-50%, -50%) translate(0px, 0px) scale(1); opacity: 0.35; }
+                                30%  { transform: translate(-50%, -50%) translate(-20px, 8px) scale(1.05); opacity: 0.55; }
+                                58%  { transform: translate(-50%, -50%) translate(8px, -16px) scale(0.97); opacity: 0.7; }
+                                82%  { transform: translate(-50%, -50%) translate(18px, 10px) scale(1.03); opacity: 0.45; }
+                                100% { transform: translate(-50%, -50%) translate(0px, 0px) scale(1); opacity: 0.35; }
+                            }
+                        `}</style>
+                        <div className='pointer-events-none absolute inset-0 z-0 overflow-hidden bg-zinc-950 select-none'>
+                            <div
+                                className='absolute left-[45%] top-[29%] h-225 w-225 rounded-full'
+                                style={{
+                                    background: 'radial-gradient(circle, rgba(244,244,245,0.09) 0%, rgba(244,244,245,0.03) 34%, transparent 70%)',
+                                    filter: 'blur(75px)',
+                                    transform: 'translate(-50%, -50%) scale(1)',
+                                    opacity: 0.5,
+                                    animation: prefersReducedMotion ? 'none' : 'key-light-drift 26s ease-in-out infinite',
+                                }}
+                            />
+                            <div
+                                className='absolute left-[63%] top-[46%] h-190 w-190 rounded-full'
+                                style={{
+                                    background: 'radial-gradient(circle, rgba(228,228,231,0.05) 0%, rgba(228,228,231,0.016) 40%, transparent 72%)',
+                                    filter: 'blur(100px)',
+                                    transform: 'translate(-50%, -50%) scale(1)',
+                                    opacity: 0.35,
+                                    animation: prefersReducedMotion ? 'none' : 'ambient-pool-drift 29s ease-in-out infinite',
+                                }}
+                            />
+                            <div
+                                className='absolute inset-0'
+                                style={{
+                                    background: 'radial-gradient(ellipse 85% 65% at 47% 27%, transparent 0%, rgba(9,9,11,0.5) 58%, rgba(9,9,11,0.97) 100%), linear-gradient(to bottom, rgba(9,9,11,0) 0%, rgba(9,9,11,0.4) 100%)',
+                                }}
+                            />
+                            <div
+                                className='absolute inset-0'
+                                style={{
+                                    backgroundImage:
+                                        'url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27240%27%20height=%27240%27%20viewBox=%270%200%20240%20240%27%3E%3Cfilter%20id=%27n%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%270.9%27%20numOctaves=%272%27%20stitchTiles=%27stitch%27/%3E%3C/filter%3E%3Crect%20width=%27100%25%27%20height=%27100%25%27%20filter=%27url(%23n)%27/%3E%3C/svg%3E)',
+                                    opacity: 0.045,
+                                    mixBlendMode: 'overlay',
+                                }}
+                            />
+                        </div>
+
                         <div className='relative z-10 flex w-full max-w-2xl flex-col items-center'>
                             <div data-gsap='panel' className='relative w-full max-w-md p-8'>
                                 <div className='mx-auto relative h-104 w-64 rounded-xl bg-zinc-950 border border-zinc-800'>
-                                    {/* The visual resume boundary where content gets accurately clipped */}
                                     <div ref={resumeViewportRef} className='absolute inset-0 overflow-hidden rounded-xl'>
                                         <div className='absolute -left-px -top-px z-30 h-5 w-5 rounded-tl-xl border-l-2 border-t-2 border-zinc-400/60' />
                                         <div className='absolute -right-px -top-px z-30 h-5 w-5 rounded-tr-xl border-r-2 border-t-2 border-zinc-400/60' />
@@ -451,7 +503,6 @@ export default function Home() {
                                     </div>
 
                                     <div ref={lensRef} className='pointer-events-none absolute left-0 top-0 z-30 opacity-0' style={{ width: LENS_SIZE, height: LENS_SIZE }}>
-                                        {/* Intro Text Callout connecting minimally to the lens */}
                                         <div ref={calloutRef} className='absolute left-[calc(100%+18px)] top-1/2 -translate-y-1/2 flex items-center whitespace-nowrap opacity-0 z-40 drop-shadow-md'>
                                             <span className='font-sans text-[13px] font-light tracking-wide text-zinc-200'>Let me analyze this resume</span>
 
