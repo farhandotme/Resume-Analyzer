@@ -9,7 +9,7 @@ import Story4 from './Story4';
 import Story5 from './Story5';
 import Story6 from './Story6';
 
-const STORY_DURATIONS = [7000, 3000, 5000, 7000, 14000, 7000];
+const STORY_DURATIONS = [8000, 5000, 6000, 6000, 14000, 7000];
 
 const StoryContent = () => {
     const { paused, setPaused } = useStory();
@@ -86,7 +86,7 @@ const StoryContent = () => {
                 />
             </div>
             <StoryProgress totalStories={totalStories} currentStory={currentStory} progress={progress} />
-            {currentStory === 0 && <Story1 progress={progress} />}
+            {currentStory === 0 && <Story1 />}
             {currentStory === 1 && <Story2 />}
             {currentStory === 2 && <Story3 />}
             {currentStory === 3 && <Story4 />}

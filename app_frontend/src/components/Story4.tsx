@@ -2,39 +2,45 @@
 
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-
-type Story4Props = {};
+import { useStory } from './StoryContext';
 
 type Improvement = {
     title: string;
     description: string;
 };
 
-const improvements: Improvement[] = [
-    {
-        title: 'Summary',
-        description: "Your summary doesn't explain what you've actually built. Mention your strongest technologies, measurable impact and the exact role you're targeting.",
-    },
-    {
-        title: 'Projects',
-        description: 'Your projects look good but they lack measurable impact. Add users, response time, scaling metrics and business results recruiters can instantly trust.',
-    },
-    {
-        title: 'Skills',
-        description: 'Separate Technical Skills from DevOps and include Docker, Kubernetes, REST APIs and CI/CD to significantly improve ATS matching.',
-    },
-];
-
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-const Story4 = ({}: Story4Props) => {
+const Story4 = () => {
+    const { analysisResult } = useStory();
+
+    const improvements: Improvement[] =
+        analysisResult?.data?.data?.resume_fixes
+            ?.filter((item: { priority: string; section: string; fix: string }) => item.priority === 'High')
+            .slice(0, 3)
+            .map((item: { priority: string; section: string; fix: string }) => ({
+                title: item.section,
+                description: item.fix,
+            })) ?? [];
+
     const [visibleColumns, setVisibleColumns] = useState(0);
 
     useEffect(() => {
-        const timers = [setTimeout(() => setVisibleColumns(1), 700), setTimeout(() => setVisibleColumns(2), 1250), setTimeout(() => setVisibleColumns(3), 1800)];
+        setVisibleColumns(0);
+
+        const timers = improvements.map((_, index) =>
+            window.setTimeout(
+                () => {
+                    setVisibleColumns(index + 1);
+                },
+                700 + index * 550,
+            ),
+        );
 
         return () => timers.forEach(clearTimeout);
-    }, []);
+    }, [improvements.length]);
+
+    const layoutClass = improvements.length === 1 ? 'flex justify-center' : improvements.length === 2 ? 'mx-auto grid max-w-4xl grid-cols-2 gap-20' : 'grid grid-cols-3 gap-20';
 
     return (
         <section className='relative flex h-screen items-center justify-center overflow-hidden bg-white'>
@@ -44,6 +50,7 @@ const Story4 = ({}: Story4Props) => {
                     background: 'radial-gradient(circle at center, rgba(0,0,0,.035), transparent 70%)',
                 }}
             />
+
             <div className='relative z-10 w-full max-w-7xl px-20'>
                 <motion.div
                     initial={{
@@ -63,7 +70,7 @@ const Story4 = ({}: Story4Props) => {
                     <p className='text-[13px] uppercase tracking-[0.45em] text-zinc-500'>Top Improvements</p>
                 </motion.div>
 
-                <div className='grid grid-cols-3 gap-20'>
+                <div className={layoutClass}>
                     {improvements.map((item, index) => {
                         const visible = visibleColumns > index;
 
@@ -107,10 +114,11 @@ const Story4 = ({}: Story4Props) => {
                                         duration: 0.7,
                                         delay: 0.1,
                                     }}
-                                    className='pointer-events-none absolute -top-14 -left-2 text-[170px] font-semibold leading-none tracking-[-0.08em] text-black'
+                                    className='pointer-events-none absolute -top-12 -left-6 text-[145px] font-semibold leading-none tracking-[-0.14em] text-black'
                                 >
                                     {`0${index + 1}`}
                                 </motion.span>
+
                                 <motion.h2
                                     initial={{
                                         opacity: 0,
@@ -132,6 +140,7 @@ const Story4 = ({}: Story4Props) => {
                                 >
                                     {item.title}
                                 </motion.h2>
+
                                 <motion.p
                                     initial={{
                                         opacity: 0,
@@ -149,7 +158,7 @@ const Story4 = ({}: Story4Props) => {
                                         delay: 0.45,
                                         duration: 0.55,
                                     }}
-                                    className='relative z-10 mt-22 text-[18px] tracking-wide leading-7 text-zinc-600'
+                                    className='relative z-10 mt-22 text-[18px] leading-7 tracking-wide text-zinc-600'
                                 >
                                     {item.description}
                                 </motion.p>

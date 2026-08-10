@@ -424,7 +424,7 @@ export default function Home() {
 
             const result = await response.json();
 
-            console.log('Resume analysis completed\nAnalysis result:', result);
+            console.log('Resume analysis completed\nAnalysis result:', JSON.stringify(result, null, 2));
 
             const elapsedTime = Date.now() - animationStartTime;
             const remainingAnimationTime = Math.max(0, ANALYSIS_ANIMATION_DURATION - elapsedTime);
@@ -442,7 +442,11 @@ export default function Home() {
 
             await playCompletionAnimation();
 
-            navigate('/story');
+            navigate('/story', {
+                state: {
+                    analysisResult: result,
+                },
+            });
         } catch (error) {
             console.error('Resume analysis failed:', error);
             setIsComplete(false);
