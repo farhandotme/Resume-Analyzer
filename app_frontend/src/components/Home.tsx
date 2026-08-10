@@ -25,60 +25,60 @@ function ResumeDocument({ refs }: { refs?: ResumeDocumentRefs }) {
     return (
         <>
             <div ref={refs?.nameRef} className='mb-5 w-fit space-y-1.5'>
-                <div className='h-2 w-24 rounded-full bg-zinc-600' />
-                <div className='h-1.5 w-32 rounded-full bg-zinc-800' />
+                <div className='h-2 w-24 rounded-full bg-zinc-300 dark:bg-zinc-600' />
+                <div className='h-1.5 w-32 rounded-full bg-zinc-200 dark:bg-zinc-800' />
             </div>
 
             <div ref={refs?.experienceBlockRef} className='relative mb-5 rounded-md'>
                 <div ref={refs?.experienceHeadingRef} className='mb-2 flex w-fit items-center gap-1.5'>
-                    <span className='h-1 w-1 rounded-full bg-zinc-500' />
-                    <span className='font-mono text-[8px] font-medium uppercase tracking-[0.16em] text-zinc-500'>Experience</span>
+                    <span className='h-1 w-1 rounded-full bg-zinc-400 dark:bg-zinc-500' />
+                    <span className='font-mono text-[8px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500'>Experience</span>
                 </div>
                 <div className='space-y-1.5'>
-                    <div className='h-1.5 w-4/5 rounded-full bg-zinc-700' />
-                    <div className='h-1.5 w-3/5 rounded-full bg-zinc-800' />
-                    <div className='h-1.5 w-2/3 rounded-full bg-zinc-800' />
+                    <div className='h-1.5 w-4/5 rounded-full bg-zinc-300 dark:bg-zinc-700' />
+                    <div className='h-1.5 w-3/5 rounded-full bg-zinc-200 dark:bg-zinc-800' />
+                    <div className='h-1.5 w-2/3 rounded-full bg-zinc-200 dark:bg-zinc-800' />
                 </div>
                 <div className='mt-3 space-y-1.5'>
-                    <div className='h-1.5 w-3/5 rounded-full bg-zinc-700' />
-                    <div className='h-1.5 w-1/2 rounded-full bg-zinc-800' />
+                    <div className='h-1.5 w-3/5 rounded-full bg-zinc-300 dark:bg-zinc-700' />
+                    <div className='h-1.5 w-1/2 rounded-full bg-zinc-200 dark:bg-zinc-800' />
                 </div>
             </div>
 
             <div className='relative mb-5 rounded-md'>
                 <div ref={refs?.projectsHeadingRef} className='mb-2 flex w-fit items-center gap-1.5'>
-                    <span className='h-1 w-1 rounded-full bg-zinc-500' />
-                    <span className='font-mono text-[8px] font-medium uppercase tracking-[0.16em] text-zinc-500'>Projects</span>
+                    <span className='h-1 w-1 rounded-full bg-zinc-400 dark:bg-zinc-500' />
+                    <span className='font-mono text-[8px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500'>Projects</span>
                 </div>
                 <div className='space-y-1.5'>
-                    <div className='h-1.5 w-3/4 rounded-full bg-zinc-700' />
-                    <div className='h-1.5 w-1/2 rounded-full bg-zinc-800' />
+                    <div className='h-1.5 w-3/4 rounded-full bg-zinc-300 dark:bg-zinc-700' />
+                    <div className='h-1.5 w-1/2 rounded-full bg-zinc-200 dark:bg-zinc-800' />
                 </div>
                 <div className='mt-3 space-y-1.5'>
-                    <div className='h-1.5 w-2/3 rounded-full bg-zinc-700' />
-                    <div className='h-1.5 w-2/5 rounded-full bg-zinc-800' />
+                    <div className='h-1.5 w-2/3 rounded-full bg-zinc-300 dark:bg-zinc-700' />
+                    <div className='h-1.5 w-2/5 rounded-full bg-zinc-200 dark:bg-zinc-800' />
                 </div>
             </div>
 
             <div className='relative mb-5 rounded-md'>
                 <div ref={refs?.educationHeadingRef} className='mb-2 flex w-fit items-center gap-1.5'>
-                    <span className='h-1 w-1 rounded-full bg-zinc-500' />
-                    <span className='font-mono text-[8px] font-medium uppercase tracking-[0.16em] text-zinc-500'>Education</span>
+                    <span className='h-1 w-1 rounded-full bg-zinc-400 dark:bg-zinc-500' />
+                    <span className='font-mono text-[8px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500'>Education</span>
                 </div>
                 <div className='space-y-1.5'>
-                    <div className='h-1.5 w-3/5 rounded-full bg-zinc-700' />
-                    <div className='h-1.5 w-2/5 rounded-full bg-zinc-800' />
+                    <div className='h-1.5 w-3/5 rounded-full bg-zinc-300 dark:bg-zinc-700' />
+                    <div className='h-1.5 w-2/5 rounded-full bg-zinc-200 dark:bg-zinc-800' />
                 </div>
             </div>
 
             <div className='relative rounded-md'>
                 <div ref={refs?.skillsHeadingRef} className='mb-2 flex w-fit items-center gap-1.5'>
-                    <span className='h-1 w-1 rounded-full bg-zinc-500' />
-                    <span className='font-mono text-[8px] font-medium uppercase tracking-[0.16em] text-zinc-500'>Skills</span>
+                    <span className='h-1 w-1 rounded-full bg-zinc-400 dark:bg-zinc-500' />
+                    <span className='font-mono text-[8px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500'>Skills</span>
                 </div>
                 <div className='flex flex-wrap gap-1.5'>
                     {['Strategy', 'Analytics', 'Leadership', 'Automation', 'Design', 'Research'].map((skill) => (
-                        <span key={skill} className='rounded-full border border-zinc-800 bg-zinc-900 px-2 py-1 text-[8px] font-medium text-zinc-500'>
+                        <span key={skill} className='rounded-full border border-zinc-200 bg-zinc-50 px-2 py-1 text-[8px] font-medium text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-500'>
                             {skill}
                         </span>
                     ))}
@@ -443,11 +443,11 @@ export default function Home() {
                         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                         role='status'
                         aria-live='polite'
-                        className='fixed inset-0 z-100 flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-zinc-950 px-6 text-zinc-100 font-sans'
+                        className='fixed inset-0 z-100 flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-white dark:bg-zinc-950 px-6 text-zinc-900 dark:text-zinc-100 font-sans transition-colors duration-300'
                     >
                         <div data-gsap='status' className='absolute left-6 top-6 z-20 flex items-center gap-2'>
-                            <span className='h-1.5 w-1.5 rounded-full bg-zinc-400' />
-                            <span className='font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-400'>Resume Analysis</span>
+                            <span className='h-1.5 w-1.5 rounded-full bg-zinc-500 dark:bg-zinc-400' />
+                            <span className='font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400'>Resume Analysis</span>
                         </div>
 
                         <style>{`
@@ -466,11 +466,11 @@ export default function Home() {
                                 100% { transform: translate(-50%, -50%) translate(0px, 0px) scale(1); opacity: 0.35; }
                             }
                         `}</style>
-                        <div className='pointer-events-none absolute inset-0 z-0 overflow-hidden bg-zinc-950 select-none'>
+                        <div className='pointer-events-none absolute inset-0 z-0 overflow-hidden bg-white dark:bg-zinc-950 select-none transition-colors duration-300'>
                             <div
                                 className='absolute left-[45%] top-[29%] h-225 w-225 rounded-full'
                                 style={{
-                                    background: 'radial-gradient(circle, rgba(244,244,245,0.09) 0%, rgba(244,244,245,0.03) 34%, transparent 70%)',
+                                    background: theme === 'dark' ? 'radial-gradient(circle, rgba(244,244,245,0.09) 0%, rgba(244,244,245,0.03) 34%, transparent 70%)' : 'radial-gradient(circle, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 34%, transparent 70%)',
                                     filter: 'blur(75px)',
                                     transform: 'translate(-50%, -50%) scale(1)',
                                     opacity: 0.5,
@@ -480,7 +480,7 @@ export default function Home() {
                             <div
                                 className='absolute left-[63%] top-[46%] h-190 w-190 rounded-full'
                                 style={{
-                                    background: 'radial-gradient(circle, rgba(228,228,231,0.05) 0%, rgba(228,228,231,0.016) 40%, transparent 72%)',
+                                    background: theme === 'dark' ? 'radial-gradient(circle, rgba(228,228,231,0.05) 0%, rgba(228,228,231,0.016) 40%, transparent 72%)' : 'radial-gradient(circle, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.01) 40%, transparent 72%)',
                                     filter: 'blur(100px)',
                                     transform: 'translate(-50%, -50%) scale(1)',
                                     opacity: 0.35,
@@ -490,7 +490,10 @@ export default function Home() {
                             <div
                                 className='absolute inset-0'
                                 style={{
-                                    background: 'radial-gradient(ellipse 85% 65% at 47% 27%, transparent 0%, rgba(9,9,11,0.5) 58%, rgba(9,9,11,0.97) 100%), linear-gradient(to bottom, rgba(9,9,11,0) 0%, rgba(9,9,11,0.4) 100%)',
+                                    background:
+                                        theme === 'dark'
+                                            ? 'radial-gradient(ellipse 85% 65% at 47% 27%, transparent 0%, rgba(9,9,11,0.5) 58%, rgba(9,9,11,0.97) 100%), linear-gradient(to bottom, rgba(9,9,11,0) 0%, rgba(9,9,11,0.4) 100%)'
+                                            : 'radial-gradient(ellipse 85% 65% at 47% 27%, transparent 0%, rgba(255,255,255,0.5) 58%, rgba(255,255,255,0.97) 100%), linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 100%)',
                                 }}
                             />
                             <div
@@ -506,27 +509,27 @@ export default function Home() {
 
                         <div className='relative z-10 flex w-full max-w-2xl flex-col items-center'>
                             <div data-gsap='panel' className='relative w-full max-w-md p-8'>
-                                <div className='mx-auto relative h-104 w-64 rounded-xl bg-zinc-950 border border-zinc-800'>
+                                <div className='mx-auto relative h-104 w-64 rounded-xl bg-white border border-zinc-200 dark:bg-zinc-950 dark:border-zinc-800 transition-colors duration-300'>
                                     <div ref={resumeViewportRef} className='absolute inset-0 overflow-hidden rounded-xl'>
-                                        <div className='absolute -left-px -top-px z-30 h-5 w-5 rounded-tl-xl border-l-2 border-t-2 border-zinc-400/60' />
-                                        <div className='absolute -right-px -top-px z-30 h-5 w-5 rounded-tr-xl border-r-2 border-t-2 border-zinc-400/60' />
-                                        <div className='absolute -bottom-px -left-px z-30 h-5 w-5 rounded-bl-xl border-b-2 border-l-2 border-zinc-400/60' />
-                                        <div className='absolute -bottom-px -right-px z-30 h-5 w-5 rounded-br-xl border-b-2 border-r-2 border-zinc-400/60' />
+                                        <div className='absolute -left-px -top-px z-30 h-5 w-5 rounded-tl-xl border-l-2 border-t-2 border-zinc-300 dark:border-zinc-400/60' />
+                                        <div className='absolute -right-px -top-px z-30 h-5 w-5 rounded-tr-xl border-r-2 border-t-2 border-zinc-300 dark:border-zinc-400/60' />
+                                        <div className='absolute -bottom-px -left-px z-30 h-5 w-5 rounded-bl-xl border-b-2 border-l-2 border-zinc-300 dark:border-zinc-400/60' />
+                                        <div className='absolute -bottom-px -right-px z-30 h-5 w-5 rounded-br-xl border-b-2 border-r-2 border-zinc-300 dark:border-zinc-400/60' />
 
                                         <div ref={resumeStageRef} className='relative h-full w-full px-5 pb-8 pt-6 will-change-transform'>
                                             <ResumeDocument refs={{ nameRef, experienceBlockRef, experienceHeadingRef, projectsHeadingRef, educationHeadingRef, skillsHeadingRef }} />
                                         </div>
 
-                                        <div ref={finishFlashRef} className='pointer-events-none absolute inset-0 z-25 bg-white/10 opacity-0' />
-                                        <div className='pointer-events-none absolute inset-x-0 top-0 z-20 h-8 bg-linear-to-b from-zinc-950 to-transparent' />
-                                        <div className='pointer-events-none absolute inset-x-0 bottom-0 z-20 h-8 bg-linear-to-t from-zinc-950 to-transparent' />
+                                        <div ref={finishFlashRef} className='pointer-events-none absolute inset-0 z-25 bg-black/5 dark:bg-white/10 opacity-0' />
+                                        <div className='pointer-events-none absolute inset-x-0 top-0 z-20 h-8 bg-linear-to-b from-white dark:from-zinc-950 to-transparent' />
+                                        <div className='pointer-events-none absolute inset-x-0 bottom-0 z-20 h-8 bg-linear-to-t from-white dark:from-zinc-950 to-transparent' />
                                     </div>
 
                                     <div ref={lensRef} className='pointer-events-none absolute left-0 top-0 z-30 opacity-0' style={{ width: LENS_SIZE, height: LENS_SIZE }}>
                                         <div ref={calloutRef} className='absolute left-[calc(100%+18px)] top-1/2 -translate-y-1/2 flex items-center whitespace-nowrap opacity-0 z-40 drop-shadow-md'>
-                                            <span className='font-sans text-[13px] font-light tracking-wide text-zinc-200'>Let me analyze this resume</span>
+                                            <span className='font-sans text-[13px] font-light tracking-wide text-zinc-700 dark:text-zinc-200'>Let me analyze this resume</span>
 
-                                            <svg width='28' height='20' viewBox='0 0 28 20' className='absolute right-full mr-2 text-zinc-500/50'>
+                                            <svg width='28' height='20' viewBox='0 0 28 20' className='absolute right-full mr-2 text-zinc-400/50 dark:text-zinc-500/50'>
                                                 <line x1='28' y1='10' x2='0' y2='10' stroke='currentColor' strokeWidth='1' />
                                             </svg>
                                         </div>
@@ -539,41 +542,41 @@ export default function Home() {
                                             <div className='absolute -left-2.25 top-48 h-4.5 w-4.5 rounded-full border border-zinc-600/50 bg-linear-to-br from-zinc-700 to-zinc-900 shadow-[inset_1px_1px_3px_rgba(255,255,255,0.2)]' />
                                         </div>
 
-                                        <div className='absolute inset-0 overflow-hidden rounded-full bg-zinc-950'>
+                                        <div className='absolute inset-0 overflow-hidden rounded-full bg-white dark:bg-zinc-950'>
                                             <div ref={lensCloneRef} className='absolute left-0 top-0 w-64 px-5 pb-8 pt-6'>
                                                 <ResumeDocument />
                                             </div>
-                                            <div className='pointer-events-none absolute inset-0 rounded-full shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]' />
+                                            <div className='pointer-events-none absolute inset-0 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]' />
                                         </div>
-                                        <div className='pointer-events-none absolute inset-0 rounded-full border border-zinc-300/25 shadow-[0_10px_30px_-6px_rgba(0,0,0,0.65),0_0_0_1px_rgba(255,255,255,0.03)]' />
-                                        <div className='pointer-events-none absolute left-[14%] top-[10%] h-[38%] w-[46%] rounded-full bg-white/10 blur-[6px]' />
-                                        <div className='pointer-events-none absolute inset-0 rounded-full bg-linear-to-br from-white/4 via-transparent to-transparent' />
+                                        <div className='pointer-events-none absolute inset-0 rounded-full border border-zinc-200/50 dark:border-zinc-300/25 shadow-[0_10px_30px_-6px_rgba(0,0,0,0.15),0_0_0_1px_rgba(0,0,0,0.05)] dark:shadow-[0_10px_30px_-6px_rgba(0,0,0,0.65),0_0_0_1px_rgba(255,255,255,0.03)]' />
+                                        <div className='pointer-events-none absolute left-[14%] top-[10%] h-[38%] w-[46%] rounded-full bg-white/60 dark:bg-white/10 blur-[6px]' />
+                                        <div className='pointer-events-none absolute inset-0 rounded-full bg-linear-to-br from-black/5 dark:from-white/4 via-transparent to-transparent' />
                                     </div>
                                 </div>
 
                                 <div className='mt-8 text-center min-h-18'>
                                     <AnimatePresence mode='wait'>
                                         <motion.div key={analysisStep} initial={{ opacity: 0, y: 12, filter: 'blur(4px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, y: -12, filter: 'blur(4px)' }} transition={{ duration: 0.4, ease: 'easeOut' }}>
-                                            <h2 className='text-xl font-semibold tracking-tight text-white'>{analysisMessages[analysisStep].title}</h2>
+                                            <h2 className='text-xl font-semibold tracking-tight text-zinc-900 dark:text-white'>{analysisMessages[analysisStep].title}</h2>
 
-                                            <p className='mt-2 text-sm text-zinc-400'>{analysisMessages[analysisStep].subtitle}</p>
+                                            <p className='mt-2 text-sm text-zinc-500 dark:text-zinc-400'>{analysisMessages[analysisStep].subtitle}</p>
                                         </motion.div>
                                     </AnimatePresence>
                                 </div>
                             </div>
                             <div data-gsap='role' className='mt-2 flex items-center gap-2 text-center'>
-                                <span className='text-[12px] font-mono uppercase tracking-[0.16em] text-zinc-500'>Tailoring for</span>
-                                <span className='text-[14px] font-medium text-zinc-300'>{targetRole}</span>
+                                <span className='text-[12px] font-mono uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500'>Tailoring for</span>
+                                <span className='text-[14px] font-medium text-zinc-700 dark:text-zinc-300'>{targetRole}</span>
                             </div>
                         </div>
 
                         <div data-gsap='footer' className='absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500'>
                             {isComplete ? (
-                                <span className='text-zinc-200'>Analysis complete</span>
+                                <span className='text-zinc-700 dark:text-zinc-200'>Analysis complete</span>
                             ) : (
                                 <>
-                                    <Loader2 className='h-3.5 w-3.5 animate-spin text-zinc-400' />
-                                    <span>Analyzing · {elapsedSeconds}s</span>
+                                    <Loader2 className='h-3.5 w-3.5 animate-spin text-zinc-400 dark:text-zinc-500' />
+                                    <span className='text-zinc-500 dark:text-zinc-400'>Analyzing · {elapsedSeconds}s</span>
                                 </>
                             )}
                         </div>
