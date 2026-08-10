@@ -2,14 +2,7 @@
 
 import { motion, animate } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
-
-type Story6Props = {
-    score?: number;
-    strengths?: string[];
-    badgeLabel?: string;
-};
-
-const DEFAULT_STRENGTHS = ['ATS Friendly Resume', 'Strong Technical Projects', 'Clean Resume Structure', 'Modern Backend Tech Stack'];
+import { useStory } from './StoryContext';
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -37,9 +30,12 @@ const TONE_CLASS: Record<ConfettiPiece['tone'], string> = {
 
 const makeConfetti = (count: number): ConfettiPiece[] => {
     const tones: ConfettiPiece['tone'][] = ['white', 'white', 'mist', 'mist', 'sky', 'mint'];
+
     const pieces: ConfettiPiece[] = [];
+
     for (let i = 0; i < count; i++) {
         const side: ConfettiPiece['side'] = i % 2 === 0 ? 'left' : 'right';
+
         pieces.push({
             id: i,
             side,
@@ -55,6 +51,7 @@ const makeConfetti = (count: number): ConfettiPiece[] => {
             tone: tones[Math.floor(Math.random() * tones.length)],
         });
     }
+
     return pieces;
 };
 
@@ -76,6 +73,7 @@ const ConfettiField = ({ active, mode = 'infinite' }: ConfettiFieldProps) => {
                         .filter((p) => p.side === side)
                         .map((p) => {
                             const driftPx = side === 'left' ? p.drift : -p.drift;
+
                             return (
                                 <motion.span
                                     key={p.id}
@@ -87,14 +85,29 @@ const ConfettiField = ({ active, mode = 'infinite' }: ConfettiFieldProps) => {
                                         top: -24,
                                         boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
                                     }}
-                                    initial={{ opacity: 0, y: -24, x: 0, rotate: p.rotateStart }}
-                                    animate={{ opacity: [0, 1, 1, 0], y: p.fall, x: driftPx, rotate: p.rotateEnd }}
+                                    initial={{
+                                        opacity: 0,
+                                        y: -24,
+                                        x: 0,
+                                        rotate: p.rotateStart,
+                                    }}
+                                    animate={{
+                                        opacity: [0, 1, 1, 0],
+                                        y: p.fall,
+                                        x: driftPx,
+                                        rotate: p.rotateEnd,
+                                    }}
                                     transition={{
                                         duration: p.duration,
                                         delay: p.delay,
                                         ease: 'easeIn',
                                         times: [0, 0.12, 0.7, 1],
-                                        ...(mode === 'infinite' ? { repeat: Infinity, repeatDelay: p.repeatDelay } : {}),
+                                        ...(mode === 'infinite'
+                                            ? {
+                                                  repeat: Infinity,
+                                                  repeatDelay: p.repeatDelay,
+                                              }
+                                            : {}),
                                     }}
                                 />
                             );
@@ -105,7 +118,68 @@ const ConfettiField = ({ active, mode = 'infinite' }: ConfettiFieldProps) => {
     );
 };
 
-export default function Story6({ score: targetScore = 92, strengths = DEFAULT_STRENGTHS, badgeLabel = 'Excellent Resume' }: Story6Props) {
+export default function Story6() {
+    const { analysisResult } = useStory();
+
+    const data = analysisResult?.data?.data;
+
+    const targetScore = Number(data?.hero?.ats_score ?? 0);
+
+    const verdict = data?.hero?.verdict ?? 'Needs Work';
+
+    const strongestAsset = data?.candidate?.strongest_asset;
+
+    const scoreBreakdown = data?.score_breakdown ?? [];
+
+    const matchedSkills = data?.skills?.matched ?? [];
+
+    const strengths = useMemo(() => {
+        const result: string[] = [];
+
+        // strongest positive point identified by the AI
+        if (strongestAsset) {
+            result.push(strongestAsset);
+        }
+
+        // use real score breakdown information
+        scoreBreakdown
+            .filter((breakdownItem: { label: string; score: number; out_of: number }) => breakdownItem.score > 0)
+            .sort(
+                (
+                    a: {
+                        label: string;
+                        score: number;
+                        out_of: number;
+                    },
+                    b: {
+                        label: string;
+                        score: number;
+                        out_of: number;
+                    },
+                ) => b.score / b.out_of - a.score / a.out_of,
+            )
+            .forEach((breakdownItem: { label: string; score: number; out_of: number; reason: string }) => {
+                if (result.length < 4 && !result.some((existingStrength) => existingStrength.toLowerCase().includes(breakdownItem.label.toLowerCase()))) {
+                    result.push(`${breakdownItem.label}: ${breakdownItem.reason}`);
+                }
+            });
+
+        // use matched skills if available
+        matchedSkills.forEach((skillItem: string | { skill: string }) => {
+            if (result.length >= 4) return;
+
+            const skill = typeof skillItem === 'string' ? skillItem : skillItem.skill;
+
+            if (skill) {
+                result.push(`Matched skill: ${skill}`);
+            }
+        });
+
+        return result.slice(0, 4);
+    }, [strongestAsset, scoreBreakdown, matchedSkills]);
+
+    const finalStrengths = strengths.length > 0 ? strengths : ['Analysis completed successfully'];
+
     const [score, setScore] = useState(0);
     const [bounce, setBounce] = useState(false);
     const [confettiActive, setConfettiActive] = useState(false);
@@ -115,9 +189,11 @@ export default function Story6({ score: targetScore = 92, strengths = DEFAULT_ST
             duration: 1.1,
             delay: 0.9,
             ease: EASE,
-            onUpdate(v) {
-                setScore(Math.round(v));
+
+            onUpdate(value) {
+                setScore(Math.round(value));
             },
+
             onComplete() {
                 setBounce(true);
             },
@@ -133,35 +209,71 @@ export default function Story6({ score: targetScore = 92, strengths = DEFAULT_ST
 
     return (
         <section className='relative flex h-screen w-full items-center justify-center overflow-hidden bg-white'>
-            <div className='pointer-events-none absolute inset-0' style={{ background: 'radial-gradient(circle at center, rgba(0,0,0,.03), transparent 70%)' }} />
+            <div
+                className='pointer-events-none absolute inset-0'
+                style={{
+                    background: 'radial-gradient(circle at center, rgba(0,0,0,.03), transparent 70%)',
+                }}
+            />
 
             <motion.div
                 aria-hidden='true'
                 className='pointer-events-none absolute h-130 w-130 rounded-full blur-3xl'
-                style={{ background: 'radial-gradient(circle, rgba(0,0,0,0.05) 0%, transparent 70%)' }}
+                style={{
+                    background: 'radial-gradient(circle, rgba(0,0,0,0.05) 0%, transparent 70%)',
+                }}
                 initial={{ opacity: 0 }}
-                animate={{ opacity: [0.5, 0.85, 0.5] }}
-                transition={{ opacity: { duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 } }}
+                animate={{
+                    opacity: [0.5, 0.85, 0.5],
+                }}
+                transition={{
+                    opacity: {
+                        duration: 5,
+                        repeat: Infinity,
+                        ease: 'easeInOut',
+                        delay: 1,
+                    },
+                }}
             />
 
             <ConfettiField active={confettiActive} />
 
             <div className='relative z-10 w-full max-w-xl px-6'>
                 <motion.div
-                    initial={{ opacity: 0, y: 46, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ duration: 0.75, ease: EASE }}
+                    initial={{
+                        opacity: 0,
+                        y: 46,
+                        scale: 0.95,
+                    }}
+                    animate={{
+                        opacity: 1,
+                        y: 0,
+                        scale: 1,
+                    }}
+                    transition={{
+                        duration: 0.75,
+                        ease: EASE,
+                    }}
                     className='relative overflow-hidden rounded-4xl border border-zinc-200 bg-white shadow-[0_30px_80px_rgba(0,0,0,.07)]'
-                    style={{ padding: 'clamp(2rem,4.5vh,3.25rem) clamp(2rem,4.5vw,3.5rem)' }}
+                    style={{
+                        padding: 'clamp(2rem,4.5vh,3.25rem) clamp(2rem,4.5vw,3.5rem)',
+                    }}
                 >
                     <motion.div
                         aria-hidden='true'
                         className='pointer-events-none absolute inset-y-0 w-[45%]'
-                        style={{ background: 'linear-gradient(75deg, transparent 0%, rgba(0,0,0,0.035) 45%, transparent 100%)' }}
+                        style={{
+                            background: 'linear-gradient(75deg, transparent 0%, rgba(0,0,0,0.035) 45%, transparent 100%)',
+                        }}
                         initial={{ left: '-55%' }}
                         animate={{ left: '110%' }}
-                        transition={{ duration: 1.1, delay: 3.8, ease: 'easeInOut' }}
+                        transition={{
+                            duration: 1.1,
+                            delay: 3.8,
+                            ease: 'easeInOut',
+                        }}
                     />
+
                     {(['left', 'right'] as const).map((corner) => (
                         <motion.span
                             key={corner}
@@ -170,34 +282,104 @@ export default function Story6({ score: targetScore = 92, strengths = DEFAULT_ST
                             style={{
                                 background: 'radial-gradient(circle, rgba(0,0,0,0.10) 0%, transparent 70%)',
                             }}
-                            initial={{ opacity: 0, scale: 0.4 }}
-                            animate={{ opacity: [0, 1, 0], scale: [0.4, 1.3, 1.6] }}
-                            transition={{ duration: 0.9, delay: 1.0, ease: 'easeOut' }}
+                            initial={{
+                                opacity: 0,
+                                scale: 0.4,
+                            }}
+                            animate={{
+                                opacity: [0, 1, 0],
+                                scale: [0.4, 1.3, 1.6],
+                            }}
+                            transition={{
+                                duration: 0.9,
+                                delay: 1.0,
+                                ease: 'easeOut',
+                            }}
                         />
                     ))}
+
                     <div className='text-center'>
                         <p className='text-[12px] uppercase tracking-[0.4em] text-zinc-500'>Final Report</p>
-                        <h1 className='mt-4 font-semibold tracking-[-0.06em] text-zinc-900' style={{ fontSize: 'clamp(2rem, 4.2vh, 2.75rem)' }}>
+
+                        <h1
+                            className='mt-4 font-semibold tracking-[-0.06em] text-zinc-900'
+                            style={{
+                                fontSize: 'clamp(2rem, 4.2vh, 2.75rem)',
+                            }}
+                        >
                             Resume Ready
                         </h1>
                     </div>
+
                     <div className='mt-[clamp(1.5rem,3.5vh,2.5rem)] text-center'>
                         <p className='text-[13px] uppercase tracking-[0.35em] text-zinc-400'>ATS Score</p>
-                        <motion.div className='mt-2 leading-none tracking-[-0.07em] text-zinc-900' style={{ fontSize: 'clamp(4.5rem, 11vh, 6.75rem)', fontWeight: 600 }} animate={bounce ? { scale: [1, 1.1, 1] } : {}} transition={{ duration: 0.5, ease: EASE }}>
+
+                        <motion.div
+                            className='mt-2 leading-none tracking-[-0.07em] text-zinc-900'
+                            style={{
+                                fontSize: 'clamp(4.5rem, 11vh, 6.75rem)',
+                                fontWeight: 600,
+                            }}
+                            animate={
+                                bounce
+                                    ? {
+                                          scale: [1, 1.1, 1],
+                                      }
+                                    : {}
+                            }
+                            transition={{
+                                duration: 0.5,
+                                ease: EASE,
+                            }}
+                        >
                             {score}
                         </motion.div>
+
                         <p className='mt-1 text-[16px] text-zinc-500'>out of 100</p>
                     </div>
+
                     <div className='mt-[clamp(1.25rem,2.8vh,2rem)] flex justify-center'>
-                        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 2.0, duration: 0.45, ease: EASE }} className='rounded-full bg-emerald-50 px-5 py-2.5'>
-                            <span className='text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-700'>{badgeLabel}</span>
+                        <motion.div
+                            initial={{
+                                opacity: 0,
+                                scale: 0.8,
+                            }}
+                            animate={{
+                                opacity: 1,
+                                scale: 1,
+                            }}
+                            transition={{
+                                delay: 2.0,
+                                duration: 0.45,
+                                ease: EASE,
+                            }}
+                            className='rounded-full bg-zinc-100 px-5 py-2.5'
+                        >
+                            <span className='text-[12px] font-semibold uppercase tracking-[0.16em] text-zinc-700'>{verdict}</span>
                         </motion.div>
                     </div>
 
                     <div className='mt-[clamp(1.5rem,3.2vh,2.25rem)] grid grid-cols-2 gap-x-6 gap-y-4'>
-                        {strengths.map((item, index) => (
-                            <motion.div key={item} initial={{ opacity: 0, x: -14 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 2.5 + index * 0.15, duration: 0.4, ease: EASE }} className='flex items-center gap-2.5'>
+                        {finalStrengths.map((item, index) => (
+                            <motion.div
+                                key={`${item}-${index}`}
+                                initial={{
+                                    opacity: 0,
+                                    x: -14,
+                                }}
+                                animate={{
+                                    opacity: 1,
+                                    x: 0,
+                                }}
+                                transition={{
+                                    delay: 2.5 + index * 0.15,
+                                    duration: 0.4,
+                                    ease: EASE,
+                                }}
+                                className='flex items-center gap-2.5'
+                            >
                                 <div className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-[11px] text-white'>✓</div>
+
                                 <p className='text-[14.5px] leading-snug text-zinc-700'>{item}</p>
                             </motion.div>
                         ))}
@@ -205,22 +387,50 @@ export default function Story6({ score: targetScore = 92, strengths = DEFAULT_ST
 
                     <div className='mt-[clamp(1.75rem,3.5vh,2.5rem)] flex justify-center gap-3'>
                         <motion.button
-                            initial={{ opacity: 0, y: 12 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 4.3, duration: 0.45, ease: EASE }}
-                            whileHover={{ scale: 1.03 }}
-                            whileTap={{ scale: 0.97 }}
+                            initial={{
+                                opacity: 0,
+                                y: 12,
+                            }}
+                            animate={{
+                                opacity: 1,
+                                y: 0,
+                            }}
+                            transition={{
+                                delay: 4.3,
+                                duration: 0.45,
+                                ease: EASE,
+                            }}
+                            whileHover={{
+                                scale: 1.03,
+                            }}
+                            whileTap={{
+                                scale: 0.97,
+                            }}
                             className='rounded-full bg-zinc-900 px-7 py-3.5 text-[14px] font-medium text-white shadow-[0_8px_24px_rgba(0,0,0,0.18)]'
                         >
                             Download PDF
                         </motion.button>
 
                         <motion.button
-                            initial={{ opacity: 0, y: 12 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 4.45, duration: 0.45, ease: EASE }}
-                            whileHover={{ scale: 1.03 }}
-                            whileTap={{ scale: 0.97 }}
+                            initial={{
+                                opacity: 0,
+                                y: 12,
+                            }}
+                            animate={{
+                                opacity: 1,
+                                y: 0,
+                            }}
+                            transition={{
+                                delay: 4.45,
+                                duration: 0.45,
+                                ease: EASE,
+                            }}
+                            whileHover={{
+                                scale: 1.03,
+                            }}
+                            whileTap={{
+                                scale: 0.97,
+                            }}
                             className='rounded-full border border-zinc-300 px-7 py-3.5 text-[14px] font-medium text-zinc-900'
                         >
                             Analyze Again
