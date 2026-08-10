@@ -9,7 +9,7 @@ import Story4 from './Story4';
 import Story5 from './Story5';
 import Story6 from './Story6';
 
-const STORY_DURATIONS = [8000, 3000, 5000, 7000, 14000, 7000];
+const STORY_DURATIONS = [8000, 5000, 5000, 7000, 14000, 7000];
 
 const StoryContent = () => {
     const { paused, setPaused } = useStory();
