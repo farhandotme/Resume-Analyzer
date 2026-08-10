@@ -10,6 +10,8 @@ import TargetRoleSelector from './TargetRoleSelector';
 const LENS_SIZE = 176;
 const MAG_SCALE = 2.15;
 
+const ANALYSIS_ANIMATION_DURATION = 12000;
+
 type ResumeDocumentRefs = {
     nameRef?: React.RefObject<HTMLDivElement | null>;
     experienceBlockRef?: React.RefObject<HTMLDivElement | null>;
@@ -110,6 +112,7 @@ export default function Home() {
     const projectsHeadingRef = useRef<HTMLDivElement>(null);
     const educationHeadingRef = useRef<HTMLDivElement>(null);
     const skillsHeadingRef = useRef<HTMLDivElement>(null);
+    const animationCompleteRef = useRef(false);
 
     const lensRef = useRef<HTMLDivElement>(null);
     const lensCloneRef = useRef<HTMLDivElement>(null);
@@ -371,10 +374,14 @@ export default function Home() {
         setIsAnalyzing(true);
         setIsComplete(false);
         setAnalysisStep(0);
+        animationCompleteRef.current = false;
+
+        const animationStartTime = Date.now();
 
         try {
             console.log('Uploading resume...');
             setAnalysisStep(0);
+
             const pdfUrl = await uploadResume(selectedFile);
 
             console.log('Resume uploaded successfully\nPDF URL:', pdfUrl);
@@ -399,10 +406,22 @@ export default function Home() {
 
             console.log('Resume analysis completed\nAnalysis result:', result);
 
+            const elapsedTime = Date.now() - animationStartTime;
+            const remainingAnimationTime = Math.max(0, ANALYSIS_ANIMATION_DURATION - elapsedTime);
+
+            if (remainingAnimationTime > 0) {
+                console.log(`AI finished early. Waiting ${remainingAnimationTime}ms for animation.`);
+
+                await new Promise<void>((resolve) => {
+                    window.setTimeout(resolve, remainingAnimationTime);
+                });
+            }
+
             setAnalysisStep(analysisSteps.length - 1);
             setIsComplete(true);
 
             await playCompletionAnimation();
+
             navigate('/story');
         } catch (error) {
             console.error('Resume analysis failed:', error);
