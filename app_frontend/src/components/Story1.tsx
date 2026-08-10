@@ -39,7 +39,7 @@ const CreditsText = ({ text, delayStart = 0, className = '' }: { text: string; d
 const ProjectorFlicker = ({ triggerKey }: { triggerKey: number }) => (
     <motion.div
         key={triggerKey}
-        className='pointer-events-none fixed inset-0 z-40 bg-white'
+        className='pointer-events-none fixed inset-0 z-40 bg-white dark:bg-black'
         initial={{ opacity: 0.32 }}
         animate={{ opacity: 0 }}
         transition={{
@@ -91,7 +91,7 @@ const Story1 = () => {
     }, [step]);
 
     return (
-        <div className='relative h-screen w-full overflow-hidden bg-white'>
+        <div className='relative h-screen w-full overflow-hidden bg-white transition-colors duration-300 dark:bg-black'>
             <div
                 className='pointer-events-none absolute inset-0 z-10'
                 style={{
@@ -129,7 +129,7 @@ const Story1 = () => {
                                 delay: 0.15,
                                 ease: EASE_CINE,
                             }}
-                            className='text-center text-[45px] font-semibold tracking-tight text-zinc-900'
+                            className='text-center text-[45px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-100'
                         >
                             Resume received.
                         </motion.p>
@@ -148,7 +148,7 @@ const Story1 = () => {
                         }}
                         className='relative z-10 flex h-full -translate-y-6 items-center justify-center px-6 text-center'
                     >
-                        <p className='text-[40px] font-semibold tracking-tight text-zinc-900 sm:text-[54px]'>
+                        <p className='text-[40px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-[54px]'>
                             <CreditsText text="Let's get to know you." />
                         </p>
                     </motion.div>
@@ -167,19 +167,25 @@ const Story1 = () => {
                         className='relative z-10 flex h-full -translate-y-6 flex-col items-center justify-center text-center'
                     >
                         <motion.p
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
+                            initial={{
+                                opacity: 0,
+                                y: 10,
+                            }}
+                            animate={{
+                                opacity: 1,
+                                y: 0,
+                            }}
                             transition={{
                                 delay: 0.2,
                                 duration: 0.6,
                                 ease: EASE_CINE,
                             }}
-                            className='text-[13px] font-medium uppercase tracking-[0.4em] text-zinc-500'
+                            className='text-[13px] font-medium uppercase tracking-[0.4em] text-zinc-500 dark:text-zinc-400'
                         >
                             Meet
                         </motion.p>
 
-                        <h1 className='font-display mt-4 text-[60px] font-medium tracking-tight text-zinc-900 sm:text-[88px]'>
+                        <h1 className='font-display mt-4 text-[60px] font-medium tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-[88px]'>
                             <CreditsText text={NAME} delayStart={0.5} />
                         </h1>
 
@@ -197,7 +203,7 @@ const Story1 = () => {
                                 duration: 0.6,
                                 ease: EASE_CINE,
                             }}
-                            className='mt-3 h-0.5 bg-zinc-900'
+                            className='mt-3 h-0.5 bg-zinc-900 dark:bg-zinc-100'
                         />
 
                         <motion.p
@@ -214,7 +220,7 @@ const Story1 = () => {
                                 duration: 0.6,
                                 ease: EASE_CINE,
                             }}
-                            className='mt-7 text-[20px] font-normal text-zinc-500 sm:text-[24px]'
+                            className='mt-7 text-[20px] font-normal text-zinc-500 dark:text-zinc-400 sm:text-[24px]'
                         >
                             {ROLE}
                         </motion.p>
