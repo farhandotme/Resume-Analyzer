@@ -1,4 +1,4 @@
-import { UploadCloud, CheckCircle2, FileText, Gauge, ChevronRight, SunMedium, Moon, ShieldCheck, Loader2 } from 'lucide-react';
+import { UploadCloud, CheckCircle2, FileText, Gauge, ChevronRight, SunMedium, Moon, ShieldCheck, Loader2, AlertCircle } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -93,6 +93,8 @@ export default function Home() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
+    const [showFileError, setShowFileError] = useState(false);
+    const fileErrorTimeoutRef = useRef<number | null>(null);
     const [targetRole, setTargetRole] = useState('');
     const [isRoleSelected, setIsRoleSelected] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -154,6 +156,14 @@ export default function Home() {
 
         return () => {
             document.body.style.overflow = '';
+        };
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            if (fileErrorTimeoutRef.current !== null) {
+                window.clearTimeout(fileErrorTimeoutRef.current);
+            }
         };
     }, []);
 
@@ -332,8 +342,21 @@ export default function Home() {
 
     const handleFile = (file: File) => {
         if (file.type !== 'application/pdf') {
-            alert('Please select a PDF file.');
+            setShowFileError(true);
+            if (fileErrorTimeoutRef.current !== null) {
+                window.clearTimeout(fileErrorTimeoutRef.current);
+            }
+            fileErrorTimeoutRef.current = window.setTimeout(() => {
+                setShowFileError(false);
+                fileErrorTimeoutRef.current = null;
+            }, 3500);
             return;
+        }
+
+        setShowFileError(false);
+        if (fileErrorTimeoutRef.current !== null) {
+            window.clearTimeout(fileErrorTimeoutRef.current);
+            fileErrorTimeoutRef.current = null;
         }
         setSelectedFile(file);
     };
@@ -679,6 +702,24 @@ export default function Home() {
                                 <h3 className='mx-auto max-w-[90%] truncate text-base font-semibold text-zinc-900 dark:text-zinc-100'>{selectedFile ? selectedFile.name : isDragging ? 'Drop your PDF here' : 'Upload your resume'}</h3>
 
                                 <p className='mt-2 text-sm text-zinc-500 dark:text-zinc-400'>{selectedFile ? `Choose the role you're targeting — your analysis will be tailored to it.` : 'Drag and drop your PDF here, or click to browse.'}</p>
+
+                                <AnimatePresence>
+                                    {showFileError && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -6 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -6 }}
+                                            transition={{ duration: 0.25, ease: 'easeOut' }}
+                                            className='mt-3 mx-auto flex w-fit items-center justify-center gap-3 rounded-lg border border-rose-200/70 bg-rose-50/70 px-4 py-2 dark:border-rose-900/40 dark:bg-rose-950/30'
+                                        >
+                                            <AlertCircle className='h-3.5 w-3.5 shrink-0 text-rose-500 dark:text-rose-400' />
+                                            <div className='text-left'>
+                                                <p className='text-[13px] font-medium leading-tight text-rose-700 dark:text-rose-300 mb-0.5'>Invalid file type</p>
+                                                <p className='text-[12px] leading-tight text-rose-500/90 dark:text-rose-400/80'>Please upload a PDF file only</p>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
                             {selectedFile && <TargetRoleSelector value={targetRole} onChange={setTargetRole} onSelectionChange={setIsRoleSelected} />}
                             {selectedFile ? (
