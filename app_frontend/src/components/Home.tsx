@@ -7,6 +7,86 @@ import { useTheme } from '../hooks/useTheme.ts';
 import { uploadResume } from '../services/uploadResume.ts';
 import TargetRoleSelector from './TargetRoleSelector';
 
+const LENS_SIZE = 176;
+const MAG_SCALE = 2.15;
+
+type ResumeDocumentRefs = {
+    nameRef?: React.RefObject<HTMLDivElement | null>;
+    experienceBlockRef?: React.RefObject<HTMLDivElement | null>;
+    experienceHeadingRef?: React.RefObject<HTMLDivElement | null>;
+    projectsHeadingRef?: React.RefObject<HTMLDivElement | null>;
+    educationHeadingRef?: React.RefObject<HTMLDivElement | null>;
+    skillsHeadingRef?: React.RefObject<HTMLDivElement | null>;
+};
+
+function ResumeDocument({ refs }: { refs?: ResumeDocumentRefs }) {
+    return (
+        <>
+            {/* Added w-fit so bounding boxes accurately wrap the content */}
+            <div ref={refs?.nameRef} className='mb-5 w-fit space-y-1.5'>
+                <div className='h-2 w-24 rounded-full bg-zinc-600' />
+                <div className='h-1.5 w-32 rounded-full bg-zinc-800' />
+            </div>
+
+            <div ref={refs?.experienceBlockRef} className='relative mb-5 rounded-md'>
+                <div ref={refs?.experienceHeadingRef} className='mb-2 flex w-fit items-center gap-1.5'>
+                    <span className='h-1 w-1 rounded-full bg-zinc-500' />
+                    <span className='font-mono text-[8px] font-medium uppercase tracking-[0.16em] text-zinc-500'>Experience</span>
+                </div>
+                <div className='space-y-1.5'>
+                    <div className='h-1.5 w-4/5 rounded-full bg-zinc-700' />
+                    <div className='h-1.5 w-3/5 rounded-full bg-zinc-800' />
+                    <div className='h-1.5 w-2/3 rounded-full bg-zinc-800' />
+                </div>
+                <div className='mt-3 space-y-1.5'>
+                    <div className='h-1.5 w-3/5 rounded-full bg-zinc-700' />
+                    <div className='h-1.5 w-1/2 rounded-full bg-zinc-800' />
+                </div>
+            </div>
+
+            <div className='relative mb-5 rounded-md'>
+                <div ref={refs?.projectsHeadingRef} className='mb-2 flex w-fit items-center gap-1.5'>
+                    <span className='h-1 w-1 rounded-full bg-zinc-500' />
+                    <span className='font-mono text-[8px] font-medium uppercase tracking-[0.16em] text-zinc-500'>Projects</span>
+                </div>
+                <div className='space-y-1.5'>
+                    <div className='h-1.5 w-3/4 rounded-full bg-zinc-700' />
+                    <div className='h-1.5 w-1/2 rounded-full bg-zinc-800' />
+                </div>
+                <div className='mt-3 space-y-1.5'>
+                    <div className='h-1.5 w-2/3 rounded-full bg-zinc-700' />
+                    <div className='h-1.5 w-2/5 rounded-full bg-zinc-800' />
+                </div>
+            </div>
+
+            <div className='relative mb-5 rounded-md'>
+                <div ref={refs?.educationHeadingRef} className='mb-2 flex w-fit items-center gap-1.5'>
+                    <span className='h-1 w-1 rounded-full bg-zinc-500' />
+                    <span className='font-mono text-[8px] font-medium uppercase tracking-[0.16em] text-zinc-500'>Education</span>
+                </div>
+                <div className='space-y-1.5'>
+                    <div className='h-1.5 w-3/5 rounded-full bg-zinc-700' />
+                    <div className='h-1.5 w-2/5 rounded-full bg-zinc-800' />
+                </div>
+            </div>
+
+            <div className='relative rounded-md'>
+                <div ref={refs?.skillsHeadingRef} className='mb-2 flex w-fit items-center gap-1.5'>
+                    <span className='h-1 w-1 rounded-full bg-zinc-500' />
+                    <span className='font-mono text-[8px] font-medium uppercase tracking-[0.16em] text-zinc-500'>Skills</span>
+                </div>
+                <div className='flex flex-wrap gap-1.5'>
+                    {['Strategy', 'Analytics', 'Leadership', 'Automation', 'Design', 'Research'].map((skill) => (
+                        <span key={skill} className='rounded-full border border-zinc-800 bg-zinc-900 px-2 py-1 text-[8px] font-medium text-zinc-500'>
+                            {skill}
+                        </span>
+                    ))}
+                </div>
+            </div>
+        </>
+    );
+}
+
 export default function Home() {
     const { theme, toggleTheme } = useTheme();
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -22,8 +102,20 @@ export default function Home() {
     const navigate = useNavigate();
     const prefersReducedMotion = Boolean(useReducedMotion());
     const overlayRef = useRef<HTMLDivElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const canvasRafRef = useRef<number | null>(null);
+
+    const resumeViewportRef = useRef<HTMLDivElement>(null);
+    const resumeStageRef = useRef<HTMLDivElement>(null);
+    const nameRef = useRef<HTMLDivElement>(null);
+    const experienceBlockRef = useRef<HTMLDivElement>(null);
+    const experienceHeadingRef = useRef<HTMLDivElement>(null);
+    const projectsHeadingRef = useRef<HTMLDivElement>(null);
+    const educationHeadingRef = useRef<HTMLDivElement>(null);
+    const skillsHeadingRef = useRef<HTMLDivElement>(null);
+
+    const lensRef = useRef<HTMLDivElement>(null);
+    const lensCloneRef = useRef<HTMLDivElement>(null);
+    const finishFlashRef = useRef<HTMLDivElement>(null);
+    const calloutRef = useRef<HTMLDivElement>(null);
 
     const headlinePhrases = ['resume.', 'interviews.', 'career.'];
     const analysisSteps = ['Reading your resume', 'Understanding your experience', 'Matching your target role', 'Building your analysis'];
@@ -68,18 +160,23 @@ export default function Home() {
 
     useEffect(() => {
         if (!isAnalyzing) return;
+        if (analysisStep >= analysisSteps.length - 1) return;
+        let delay = 3000;
+        if (analysisStep === 0) delay = 3400;
+        else if (analysisStep === 1) delay = 3100;
+        else if (analysisStep === 2) delay = 9000;
 
-        const interval = window.setInterval(() => {
+        const timeoutId = window.setTimeout(() => {
             setAnalysisStep((current) => {
                 if (current >= analysisSteps.length - 1) {
                     return current;
                 }
                 return current + 1;
             });
-        }, 3000);
+        }, delay);
 
-        return () => window.clearInterval(interval);
-    }, [isAnalyzing]);
+        return () => window.clearTimeout(timeoutId);
+    }, [isAnalyzing, analysisStep]);
 
     useEffect(() => {
         if (!isAnalyzing) {
@@ -124,107 +221,102 @@ export default function Home() {
     useEffect(() => {
         if (!isAnalyzing) return;
 
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        const lineColor = 'rgba(244,244,245,0.14)';
-        const lineColorStrong = 'rgba(244,244,245,0.32)';
-        const scanColor = 'rgba(255,255,255,0.85)';
-
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        let width = 0;
-        let height = 0;
-
-        const lineWidths: number[] = Array.from({ length: 12 }, (_, i) => {
-            const seed = Math.sin(i * 12.9898) * 43758.5453;
-            return 0.35 + (seed - Math.floor(seed)) * 0.55;
-        });
-
-        const resize = () => {
-            const rect = canvas.getBoundingClientRect();
-            width = rect.width;
-            height = rect.height;
-            canvas.width = width * dpr;
-            canvas.height = height * dpr;
-            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        };
-        resize();
-
-        let scanProgress = prefersReducedMotion ? 0.5 : 0;
-        let lastTime = performance.now();
-
-        const draw = (time: number) => {
-            const delta = time - lastTime;
-            lastTime = time;
-
-            ctx.clearRect(0, 0, width, height);
-
-            const paddingX = 14;
-            const paddingY = 16;
-            const lineHeight = (height - paddingY * 2) / lineWidths.length;
-            const lineThickness = Math.max(1.4, lineHeight * 0.26);
-
-            lineWidths.forEach((w, i) => {
-                const y = paddingY + i * lineHeight + lineHeight / 2;
-                const lineEndX = paddingX + (width - paddingX * 2) * w;
-
-                ctx.strokeStyle = lineColor;
-                ctx.lineWidth = lineThickness;
-                ctx.lineCap = 'round';
-                ctx.beginPath();
-                ctx.moveTo(paddingX, y);
-                ctx.lineTo(lineEndX, y);
-                ctx.stroke();
-
-                const scanY = scanProgress * height;
-                const distance = Math.abs(scanY - y);
-                const band = lineHeight * 1.4;
-
-                if (distance < band) {
-                    const strength = 1 - distance / band;
-                    ctx.strokeStyle = lineColorStrong;
-                    ctx.globalAlpha = strength;
-                    ctx.beginPath();
-                    ctx.moveTo(paddingX, y);
-                    ctx.lineTo(lineEndX, y);
-                    ctx.stroke();
-                    ctx.globalAlpha = 1;
-                }
-            });
-
-            if (!prefersReducedMotion) {
-                const scanY = scanProgress * height;
-                const gradient = ctx.createLinearGradient(0, scanY - 16, 0, scanY + 16);
-                gradient.addColorStop(0, 'rgba(0,0,0,0)');
-                gradient.addColorStop(0.5, scanColor);
-                gradient.addColorStop(1, 'rgba(0,0,0,0)');
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, scanY - 16, width, 32);
-
-                scanProgress += delta * 0.00035;
-                if (scanProgress > 1.2) scanProgress = -0.2;
-
-                canvasRafRef.current = requestAnimationFrame(draw);
-            }
-        };
+        const viewport = resumeViewportRef.current;
+        const lens = lensRef.current;
+        const clone = lensCloneRef.current;
+        const stage = resumeStageRef.current;
+        if (!viewport || !lens || !clone || !stage) return;
 
         if (prefersReducedMotion) {
-            draw(performance.now());
-        } else {
-            canvasRafRef.current = requestAnimationFrame(draw);
+            gsap.set(lens, { opacity: 0 });
+            gsap.set(stage, { scale: 1 });
+            return;
         }
 
-        const handleResize = () => resize();
-        window.addEventListener('resize', handleResize);
+        gsap.set(clone, { transformOrigin: '0px 0px' });
+        gsap.set(stage, { transformOrigin: '50% 50%' });
+
+        const half = LENS_SIZE / 2;
+
+        const moveLensTo = (el: HTMLElement | null, duration: number) => {
+            const tl = gsap.timeline();
+            if (!el) return tl;
+
+            const viewportRect = viewport.getBoundingClientRect();
+            const targetRect = el.getBoundingClientRect();
+
+            const px = targetRect.left - viewportRect.left + targetRect.width / 2;
+            const py = targetRect.top - viewportRect.top + targetRect.height / 2;
+
+            const maxX = Math.max(viewportRect.width - half, half);
+            const maxY = Math.max(viewportRect.height - half, half);
+            const lensX = Math.min(Math.max(px, half), maxX);
+            const lensY = Math.min(Math.max(py, half), maxY);
+
+            const tx = half - MAG_SCALE * px;
+            const ty = half - MAG_SCALE * py;
+
+            tl.to(lens, { x: lensX - half, y: lensY - half, duration, ease: 'power3.inOut' }, 0);
+            tl.to(clone, { x: tx, y: ty, scale: MAG_SCALE, duration, ease: 'power3.inOut' }, 0);
+            return tl;
+        };
+
+        let loopTl: gsap.core.Timeline | null = null;
+        let breatheTween: gsap.core.Tween | null = null;
+
+        if (analysisStep === 0) {
+            const viewportRect = viewport.getBoundingClientRect();
+
+            const startX = viewportRect.width + half + 32;
+            const startY = 160;
+
+            gsap.set(lens, {
+                x: startX - half,
+                y: startY - half,
+                opacity: 0,
+                scale: 0.9,
+            });
+            gsap.set(clone, {
+                x: half - MAG_SCALE * startX,
+                y: half - MAG_SCALE * startY,
+                scale: MAG_SCALE,
+            });
+            gsap.set(calloutRef.current, { opacity: 1 });
+
+            loopTl = gsap.timeline();
+            loopTl.to(lens, { opacity: 1, scale: 1, duration: 0.6, ease: 'power3.out' }, 0);
+            loopTl.to(calloutRef.current, { opacity: 0, duration: 0.3, ease: 'power2.inOut' }, 3.1);
+        } else if (analysisStep === 1) {
+            loopTl = moveLensTo(experienceHeadingRef.current, 1.1);
+        } else if (analysisStep === 2) {
+            loopTl = gsap.timeline({ repeat: -1 });
+            loopTl.add(moveLensTo(projectsHeadingRef.current, 1.0)).to({}, { duration: 2.0 }).add(moveLensTo(educationHeadingRef.current, 1.0)).to({}, { duration: 2.0 }).add(moveLensTo(skillsHeadingRef.current, 1.0)).to({}, { duration: 2.0 });
+        } else {
+            loopTl = gsap.timeline();
+            loopTl.to(lens, { opacity: 0, scale: 0.85, duration: 0.5, ease: 'power2.in' });
+            breatheTween = gsap.to(stage, { scale: 1.015, duration: 2.6, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: 0.5 });
+        }
 
         return () => {
-            window.removeEventListener('resize', handleResize);
-            if (canvasRafRef.current) cancelAnimationFrame(canvasRafRef.current);
+            loopTl?.kill();
+            breatheTween?.kill();
+            gsap.killTweensOf([lens, clone, stage, calloutRef.current]);
         };
-    }, [isAnalyzing, theme, prefersReducedMotion]);
+    }, [analysisStep, isAnalyzing, prefersReducedMotion]);
+
+    useEffect(() => {
+        if (!isComplete || prefersReducedMotion) return;
+
+        const stage = resumeStageRef.current;
+        const lens = lensRef.current;
+        const flash = finishFlashRef.current;
+        if (!stage || !flash) return;
+
+        gsap.killTweensOf(stage);
+        if (lens) gsap.to(lens, { opacity: 0, duration: 0.3, ease: 'power2.out' });
+        gsap.to(stage, { scale: 1.02, duration: 0.4, ease: 'power2.out', yoyo: true, repeat: 1 });
+        gsap.fromTo(flash, { opacity: 0 }, { opacity: 1, duration: 0.35, ease: 'power2.out', yoyo: true, repeat: 1 });
+    }, [isComplete, prefersReducedMotion]);
 
     const playCompletionAnimation = () => {
         return new Promise<void>((resolve) => {
@@ -341,12 +433,51 @@ export default function Home() {
                         <div className='pointer-events-none absolute left-1/2 top-[40%] h-75 w-75 -translate-x-1/2 rounded-full bg-zinc-400/4 blur-[80px]' />
                         <div className='relative z-10 flex w-full max-w-2xl flex-col items-center'>
                             <div data-gsap='panel' className='relative w-full max-w-md p-8'>
-                                <div className='mx-auto relative h-80 w-60 overflow-hidden rounded-xl bg-zinc-950 border border-zinc-800'>
-                                    <div className='absolute -left-px -top-px z-10 h-5 w-5 rounded-tl-xl border-l-2 border-t-2 border-zinc-400/60' />
-                                    <div className='absolute -right-px -top-px z-10 h-5 w-5 rounded-tr-xl border-r-2 border-t-2 border-zinc-400/60' />
-                                    <div className='absolute -bottom-px -left-px z-10 h-5 w-5 rounded-bl-xl border-b-2 border-l-2 border-zinc-400/60' />
-                                    <div className='absolute -bottom-px -right-px z-10 h-5 w-5 rounded-br-xl border-b-2 border-r-2 border-zinc-400/60' />
-                                    <canvas ref={canvasRef} className='h-full w-full' />
+                                <div className='mx-auto relative h-104 w-64 rounded-xl bg-zinc-950 border border-zinc-800'>
+                                    {/* The visual resume boundary where content gets accurately clipped */}
+                                    <div ref={resumeViewportRef} className='absolute inset-0 overflow-hidden rounded-xl'>
+                                        <div className='absolute -left-px -top-px z-30 h-5 w-5 rounded-tl-xl border-l-2 border-t-2 border-zinc-400/60' />
+                                        <div className='absolute -right-px -top-px z-30 h-5 w-5 rounded-tr-xl border-r-2 border-t-2 border-zinc-400/60' />
+                                        <div className='absolute -bottom-px -left-px z-30 h-5 w-5 rounded-bl-xl border-b-2 border-l-2 border-zinc-400/60' />
+                                        <div className='absolute -bottom-px -right-px z-30 h-5 w-5 rounded-br-xl border-b-2 border-r-2 border-zinc-400/60' />
+
+                                        <div ref={resumeStageRef} className='relative h-full w-full px-5 pb-8 pt-6 will-change-transform'>
+                                            <ResumeDocument refs={{ nameRef, experienceBlockRef, experienceHeadingRef, projectsHeadingRef, educationHeadingRef, skillsHeadingRef }} />
+                                        </div>
+
+                                        <div ref={finishFlashRef} className='pointer-events-none absolute inset-0 z-25 bg-white/10 opacity-0' />
+                                        <div className='pointer-events-none absolute inset-x-0 top-0 z-20 h-8 bg-linear-to-b from-zinc-950 to-transparent' />
+                                        <div className='pointer-events-none absolute inset-x-0 bottom-0 z-20 h-8 bg-linear-to-t from-zinc-950 to-transparent' />
+                                    </div>
+
+                                    <div ref={lensRef} className='pointer-events-none absolute left-0 top-0 z-30 opacity-0' style={{ width: LENS_SIZE, height: LENS_SIZE }}>
+                                        {/* Intro Text Callout connecting minimally to the lens */}
+                                        <div ref={calloutRef} className='absolute left-[calc(100%+18px)] top-1/2 -translate-y-1/2 flex items-center whitespace-nowrap opacity-0 z-40 drop-shadow-md'>
+                                            <span className='font-sans text-[13px] font-light tracking-wide text-zinc-200'>Let me analyze this resume</span>
+
+                                            <svg width='28' height='20' viewBox='0 0 28 20' className='absolute right-full mr-2 text-zinc-500/50'>
+                                                <line x1='28' y1='10' x2='0' y2='10' stroke='currentColor' strokeWidth='1' />
+                                            </svg>
+                                        </div>
+
+                                        <div className='absolute left-1/2 top-1/2 -z-10 -rotate-45'>
+                                            <div className='absolute -left-1.5 top-20 h-30 w-3 bg-black/40 blur-sm' />
+                                            <div className='absolute -left-3.5 top-20 h-4 w-7 rounded-[3px] border border-zinc-600/50 bg-linear-to-r from-zinc-700 via-zinc-400 to-zinc-700 shadow-sm' />
+                                            <div className='absolute -left-2.5 top-23.5 h-1.5 w-5 rounded-b-sm border-x border-b border-zinc-600/50 bg-zinc-800' />
+                                            <div className='absolute -left-1.75 top-24.5 h-25 w-3.5 rounded-full border border-zinc-700/50 bg-linear-to-r from-zinc-900 via-zinc-700 to-zinc-950 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.15)]' />
+                                            <div className='absolute -left-2.25 top-48 h-4.5 w-4.5 rounded-full border border-zinc-600/50 bg-linear-to-br from-zinc-700 to-zinc-900 shadow-[inset_1px_1px_3px_rgba(255,255,255,0.2)]' />
+                                        </div>
+
+                                        <div className='absolute inset-0 overflow-hidden rounded-full bg-zinc-950'>
+                                            <div ref={lensCloneRef} className='absolute left-0 top-0 w-64 px-5 pb-8 pt-6'>
+                                                <ResumeDocument />
+                                            </div>
+                                            <div className='pointer-events-none absolute inset-0 rounded-full shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]' />
+                                        </div>
+                                        <div className='pointer-events-none absolute inset-0 rounded-full border border-zinc-300/25 shadow-[0_10px_30px_-6px_rgba(0,0,0,0.65),0_0_0_1px_rgba(255,255,255,0.03)]' />
+                                        <div className='pointer-events-none absolute left-[14%] top-[10%] h-[38%] w-[46%] rounded-full bg-white/10 blur-[6px]' />
+                                        <div className='pointer-events-none absolute inset-0 rounded-full bg-linear-to-br from-white/4 via-transparent to-transparent' />
+                                    </div>
                                 </div>
 
                                 <div className='mt-8 text-center min-h-18'>
