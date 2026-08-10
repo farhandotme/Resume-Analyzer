@@ -1,4 +1,4 @@
-import { UploadCloud, CheckCircle2, FileText, Gauge, ChevronRight, SunMedium, Moon, ShieldCheck, Loader2 } from 'lucide-react';
+import { UploadCloud, CheckCircle2, FileText, Gauge, ChevronRight, SunMedium, Moon, ShieldCheck, Loader2, AlertCircle } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -7,11 +7,94 @@ import { useTheme } from '../hooks/useTheme.ts';
 import { uploadResume } from '../services/uploadResume.ts';
 import TargetRoleSelector from './TargetRoleSelector';
 
+const LENS_SIZE = 176;
+const MAG_SCALE = 2.15;
+
+const ANALYSIS_ANIMATION_DURATION = 12000;
+
+type ResumeDocumentRefs = {
+    nameRef?: React.RefObject<HTMLDivElement | null>;
+    experienceBlockRef?: React.RefObject<HTMLDivElement | null>;
+    experienceHeadingRef?: React.RefObject<HTMLDivElement | null>;
+    projectsHeadingRef?: React.RefObject<HTMLDivElement | null>;
+    educationHeadingRef?: React.RefObject<HTMLDivElement | null>;
+    skillsHeadingRef?: React.RefObject<HTMLDivElement | null>;
+};
+
+function ResumeDocument({ refs }: { refs?: ResumeDocumentRefs }) {
+    return (
+        <>
+            <div ref={refs?.nameRef} className='mb-5 w-fit space-y-1.5'>
+                <div className='h-2 w-24 rounded-full bg-zinc-300 dark:bg-zinc-600' />
+                <div className='h-1.5 w-32 rounded-full bg-zinc-200 dark:bg-zinc-800' />
+            </div>
+
+            <div ref={refs?.experienceBlockRef} className='relative mb-5 rounded-md'>
+                <div ref={refs?.experienceHeadingRef} className='mb-2 flex w-fit items-center gap-1.5'>
+                    <span className='h-1 w-1 rounded-full bg-zinc-400 dark:bg-zinc-500' />
+                    <span className='font-mono text-[8px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500'>Experience</span>
+                </div>
+                <div className='space-y-1.5'>
+                    <div className='h-1.5 w-4/5 rounded-full bg-zinc-300 dark:bg-zinc-700' />
+                    <div className='h-1.5 w-3/5 rounded-full bg-zinc-200 dark:bg-zinc-800' />
+                    <div className='h-1.5 w-2/3 rounded-full bg-zinc-200 dark:bg-zinc-800' />
+                </div>
+                <div className='mt-3 space-y-1.5'>
+                    <div className='h-1.5 w-3/5 rounded-full bg-zinc-300 dark:bg-zinc-700' />
+                    <div className='h-1.5 w-1/2 rounded-full bg-zinc-200 dark:bg-zinc-800' />
+                </div>
+            </div>
+
+            <div className='relative mb-5 rounded-md'>
+                <div ref={refs?.projectsHeadingRef} className='mb-2 flex w-fit items-center gap-1.5'>
+                    <span className='h-1 w-1 rounded-full bg-zinc-400 dark:bg-zinc-500' />
+                    <span className='font-mono text-[8px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500'>Projects</span>
+                </div>
+                <div className='space-y-1.5'>
+                    <div className='h-1.5 w-3/4 rounded-full bg-zinc-300 dark:bg-zinc-700' />
+                    <div className='h-1.5 w-1/2 rounded-full bg-zinc-200 dark:bg-zinc-800' />
+                </div>
+                <div className='mt-3 space-y-1.5'>
+                    <div className='h-1.5 w-2/3 rounded-full bg-zinc-300 dark:bg-zinc-700' />
+                    <div className='h-1.5 w-2/5 rounded-full bg-zinc-200 dark:bg-zinc-800' />
+                </div>
+            </div>
+
+            <div className='relative mb-5 rounded-md'>
+                <div ref={refs?.educationHeadingRef} className='mb-2 flex w-fit items-center gap-1.5'>
+                    <span className='h-1 w-1 rounded-full bg-zinc-400 dark:bg-zinc-500' />
+                    <span className='font-mono text-[8px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500'>Education</span>
+                </div>
+                <div className='space-y-1.5'>
+                    <div className='h-1.5 w-3/5 rounded-full bg-zinc-300 dark:bg-zinc-700' />
+                    <div className='h-1.5 w-2/5 rounded-full bg-zinc-200 dark:bg-zinc-800' />
+                </div>
+            </div>
+
+            <div className='relative rounded-md'>
+                <div ref={refs?.skillsHeadingRef} className='mb-2 flex w-fit items-center gap-1.5'>
+                    <span className='h-1 w-1 rounded-full bg-zinc-400 dark:bg-zinc-500' />
+                    <span className='font-mono text-[8px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500'>Skills</span>
+                </div>
+                <div className='flex flex-wrap gap-1.5'>
+                    {['Strategy', 'Analytics', 'Leadership', 'Automation', 'Design', 'Research'].map((skill) => (
+                        <span key={skill} className='rounded-full border border-zinc-200 bg-zinc-50 px-2 py-1 text-[8px] font-medium text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-500'>
+                            {skill}
+                        </span>
+                    ))}
+                </div>
+            </div>
+        </>
+    );
+}
+
 export default function Home() {
     const { theme, toggleTheme } = useTheme();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
+    const [showFileError, setShowFileError] = useState(false);
+    const fileErrorTimeoutRef = useRef<number | null>(null);
     const [targetRole, setTargetRole] = useState('');
     const [isRoleSelected, setIsRoleSelected] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -22,8 +105,21 @@ export default function Home() {
     const navigate = useNavigate();
     const prefersReducedMotion = Boolean(useReducedMotion());
     const overlayRef = useRef<HTMLDivElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const canvasRafRef = useRef<number | null>(null);
+
+    const resumeViewportRef = useRef<HTMLDivElement>(null);
+    const resumeStageRef = useRef<HTMLDivElement>(null);
+    const nameRef = useRef<HTMLDivElement>(null);
+    const experienceBlockRef = useRef<HTMLDivElement>(null);
+    const experienceHeadingRef = useRef<HTMLDivElement>(null);
+    const projectsHeadingRef = useRef<HTMLDivElement>(null);
+    const educationHeadingRef = useRef<HTMLDivElement>(null);
+    const skillsHeadingRef = useRef<HTMLDivElement>(null);
+    const animationCompleteRef = useRef(false);
+
+    const lensRef = useRef<HTMLDivElement>(null);
+    const lensCloneRef = useRef<HTMLDivElement>(null);
+    const finishFlashRef = useRef<HTMLDivElement>(null);
+    const calloutRef = useRef<HTMLDivElement>(null);
 
     const headlinePhrases = ['resume.', 'interviews.', 'career.'];
     const analysisSteps = ['Reading your resume', 'Understanding your experience', 'Matching your target role', 'Building your analysis'];
@@ -56,30 +152,40 @@ export default function Home() {
     }, []);
 
     useEffect(() => {
-        if (isAnalyzing) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
-        }
+        document.body.style.overflow = 'hidden';
+
         return () => {
             document.body.style.overflow = '';
         };
-    }, [isAnalyzing]);
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            if (fileErrorTimeoutRef.current !== null) {
+                window.clearTimeout(fileErrorTimeoutRef.current);
+            }
+        };
+    }, []);
 
     useEffect(() => {
         if (!isAnalyzing) return;
+        if (analysisStep >= analysisSteps.length - 1) return;
+        let delay = 3000;
+        if (analysisStep === 0) delay = 3400;
+        else if (analysisStep === 1) delay = 2200;
+        else if (analysisStep === 2) delay = 6000;
 
-        const interval = window.setInterval(() => {
+        const timeoutId = window.setTimeout(() => {
             setAnalysisStep((current) => {
                 if (current >= analysisSteps.length - 1) {
                     return current;
                 }
                 return current + 1;
             });
-        }, 3000);
+        }, delay);
 
-        return () => window.clearInterval(interval);
-    }, [isAnalyzing]);
+        return () => window.clearTimeout(timeoutId);
+    }, [isAnalyzing, analysisStep]);
 
     useEffect(() => {
         if (!isAnalyzing) {
@@ -124,107 +230,103 @@ export default function Home() {
     useEffect(() => {
         if (!isAnalyzing) return;
 
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        const lineColor = 'rgba(244,244,245,0.14)';
-        const lineColorStrong = 'rgba(244,244,245,0.32)';
-        const scanColor = 'rgba(255,255,255,0.85)';
-
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        let width = 0;
-        let height = 0;
-
-        const lineWidths: number[] = Array.from({ length: 12 }, (_, i) => {
-            const seed = Math.sin(i * 12.9898) * 43758.5453;
-            return 0.35 + (seed - Math.floor(seed)) * 0.55;
-        });
-
-        const resize = () => {
-            const rect = canvas.getBoundingClientRect();
-            width = rect.width;
-            height = rect.height;
-            canvas.width = width * dpr;
-            canvas.height = height * dpr;
-            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        };
-        resize();
-
-        let scanProgress = prefersReducedMotion ? 0.5 : 0;
-        let lastTime = performance.now();
-
-        const draw = (time: number) => {
-            const delta = time - lastTime;
-            lastTime = time;
-
-            ctx.clearRect(0, 0, width, height);
-
-            const paddingX = 14;
-            const paddingY = 16;
-            const lineHeight = (height - paddingY * 2) / lineWidths.length;
-            const lineThickness = Math.max(1.4, lineHeight * 0.26);
-
-            lineWidths.forEach((w, i) => {
-                const y = paddingY + i * lineHeight + lineHeight / 2;
-                const lineEndX = paddingX + (width - paddingX * 2) * w;
-
-                ctx.strokeStyle = lineColor;
-                ctx.lineWidth = lineThickness;
-                ctx.lineCap = 'round';
-                ctx.beginPath();
-                ctx.moveTo(paddingX, y);
-                ctx.lineTo(lineEndX, y);
-                ctx.stroke();
-
-                const scanY = scanProgress * height;
-                const distance = Math.abs(scanY - y);
-                const band = lineHeight * 1.4;
-
-                if (distance < band) {
-                    const strength = 1 - distance / band;
-                    ctx.strokeStyle = lineColorStrong;
-                    ctx.globalAlpha = strength;
-                    ctx.beginPath();
-                    ctx.moveTo(paddingX, y);
-                    ctx.lineTo(lineEndX, y);
-                    ctx.stroke();
-                    ctx.globalAlpha = 1;
-                }
-            });
-
-            if (!prefersReducedMotion) {
-                const scanY = scanProgress * height;
-                const gradient = ctx.createLinearGradient(0, scanY - 16, 0, scanY + 16);
-                gradient.addColorStop(0, 'rgba(0,0,0,0)');
-                gradient.addColorStop(0.5, scanColor);
-                gradient.addColorStop(1, 'rgba(0,0,0,0)');
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, scanY - 16, width, 32);
-
-                scanProgress += delta * 0.00035;
-                if (scanProgress > 1.2) scanProgress = -0.2;
-
-                canvasRafRef.current = requestAnimationFrame(draw);
-            }
-        };
+        const viewport = resumeViewportRef.current;
+        const lens = lensRef.current;
+        const clone = lensCloneRef.current;
+        const stage = resumeStageRef.current;
+        if (!viewport || !lens || !clone || !stage) return;
 
         if (prefersReducedMotion) {
-            draw(performance.now());
-        } else {
-            canvasRafRef.current = requestAnimationFrame(draw);
+            gsap.set(lens, { opacity: 0 });
+            gsap.set(stage, { scale: 1 });
+            return;
         }
 
-        const handleResize = () => resize();
-        window.addEventListener('resize', handleResize);
+        gsap.set(clone, { transformOrigin: '0px 0px' });
+        gsap.set(stage, { transformOrigin: '50% 50%' });
+
+        const half = LENS_SIZE / 2;
+
+        const moveLensTo = (el: HTMLElement | null, duration: number) => {
+            const tl = gsap.timeline();
+            if (!el) return tl;
+
+            const viewportRect = viewport.getBoundingClientRect();
+            const targetRect = el.getBoundingClientRect();
+
+            const px = targetRect.left - viewportRect.left + targetRect.width / 2;
+            const py = targetRect.top - viewportRect.top + targetRect.height / 2;
+
+            const maxX = Math.max(viewportRect.width - half, half);
+            const maxY = Math.max(viewportRect.height - half, half);
+            const lensX = Math.min(Math.max(px, half), maxX);
+            const lensY = Math.min(Math.max(py, half), maxY);
+
+            const tx = half - MAG_SCALE * px;
+            const ty = half - MAG_SCALE * py;
+
+            tl.to(lens, { x: lensX - half, y: lensY - half, duration, ease: 'power3.inOut' }, 0);
+            tl.to(clone, { x: tx, y: ty, scale: MAG_SCALE, duration, ease: 'power3.inOut' }, 0);
+            return tl;
+        };
+
+        let loopTl: gsap.core.Timeline | null = null;
+        let breatheTween: gsap.core.Tween | null = null;
+
+        if (analysisStep === 0) {
+            const viewportRect = viewport.getBoundingClientRect();
+
+            const startX = viewportRect.width + half + 32;
+            const startY = 160;
+
+            gsap.set(lens, {
+                x: startX - half,
+                y: startY - half,
+                opacity: 0,
+                scale: 0.9,
+            });
+            gsap.set(clone, {
+                x: half - MAG_SCALE * startX,
+                y: half - MAG_SCALE * startY,
+                scale: MAG_SCALE,
+            });
+            gsap.set(calloutRef.current, { opacity: 1 });
+
+            loopTl = gsap.timeline();
+            loopTl.to(lens, { opacity: 1, scale: 1, duration: 0.6, ease: 'power3.out' }, 0);
+            loopTl.to(calloutRef.current, { opacity: 0, duration: 0.3, ease: 'power2.inOut' }, 3.1);
+        } else if (analysisStep === 1) {
+            loopTl = moveLensTo(experienceHeadingRef.current, 1.1);
+        } else if (analysisStep === 2) {
+            loopTl = gsap.timeline();
+
+            loopTl.add(moveLensTo(projectsHeadingRef.current, 0.8)).to({}, { duration: 1.2 }).add(moveLensTo(educationHeadingRef.current, 0.8)).to({}, { duration: 1.2 }).add(moveLensTo(skillsHeadingRef.current, 0.8)).to({}, { duration: 1.2 });
+        } else {
+            loopTl = gsap.timeline();
+            loopTl.to(lens, { opacity: 0, scale: 0.85, duration: 0.5, ease: 'power2.in' });
+            breatheTween = gsap.to(stage, { scale: 1.015, duration: 2.6, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: 0.5 });
+        }
 
         return () => {
-            window.removeEventListener('resize', handleResize);
-            if (canvasRafRef.current) cancelAnimationFrame(canvasRafRef.current);
+            loopTl?.kill();
+            breatheTween?.kill();
+            gsap.killTweensOf([lens, clone, stage, calloutRef.current]);
         };
-    }, [isAnalyzing, theme, prefersReducedMotion]);
+    }, [analysisStep, isAnalyzing, prefersReducedMotion]);
+
+    useEffect(() => {
+        if (!isComplete || prefersReducedMotion) return;
+
+        const stage = resumeStageRef.current;
+        const lens = lensRef.current;
+        const flash = finishFlashRef.current;
+        if (!stage || !flash) return;
+
+        gsap.killTweensOf(stage);
+        if (lens) gsap.to(lens, { opacity: 0, duration: 0.3, ease: 'power2.out' });
+        gsap.to(stage, { scale: 1.02, duration: 0.4, ease: 'power2.out', yoyo: true, repeat: 1 });
+        gsap.fromTo(flash, { opacity: 0 }, { opacity: 1, duration: 0.35, ease: 'power2.out', yoyo: true, repeat: 1 });
+    }, [isComplete, prefersReducedMotion]);
 
     const playCompletionAnimation = () => {
         return new Promise<void>((resolve) => {
@@ -240,8 +342,21 @@ export default function Home() {
 
     const handleFile = (file: File) => {
         if (file.type !== 'application/pdf') {
-            alert('Please select a PDF file.');
+            setShowFileError(true);
+            if (fileErrorTimeoutRef.current !== null) {
+                window.clearTimeout(fileErrorTimeoutRef.current);
+            }
+            fileErrorTimeoutRef.current = window.setTimeout(() => {
+                setShowFileError(false);
+                fileErrorTimeoutRef.current = null;
+            }, 3500);
             return;
+        }
+
+        setShowFileError(false);
+        if (fileErrorTimeoutRef.current !== null) {
+            window.clearTimeout(fileErrorTimeoutRef.current);
+            fileErrorTimeoutRef.current = null;
         }
         setSelectedFile(file);
     };
@@ -279,10 +394,14 @@ export default function Home() {
         setIsAnalyzing(true);
         setIsComplete(false);
         setAnalysisStep(0);
+        animationCompleteRef.current = false;
+
+        const animationStartTime = Date.now();
 
         try {
             console.log('Uploading resume...');
             setAnalysisStep(0);
+
             const pdfUrl = await uploadResume(selectedFile);
 
             console.log('Resume uploaded successfully\nPDF URL:', pdfUrl);
@@ -307,10 +426,22 @@ export default function Home() {
 
             console.log('Resume analysis completed\nAnalysis result:', result);
 
+            const elapsedTime = Date.now() - animationStartTime;
+            const remainingAnimationTime = Math.max(0, ANALYSIS_ANIMATION_DURATION - elapsedTime);
+
+            if (remainingAnimationTime > 0) {
+                console.log(`AI finished early. Waiting ${remainingAnimationTime}ms for animation.`);
+
+                await new Promise<void>((resolve) => {
+                    window.setTimeout(resolve, remainingAnimationTime);
+                });
+            }
+
             setAnalysisStep(analysisSteps.length - 1);
             setIsComplete(true);
 
             await playCompletionAnimation();
+
             navigate('/story');
         } catch (error) {
             console.error('Resume analysis failed:', error);
@@ -332,46 +463,140 @@ export default function Home() {
                         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                         role='status'
                         aria-live='polite'
-                        className='fixed inset-0 z-100 flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-zinc-950 px-6 text-zinc-100 font-sans'
+                        className='fixed inset-0 z-100 flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-white dark:bg-zinc-950 px-6 text-zinc-900 dark:text-zinc-100 font-sans transition-colors duration-300'
                     >
                         <div data-gsap='status' className='absolute left-6 top-6 z-20 flex items-center gap-2'>
-                            <span className='h-1.5 w-1.5 rounded-full bg-zinc-400' />
-                            <span className='font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-400'>Resume Analysis</span>
+                            <span className='h-1.5 w-1.5 rounded-full bg-zinc-500 dark:bg-zinc-400' />
+                            <span className='font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400'>Resume Analysis</span>
                         </div>
-                        <div className='pointer-events-none absolute left-1/2 top-[40%] h-75 w-75 -translate-x-1/2 rounded-full bg-zinc-400/4 blur-[80px]' />
+
+                        <style>{`
+                            @keyframes key-light-drift {
+                                0%   { transform: translate(-50%, -50%) translate(0px, 0px) scale(1); opacity: 0.5; }
+                                20%  { transform: translate(-50%, -50%) translate(16px, 10px) scale(1.035); opacity: 0.68; }
+                                45%  { transform: translate(-50%, -50%) translate(-10px, 18px) scale(1.06); opacity: 0.85; }
+                                70%  { transform: translate(-50%, -50%) translate(-18px, -6px) scale(1.02); opacity: 0.6; }
+                                100% { transform: translate(-50%, -50%) translate(0px, 0px) scale(1); opacity: 0.5; }
+                            }
+                            @keyframes ambient-pool-drift {
+                                0%   { transform: translate(-50%, -50%) translate(0px, 0px) scale(1); opacity: 0.35; }
+                                30%  { transform: translate(-50%, -50%) translate(-20px, 8px) scale(1.05); opacity: 0.55; }
+                                58%  { transform: translate(-50%, -50%) translate(8px, -16px) scale(0.97); opacity: 0.7; }
+                                82%  { transform: translate(-50%, -50%) translate(18px, 10px) scale(1.03); opacity: 0.45; }
+                                100% { transform: translate(-50%, -50%) translate(0px, 0px) scale(1); opacity: 0.35; }
+                            }
+                        `}</style>
+                        <div className='pointer-events-none absolute inset-0 z-0 overflow-hidden bg-white dark:bg-zinc-950 select-none transition-colors duration-300'>
+                            <div
+                                className='absolute left-[45%] top-[29%] h-225 w-225 rounded-full'
+                                style={{
+                                    background: theme === 'dark' ? 'radial-gradient(circle, rgba(244,244,245,0.09) 0%, rgba(244,244,245,0.03) 34%, transparent 70%)' : 'radial-gradient(circle, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 34%, transparent 70%)',
+                                    filter: 'blur(75px)',
+                                    transform: 'translate(-50%, -50%) scale(1)',
+                                    opacity: 0.5,
+                                    animation: prefersReducedMotion ? 'none' : 'key-light-drift 26s ease-in-out infinite',
+                                }}
+                            />
+                            <div
+                                className='absolute left-[63%] top-[46%] h-190 w-190 rounded-full'
+                                style={{
+                                    background: theme === 'dark' ? 'radial-gradient(circle, rgba(228,228,231,0.05) 0%, rgba(228,228,231,0.016) 40%, transparent 72%)' : 'radial-gradient(circle, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.01) 40%, transparent 72%)',
+                                    filter: 'blur(100px)',
+                                    transform: 'translate(-50%, -50%) scale(1)',
+                                    opacity: 0.35,
+                                    animation: prefersReducedMotion ? 'none' : 'ambient-pool-drift 29s ease-in-out infinite',
+                                }}
+                            />
+                            <div
+                                className='absolute inset-0'
+                                style={{
+                                    background:
+                                        theme === 'dark'
+                                            ? 'radial-gradient(ellipse 85% 65% at 47% 27%, transparent 0%, rgba(9,9,11,0.5) 58%, rgba(9,9,11,0.97) 100%), linear-gradient(to bottom, rgba(9,9,11,0) 0%, rgba(9,9,11,0.4) 100%)'
+                                            : 'radial-gradient(ellipse 85% 65% at 47% 27%, transparent 0%, rgba(255,255,255,0.5) 58%, rgba(255,255,255,0.97) 100%), linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 100%)',
+                                }}
+                            />
+                            <div
+                                className='absolute inset-0'
+                                style={{
+                                    backgroundImage:
+                                        'url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27240%27%20height=%27240%27%20viewBox=%270%200%20240%20240%27%3E%3Cfilter%20id=%27n%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%270.9%27%20numOctaves=%272%27%20stitchTiles=%27stitch%27/%3E%3C/filter%3E%3Crect%20width=%27100%25%27%20height=%27100%25%27%20filter=%27url(%23n)%27/%3E%3C/svg%3E)',
+                                    opacity: 0.045,
+                                    mixBlendMode: 'overlay',
+                                }}
+                            />
+                        </div>
+
                         <div className='relative z-10 flex w-full max-w-2xl flex-col items-center'>
                             <div data-gsap='panel' className='relative w-full max-w-md p-8'>
-                                <div className='mx-auto relative h-80 w-60 overflow-hidden rounded-xl bg-zinc-950 border border-zinc-800'>
-                                    <div className='absolute -left-px -top-px z-10 h-5 w-5 rounded-tl-xl border-l-2 border-t-2 border-zinc-400/60' />
-                                    <div className='absolute -right-px -top-px z-10 h-5 w-5 rounded-tr-xl border-r-2 border-t-2 border-zinc-400/60' />
-                                    <div className='absolute -bottom-px -left-px z-10 h-5 w-5 rounded-bl-xl border-b-2 border-l-2 border-zinc-400/60' />
-                                    <div className='absolute -bottom-px -right-px z-10 h-5 w-5 rounded-br-xl border-b-2 border-r-2 border-zinc-400/60' />
-                                    <canvas ref={canvasRef} className='h-full w-full' />
+                                <div className='mx-auto relative h-104 w-64 rounded-xl bg-white border border-zinc-200 dark:bg-zinc-950 dark:border-zinc-800 transition-colors duration-300'>
+                                    <div ref={resumeViewportRef} className='absolute inset-0 overflow-hidden rounded-xl'>
+                                        <div className='absolute -left-px -top-px z-30 h-5 w-5 rounded-tl-xl border-l-2 border-t-2 border-zinc-300 dark:border-zinc-400/60' />
+                                        <div className='absolute -right-px -top-px z-30 h-5 w-5 rounded-tr-xl border-r-2 border-t-2 border-zinc-300 dark:border-zinc-400/60' />
+                                        <div className='absolute -bottom-px -left-px z-30 h-5 w-5 rounded-bl-xl border-b-2 border-l-2 border-zinc-300 dark:border-zinc-400/60' />
+                                        <div className='absolute -bottom-px -right-px z-30 h-5 w-5 rounded-br-xl border-b-2 border-r-2 border-zinc-300 dark:border-zinc-400/60' />
+
+                                        <div ref={resumeStageRef} className='relative h-full w-full px-5 pb-8 pt-6 will-change-transform'>
+                                            <ResumeDocument refs={{ nameRef, experienceBlockRef, experienceHeadingRef, projectsHeadingRef, educationHeadingRef, skillsHeadingRef }} />
+                                        </div>
+
+                                        <div ref={finishFlashRef} className='pointer-events-none absolute inset-0 z-25 bg-black/5 dark:bg-white/10 opacity-0' />
+                                        <div className='pointer-events-none absolute inset-x-0 top-0 z-20 h-8 bg-linear-to-b from-white dark:from-zinc-950 to-transparent' />
+                                        <div className='pointer-events-none absolute inset-x-0 bottom-0 z-20 h-8 bg-linear-to-t from-white dark:from-zinc-950 to-transparent' />
+                                    </div>
+
+                                    <div ref={lensRef} className='pointer-events-none absolute left-0 top-0 z-30 opacity-0' style={{ width: LENS_SIZE, height: LENS_SIZE }}>
+                                        <div ref={calloutRef} className='absolute left-[calc(100%+18px)] top-1/2 -translate-y-1/2 flex items-center whitespace-nowrap opacity-0 z-40 drop-shadow-md'>
+                                            <span className='font-sans text-[13px] font-light tracking-wide text-zinc-700 dark:text-zinc-200'>Let me analyze this resume</span>
+
+                                            <svg width='28' height='20' viewBox='0 0 28 20' className='absolute right-full mr-2 text-zinc-400/50 dark:text-zinc-500/50'>
+                                                <line x1='28' y1='10' x2='0' y2='10' stroke='currentColor' strokeWidth='1' />
+                                            </svg>
+                                        </div>
+
+                                        <div className='absolute left-1/2 top-1/2 -z-10 -rotate-45'>
+                                            <div className='absolute -left-1.5 top-20 h-30 w-3 bg-black/40 blur-sm' />
+                                            <div className='absolute -left-3.5 top-20 h-4 w-7 rounded-[3px] border border-zinc-600/50 bg-linear-to-r from-zinc-700 via-zinc-400 to-zinc-700 shadow-sm' />
+                                            <div className='absolute -left-2.5 top-23.5 h-1.5 w-5 rounded-b-sm border-x border-b border-zinc-600/50 bg-zinc-800' />
+                                            <div className='absolute -left-1.75 top-24.5 h-25 w-3.5 rounded-full border border-zinc-700/50 bg-linear-to-r from-zinc-900 via-zinc-700 to-zinc-950 shadow-[inset_1px_1px_2px_rgba(255,255,255,0.15)]' />
+                                            <div className='absolute -left-2.25 top-48 h-4.5 w-4.5 rounded-full border border-zinc-600/50 bg-linear-to-br from-zinc-700 to-zinc-900 shadow-[inset_1px_1px_3px_rgba(255,255,255,0.2)]' />
+                                        </div>
+
+                                        <div className='absolute inset-0 overflow-hidden rounded-full bg-white dark:bg-zinc-950'>
+                                            <div ref={lensCloneRef} className='absolute left-0 top-0 w-64 px-5 pb-8 pt-6'>
+                                                <ResumeDocument />
+                                            </div>
+                                            <div className='pointer-events-none absolute inset-0 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]' />
+                                        </div>
+                                        <div className='pointer-events-none absolute inset-0 rounded-full border border-zinc-200/50 dark:border-zinc-300/25 shadow-[0_10px_30px_-6px_rgba(0,0,0,0.15),0_0_0_1px_rgba(0,0,0,0.05)] dark:shadow-[0_10px_30px_-6px_rgba(0,0,0,0.65),0_0_0_1px_rgba(255,255,255,0.03)]' />
+                                        <div className='pointer-events-none absolute left-[14%] top-[10%] h-[38%] w-[46%] rounded-full bg-white/60 dark:bg-white/10 blur-[6px]' />
+                                        <div className='pointer-events-none absolute inset-0 rounded-full bg-linear-to-br from-black/5 dark:from-white/4 via-transparent to-transparent' />
+                                    </div>
                                 </div>
 
                                 <div className='mt-8 text-center min-h-18'>
                                     <AnimatePresence mode='wait'>
                                         <motion.div key={analysisStep} initial={{ opacity: 0, y: 12, filter: 'blur(4px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, y: -12, filter: 'blur(4px)' }} transition={{ duration: 0.4, ease: 'easeOut' }}>
-                                            <h2 className='text-xl font-semibold tracking-tight text-white'>{analysisMessages[analysisStep].title}</h2>
+                                            <h2 className='text-xl font-semibold tracking-tight text-zinc-900 dark:text-white'>{analysisMessages[analysisStep].title}</h2>
 
-                                            <p className='mt-2 text-sm text-zinc-400'>{analysisMessages[analysisStep].subtitle}</p>
+                                            <p className='mt-2 text-sm text-zinc-500 dark:text-zinc-400'>{analysisMessages[analysisStep].subtitle}</p>
                                         </motion.div>
                                     </AnimatePresence>
                                 </div>
                             </div>
                             <div data-gsap='role' className='mt-2 flex items-center gap-2 text-center'>
-                                <span className='text-[12px] font-mono uppercase tracking-[0.16em] text-zinc-500'>Tailoring for</span>
-                                <span className='text-[14px] font-medium text-zinc-300'>{targetRole}</span>
+                                <span className='text-[12px] font-mono uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500'>Tailoring for</span>
+                                <span className='text-[14px] font-medium text-zinc-700 dark:text-zinc-300'>{targetRole}</span>
                             </div>
                         </div>
 
                         <div data-gsap='footer' className='absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500'>
                             {isComplete ? (
-                                <span className='text-zinc-200'>Analysis complete</span>
+                                <span className='text-zinc-700 dark:text-zinc-200'>Analysis complete</span>
                             ) : (
                                 <>
-                                    <Loader2 className='h-3.5 w-3.5 animate-spin text-zinc-400' />
-                                    <span>Analyzing · {elapsedSeconds}s</span>
+                                    <Loader2 className='h-3.5 w-3.5 animate-spin text-zinc-400 dark:text-zinc-500' />
+                                    <span className='text-zinc-500 dark:text-zinc-400'>Analyzing · {elapsedSeconds}s</span>
                                 </>
                             )}
                         </div>
@@ -477,6 +702,24 @@ export default function Home() {
                                 <h3 className='mx-auto max-w-[90%] truncate text-base font-semibold text-zinc-900 dark:text-zinc-100'>{selectedFile ? selectedFile.name : isDragging ? 'Drop your PDF here' : 'Upload your resume'}</h3>
 
                                 <p className='mt-2 text-sm text-zinc-500 dark:text-zinc-400'>{selectedFile ? `Choose the role you're targeting — your analysis will be tailored to it.` : 'Drag and drop your PDF here, or click to browse.'}</p>
+
+                                <AnimatePresence>
+                                    {showFileError && (
+                                        <motion.div
+                                            initial={{ opacity: 0, scale: 0.92 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.92 }}
+                                            transition={{ duration: 0.25, ease: 'easeOut' }}
+                                            className='mt-3 mx-auto flex w-fit items-center justify-center gap-3 rounded-lg border border-rose-200/70 bg-rose-50/70 px-4 py-2 dark:border-rose-900/40 dark:bg-rose-950/30'
+                                        >
+                                            <AlertCircle className='h-3.5 w-3.5 shrink-0 text-rose-500 dark:text-rose-400' />
+                                            <div className='text-left'>
+                                                <p className='text-[13px] font-medium leading-tight text-rose-700 dark:text-rose-300 mb-0.5'>Invalid file type</p>
+                                                <p className='text-[12px] leading-tight text-rose-500/90 dark:text-rose-400/80'>Please upload a PDF file only</p>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
                             {selectedFile && <TargetRoleSelector value={targetRole} onChange={setTargetRole} onSelectionChange={setIsRoleSelected} />}
                             {selectedFile ? (
