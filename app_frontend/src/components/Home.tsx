@@ -150,15 +150,12 @@ export default function Home() {
     }, []);
 
     useEffect(() => {
-        if (isAnalyzing) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
-        }
+        document.body.style.overflow = 'hidden';
+
         return () => {
             document.body.style.overflow = '';
         };
-    }, [isAnalyzing]);
+    }, []);
 
     useEffect(() => {
         if (!isAnalyzing) return;
