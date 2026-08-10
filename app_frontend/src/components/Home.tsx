@@ -162,8 +162,8 @@ export default function Home() {
         if (analysisStep >= analysisSteps.length - 1) return;
         let delay = 3000;
         if (analysisStep === 0) delay = 3400;
-        else if (analysisStep === 1) delay = 3100;
-        else if (analysisStep === 2) delay = 9000;
+        else if (analysisStep === 1) delay = 2200;
+        else if (analysisStep === 2) delay = 6000;
 
         const timeoutId = window.setTimeout(() => {
             setAnalysisStep((current) => {
@@ -288,8 +288,9 @@ export default function Home() {
         } else if (analysisStep === 1) {
             loopTl = moveLensTo(experienceHeadingRef.current, 1.1);
         } else if (analysisStep === 2) {
-            loopTl = gsap.timeline({ repeat: -1 });
-            loopTl.add(moveLensTo(projectsHeadingRef.current, 1.0)).to({}, { duration: 2.0 }).add(moveLensTo(educationHeadingRef.current, 1.0)).to({}, { duration: 2.0 }).add(moveLensTo(skillsHeadingRef.current, 1.0)).to({}, { duration: 2.0 });
+            loopTl = gsap.timeline();
+
+            loopTl.add(moveLensTo(projectsHeadingRef.current, 0.8)).to({}, { duration: 1.2 }).add(moveLensTo(educationHeadingRef.current, 0.8)).to({}, { duration: 1.2 }).add(moveLensTo(skillsHeadingRef.current, 0.8)).to({}, { duration: 1.2 });
         } else {
             loopTl = gsap.timeline();
             loopTl.to(lens, { opacity: 0, scale: 0.85, duration: 0.5, ease: 'power2.in' });
