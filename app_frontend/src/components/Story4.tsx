@@ -1,174 +1,138 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { motion, useReducedMotion, type Variants } from 'framer-motion';
 import { useStory } from './StoryContext';
 
-type Improvement = {
-    title: string;
-    description: string;
+type MatchedSkill = {
+    skill: string;
+    strength?: string;
 };
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-const Story4 = () => {
+const FALLBACK_ASSET = 'A well-rounded set of skills across your resume';
+
+export default function Story4() {
     const { analysisResult } = useStory();
+    const reduceMotion = useReducedMotion();
 
-    const improvements: Improvement[] =
-        analysisResult?.data?.data?.resume_fixes
-            ?.filter((item: { priority: string; section: string; fix: string }) => item.priority === 'High')
-            .slice(0, 3)
-            .map((item: { priority: string; section: string; fix: string }) => ({
-                title: item.section,
-                description: item.fix,
-            })) ?? [];
+    const strongestAsset: string = analysisResult?.data?.data?.candidate?.strongest_asset || FALLBACK_ASSET;
 
-    const [visibleColumns, setVisibleColumns] = useState(0);
+    const matchedSkills: MatchedSkill[] = (analysisResult?.data?.data?.skills?.matched ?? []).filter((item: any): item is MatchedSkill => typeof item?.skill === 'string' && item.skill.trim().length > 0);
 
-    useEffect(() => {
-        setVisibleColumns(0);
+    const T = {
+        eyebrow: 0.1,
+        line1: 0.4,
+        line2: 0.48,
+        divider: 1.05,
+        heroLabel: 1.3,
+        heroReveal: 1.55,
+        heroDuration: 1.15,
+        skills: 2.85,
+    };
 
-        const timers = improvements.map((_, index) =>
-            window.setTimeout(
-                () => {
-                    setVisibleColumns(index + 1);
-                },
-                700 + index * 550,
-            ),
-        );
+    const skillsContainer: Variants = {
+        hidden: {},
+        show: { transition: { staggerChildren: reduceMotion ? 0 : 0.045, delayChildren: T.skills } },
+    };
 
-        return () => timers.forEach(clearTimeout);
-    }, [improvements.length]);
-
-    const layoutClass = improvements.length === 1 ? 'flex justify-center' : improvements.length === 2 ? 'mx-auto grid max-w-4xl grid-cols-2 gap-20' : 'grid grid-cols-3 gap-20';
+    const skillItem: Variants = {
+        hidden: { opacity: 0, y: reduceMotion ? 0 : 8 },
+        show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
+    };
 
     return (
-        <section className='relative flex h-screen items-center justify-center overflow-hidden bg-white'>
-            <div
-                className='pointer-events-none absolute inset-0'
-                style={{
-                    background: 'radial-gradient(circle at center, rgba(0,0,0,.035), transparent 70%)',
-                }}
-            />
-
-            <div className='relative z-10 w-full max-w-7xl px-20'>
-                <motion.div
-                    initial={{
-                        opacity: 0,
-                        y: -20,
-                    }}
-                    animate={{
-                        opacity: 1,
-                        y: 0,
-                    }}
-                    transition={{
-                        duration: 0.7,
-                        ease: EASE,
-                    }}
-                    className='mb-24 text-center'
-                >
-                    <p className='text-[13px] uppercase tracking-[0.45em] text-zinc-500'>Top Improvements</p>
-                </motion.div>
-
-                <div className={layoutClass}>
-                    {improvements.map((item, index) => {
-                        const visible = visibleColumns > index;
-
-                        return (
-                            <motion.div
-                                key={item.title}
-                                initial={{
-                                    opacity: 0,
-                                    y: 40,
-                                    filter: 'blur(10px)',
-                                }}
-                                animate={
-                                    visible
-                                        ? {
-                                              opacity: 1,
-                                              y: 0,
-                                              filter: 'blur(0px)',
-                                          }
-                                        : {}
-                                }
-                                transition={{
-                                    duration: 0.65,
-                                    ease: EASE,
-                                }}
-                                className='relative flex flex-col'
-                            >
+        <section className='relative left-[calc(50%-50vw)] h-screen w-screen overflow-hidden bg-white transition-colors duration-500 dark:bg-black'>
+            <div aria-hidden className='pointer-events-none absolute inset-0 dark:hidden' style={{ background: 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(0,0,0,0.025), transparent 70%)' }} />
+            <div className='absolute inset-0 z-10 flex w-full items-center justify-center px-6 text-center sm:px-12'>
+                <div className='flex w-full max-w-275 flex-col items-center'>
+                    <div className='flex items-center justify-center gap-6'>
+                        <motion.div
+                            initial={reduceMotion ? { scaleX: 1, opacity: 1 } : { scaleX: 0, opacity: 0 }}
+                            animate={{ scaleX: 1, opacity: 1 }}
+                            transition={reduceMotion ? { duration: 0 } : { duration: 0.65, ease: EASE, delay: 0.85 }}
+                            style={{ originX: 0 }}
+                            className='relative h-px w-20 overflow-hidden bg-zinc-300 dark:bg-zinc-800'
+                        >
+                            {!reduceMotion && (
                                 <motion.span
-                                    initial={{
-                                        opacity: 0,
-                                        scale: 0.9,
-                                    }}
-                                    animate={
-                                        visible
-                                            ? {
-                                                  opacity: 0.05,
-                                                  scale: 1,
-                                              }
-                                            : {}
-                                    }
+                                    aria-hidden
+                                    className='absolute top-0 h-px w-10 bg-zinc-950 shadow-[0_0_6px_rgba(24,24,27,0.45)] dark:bg-white dark:shadow-[0_0_8px_rgba(255,255,255,0.7)]'
+                                    initial={{ left: '100%' }}
+                                    animate={{ left: '-40px' }}
+                                    transition={{ duration: 1.3, ease: [0.7, 0, 0.3, 1], repeat: Infinity, repeatType: 'loop', repeatDelay: 1, delay: 1.5 }}
+                                />
+                            )}
+                        </motion.div>
+                        <motion.span
+                            initial={reduceMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.72 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={reduceMotion ? { duration: 0 } : { duration: 0.75, ease: [0.16, 1, 0.3, 1], delay: 0 }}
+                            className='shrink-0 font-mono text-[11px] font-medium uppercase tracking-[0.35em] text-zinc-500 dark:text-zinc-400'
+                        >
+                            What stands out
+                        </motion.span>
+                        <motion.div
+                            initial={reduceMotion ? { scaleX: 1, opacity: 1 } : { scaleX: 0, opacity: 0 }}
+                            animate={{ scaleX: 1, opacity: 1 }}
+                            transition={reduceMotion ? { duration: 0 } : { duration: 0.65, ease: EASE, delay: 0.85 }}
+                            style={{ originX: 1 }}
+                            className='relative h-px w-20 overflow-hidden bg-zinc-300 dark:bg-zinc-800'
+                        >
+                            {!reduceMotion && (
+                                <motion.span
+                                    aria-hidden
+                                    className='absolute top-0 h-px w-10 bg-zinc-950 shadow-[0_0_6px_rgba(24,24,27,0.45)] dark:bg-white dark:shadow-[0_0_8px_rgba(255,255,255,0.7)]'
+                                    initial={{ left: '-40px' }}
+                                    animate={{ left: '100%' }}
+                                    transition={{ duration: 1.3, ease: [0.7, 0, 0.3, 1], repeat: Infinity, repeatType: 'loop', repeatDelay: 1, delay: 1.5 }}
+                                />
+                            )}
+                        </motion.div>
+                    </div>
+                    <div className='mt-8 flex flex-col items-center sm:mt-10'>
+                        <div className='relative w-full max-w-170'>
+                            <motion.h1
+                                initial={reduceMotion ? { opacity: 0 } : { clipPath: 'inset(0 100% 0 0)', filter: 'blur(14px)' }}
+                                animate={reduceMotion ? { opacity: 1 } : { clipPath: 'inset(0 0% 0 0)', filter: 'blur(0px)' }}
+                                transition={{ duration: T.heroDuration, ease: EASE, delay: T.heroReveal }}
+                                className='text-balance text-[26px] font-bold leading-[1.2] tracking-wide text-zinc-950 dark:text-white sm:text-[36px] lg:text-[46px] xl:text-[50px]'
+                                style={{ fontFamily: '"Fraunces", ui-serif, Georgia, serif', fontWeight: 300, fontVariationSettings: '"wght" 300' }}
+                            >
+                                {strongestAsset}
+                            </motion.h1>
+                            {!reduceMotion && (
+                                <motion.span
+                                    aria-hidden
+                                    initial={{ left: '0%', opacity: 0 }}
+                                    animate={{ left: '100%', opacity: [0, 1, 1, 0] }}
                                     transition={{
-                                        duration: 0.7,
-                                        delay: 0.1,
+                                        left: { duration: T.heroDuration, ease: EASE, delay: T.heroReveal },
+                                        opacity: { duration: T.heroDuration, ease: EASE, delay: T.heroReveal, times: [0, 0.08, 0.92, 1] },
                                     }}
-                                    className='pointer-events-none absolute -top-12 -left-6 text-[145px] font-semibold leading-none tracking-[-0.14em] text-black'
-                                >
-                                    {`0${index + 1}`}
-                                </motion.span>
+                                    className='pointer-events-none absolute top-0 bottom-0 w-px bg-zinc-900 dark:bg-white'
+                                />
+                            )}
+                        </div>
+                    </div>
+                    {matchedSkills.length > 0 && (
+                        <motion.div initial='hidden' animate='show' variants={skillsContainer} className='mt-12 flex w-full max-w-190 flex-col items-center sm:mt-14'>
+                            <motion.span variants={skillItem} className='mb-3 font-mono text-[11px] font-medium uppercase tracking-[0.3em] text-zinc-400 dark:text-zinc-600'>
+                                Supported by
+                            </motion.span>
 
-                                <motion.h2
-                                    initial={{
-                                        opacity: 0,
-                                        y: 18,
-                                    }}
-                                    animate={
-                                        visible
-                                            ? {
-                                                  opacity: 1,
-                                                  y: 0,
-                                              }
-                                            : {}
-                                    }
-                                    transition={{
-                                        delay: 0.2,
-                                        duration: 0.45,
-                                    }}
-                                    className='relative z-10 text-[34px] font-medium tracking-[-0.04em] text-zinc-900'
-                                >
-                                    {item.title}
-                                </motion.h2>
-
-                                <motion.p
-                                    initial={{
-                                        opacity: 0,
-                                        y: 16,
-                                    }}
-                                    animate={
-                                        visible
-                                            ? {
-                                                  opacity: 1,
-                                                  y: 0,
-                                              }
-                                            : {}
-                                    }
-                                    transition={{
-                                        delay: 0.45,
-                                        duration: 0.55,
-                                    }}
-                                    className='relative z-10 mt-22 text-[18px] leading-7 tracking-wide text-zinc-600'
-                                >
-                                    {item.description}
-                                </motion.p>
-                            </motion.div>
-                        );
-                    })}
+                            <div className='flex flex-wrap items-center justify-center gap-x-4 gap-y-2'>
+                                {matchedSkills.map((item, index) => (
+                                    <motion.span key={`${item.skill}-${index}`} variants={skillItem} className='flex items-center font-mono text-[13px] tracking-wide text-zinc-600 dark:text-zinc-400 sm:text-[14px]'>
+                                        {item.skill}
+                                        {index < matchedSkills.length - 1 && <span className='ml-4 text-zinc-300 dark:text-zinc-700'>/</span>}
+                                    </motion.span>
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
                 </div>
             </div>
         </section>
     );
-};
-
-export default Story4;
+}

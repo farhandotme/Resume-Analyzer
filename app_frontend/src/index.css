@@ -1,3 +1,6 @@
+@import '@fontsource/fraunces/300.css';
+@import '@fontsource/fraunces/400.css';
+
 @import 'tailwindcss';
 
 @custom-variant dark (&:where(.dark, .dark *));
