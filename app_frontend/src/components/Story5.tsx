@@ -1,236 +1,413 @@
 'use client';
 
-import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useStory } from './StoryContext';
 
-type RoadmapItem = {
-    id: string;
-    action: string;
-    priority: 'High' | 'Medium';
+const EASE = [0.22, 1, 0.36, 1] as const;
+const EASE_DRAW = [0.65, 0, 0.35, 1] as const;
+const TRAVEL_EASE_X = [0.4, 0, 0.2, 1] as const;
+const TRAVEL_EASE_Y = [0.16, 1, 0.3, 1] as const;
+
+const CX = 60;
+const CY = 60;
+
+const TRIANGLE_PATH = 'M 60 8 L 105 86 L 15 86 Z';
+
+const SEGMENT_COUNT = 4;
+const SEGMENT_LEN = 18;
+const SEGMENT_START_ROTATION = [-235, 210, -290, 260];
+const SEG_AT = 0.35;
+const SEG_STAGGER = 0.14;
+const LOCK_AT = SEG_AT + (SEGMENT_COUNT - 1) * SEG_STAGGER + 0.85;
+const BAR_AT = LOCK_AT + 0.18;
+const DOT_AT = BAR_AT + 0.3;
+
+export const GLYPH_LOCK_AT = LOCK_AT;
+export const GLYPH_FORMATION_DURATION = DOT_AT + 0.45;
+export const GLYPH_ACCENT = 'currentColor';
+
+type Phase = 'forming' | 'holding' | 'preTravel' | 'traveling' | 'landed';
+
+type FaultGlyphProps = {
+    phase: Phase;
+    still?: boolean;
+    className?: string;
 };
 
-type RoadmapSection = {
-    title: string;
-    items: RoadmapItem[];
-};
-
-const EASE = [0.16, 1, 0.3, 1] as const;
-
-const Story5 = () => {
-    const { analysisResult } = useStory();
-
-    const roadmap: RoadmapSection[] = useMemo(() => {
-        const actionPlan = analysisResult?.data?.data?.action_plan ?? [];
-
-        const grouped = actionPlan.reduce(
-            (
-                groups: Record<string, RoadmapSection>,
-                item: {
-                    timeline: string;
-                    action: string;
-                    impact: string;
-                },
-            ) => {
-                const timeline = item.timeline;
-
-                if (!groups[timeline]) {
-                    groups[timeline] = {
-                        title: timeline,
-                        items: [],
-                    };
-                }
-
-                groups[timeline].items.push({
-                    id: String(groups[timeline].items.length + 1).padStart(2, '0'),
-                    action: item.action,
-                    priority: item.impact === 'High' ? 'High' : 'Medium',
-                });
-
-                return groups;
-            },
-            {},
-        );
-
-        return Object.values(grouped);
-    }, [analysisResult]);
-
-    const [activeIndex, setActiveIndex] = useState(0);
-
-    const durations = useMemo(() => roadmap.map((section) => 1500 + section.items.length * 1400), [roadmap]);
-
-    const maxItems = useMemo(() => Math.max(...roadmap.map((section) => section.items.length), 0), [roadmap]);
-
-    useEffect(() => {
-        setActiveIndex(0);
-
-        if (roadmap.length <= 1) {
-            return;
-        }
-
-        let elapsed = 500;
-
-        const timers = roadmap.slice(1).map((_, i) => {
-            elapsed += durations[i];
-
-            return window.setTimeout(() => {
-                setActiveIndex(i + 1);
-            }, elapsed);
-        });
-
-        return () => timers.forEach((timer) => window.clearTimeout(timer));
-    }, [roadmap, durations]);
-
-    if (roadmap.length === 0) {
-        return null;
-    }
-
-    const section = roadmap[activeIndex];
+function FaultGlyph({ phase, still = false }: FaultGlyphProps) {
+    const ringOrigin = `${CX}px ${CY}px`;
+    const barOrigin = `${CX}px 45px`;
+    const dotOrigin = `${CX}px 68px`;
+    const isLanded = phase === 'landed';
 
     return (
-        <section className='relative flex h-screen w-full flex-col items-center overflow-hidden bg-white'>
-            <div
-                className='pointer-events-none absolute inset-0'
-                style={{
-                    background: 'radial-gradient(circle at center, rgba(0,0,0,.03), transparent 70%)',
-                }}
-            />
+        <motion.svg viewBox='0 0 120 120' fill='none' className='h-full w-full text-zinc-900 dark:text-white' aria-hidden initial={{ color: 'currentColor' }} animate={{ color: 'currentColor' }} transition={{ duration: 0 }}>
+            {Array.from({
+                length: SEGMENT_COUNT,
+            }).map((_, i) => (
+                <motion.path
+                    key={i}
+                    d={TRIANGLE_PATH}
+                    pathLength='100'
+                    stroke='currentColor'
+                    strokeWidth={2.5}
+                    strokeLinecap='square'
+                    strokeDasharray={`${SEGMENT_LEN} 82`}
+                    strokeDashoffset={-(i * 25)}
+                    initial={still ? { rotate: 0, opacity: 1, scale: 1 } : { rotate: SEGMENT_START_ROTATION[i], opacity: 0, scale: 0.4 }}
+                    animate={still ? { rotate: 0, opacity: 1, scale: 1 } : isLanded ? { rotate: 0, opacity: 1, scale: 1 } : { rotate: [SEGMENT_START_ROTATION[i], i % 2 === 0 ? -7 : 7, 0], opacity: 1, scale: 1 }}
+                    transition={
+                        still
+                            ? { duration: 0 }
+                            : isLanded
+                              ? { duration: 0 }
+                              : {
+                                    rotate: { duration: 1.05, ease: EASE_DRAW, delay: SEG_AT + i * SEG_STAGGER, times: [0, 0.72, 1] },
+                                    opacity: { duration: 0.4, delay: SEG_AT + i * SEG_STAGGER },
+                                    scale: { duration: 0.65, ease: EASE, delay: SEG_AT + i * SEG_STAGGER },
+                                }
+                    }
+                    style={{
+                        transformOrigin: ringOrigin,
+                    }}
+                />
+            ))}
 
-            <div className='relative z-10 w-full max-w-2xl px-8 pt-[20vh] text-center'>
-                <motion.p
-                    initial={{
-                        opacity: 0,
-                        y: -8,
-                    }}
-                    animate={{
-                        opacity: 1,
-                        y: 0,
-                    }}
-                    transition={{
-                        duration: 0.5,
-                        ease: EASE,
-                    }}
-                    className='text-[13px] font-medium uppercase tracking-[0.4em] text-zinc-500'
-                >
-                    Your Roadmap
-                </motion.p>
+            <motion.line
+                x1={CX}
+                x2={CX}
+                y1={30}
+                y2={56}
+                stroke='currentColor'
+                strokeWidth={4.5}
+                strokeLinecap='round'
+                initial={still ? { scaleY: 1, opacity: 1, filter: 'blur(0px)' } : { scaleY: 0, opacity: 0, filter: 'blur(6px)' }}
+                animate={still ? { scaleY: 1, opacity: 1, filter: 'blur(0px)' } : isLanded ? { scaleY: 1, opacity: 1, filter: 'blur(0px)' } : { scaleY: 1, opacity: 1, filter: 'blur(0px)' }}
+                transition={still ? { duration: 0 } : isLanded ? { duration: 0 } : { scaleY: { duration: 0.5, ease: EASE_DRAW, delay: BAR_AT }, opacity: { duration: 0.3, delay: BAR_AT }, filter: { duration: 0.45, delay: BAR_AT } }}
+                style={{ transformOrigin: barOrigin }}
+            />
+            <motion.circle
+                cx={CX}
+                cy={68}
+                r={3.5}
+                fill='currentColor'
+                initial={still ? { scale: 1, opacity: 1 } : { scale: 1, opacity: 0 }}
+                animate={still ? { scale: 1, opacity: 1 } : isLanded ? { scale: 1, opacity: [1, 0.4, 1] } : { scale: 1, opacity: 1 }}
+                transition={still ? { duration: 0 } : isLanded ? { duration: 1.5, ease: 'easeInOut', repeat: Infinity, repeatType: 'reverse' } : { duration: 0.4, ease: EASE, delay: DOT_AT }}
+                style={{ transformOrigin: dotOrigin }}
+            />
+        </motion.svg>
+    );
+}
+
+function GeometricTrail({ phase, target, glyphSize }: { phase: Phase; target: any; glyphSize: string }) {
+    if (!target) return null;
+    const active = phase === 'traveling';
+    return (
+        <>
+            {[1, 2, 3].map((i) => {
+                const delay = i * 0.06;
+                return (
+                    <motion.div
+                        key={`trail-${i}`}
+                        aria-hidden
+                        className='pointer-events-none fixed left-1/2 top-1/2 z-30'
+                        style={{ width: glyphSize, height: glyphSize, marginLeft: `calc(${glyphSize} / -2)`, marginTop: `calc(${glyphSize} / -2)` }}
+                        initial={{ x: 0, y: 0, scale: 0.94, opacity: 0 }}
+                        animate={active ? { x: target.x, y: target.y, scale: target.scale, opacity: [0, 0.4, 0] } : { x: 0, y: 0, scale: 0.94, opacity: 0 }}
+                        transition={active ? { x: { duration: 1.15, ease: TRAVEL_EASE_X, delay }, y: { duration: 1.15, ease: TRAVEL_EASE_Y, delay }, scale: { duration: 1.15, ease: TRAVEL_EASE_Y, delay }, opacity: { duration: 0.92, times: [0, 0.3, 1], delay } } : { duration: 0 }}
+                    >
+                        <svg viewBox='0 0 120 120' className='h-full w-full' style={{ color: GLYPH_ACCENT }}>
+                            {i === 1 && <path d={TRIANGLE_PATH} stroke='currentColor' strokeWidth={1} fill='none' strokeDasharray='3 12' pathLength='100' />}
+                            {i === 2 && <path d={TRIANGLE_PATH} stroke='currentColor' strokeWidth={0.5} fill='none' />}
+                            {i === 3 && <path d={TRIANGLE_PATH} stroke='currentColor' strokeWidth={2} fill='none' strokeDasharray='1 30' pathLength='100' opacity={0.6} />}
+                        </svg>
+                    </motion.div>
+                );
+            })}
+        </>
+    );
+}
+
+type ResumeIssue = {
+    title?: string;
+    issue?: string;
+    name?: string;
+    problem?: string;
+    description?: string;
+    recommendation?: string;
+    details?: string;
+    priority?: string;
+    severity?: string;
+};
+
+type MissingSkill = {
+    skill?: string;
+    name?: string;
+    priority?: string;
+    importance?: string;
+};
+
+type SupportingIssue = {
+    title: string;
+    description?: string;
+    tag?: string;
+};
+
+const clean = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
+
+const getIssueTitle = (item: ResumeIssue | MissingSkill) => {
+    const any = item as ResumeIssue & MissingSkill;
+    if ('skill' in item) {
+        return clean(any.skill) || clean(any.name);
+    }
+    return clean(any.title) || clean(any.issue) || clean(any.name) || clean(any.problem);
+};
+
+const getIssueDescription = (item: ResumeIssue) => clean(item.description) || clean(item.recommendation) || clean(item.details);
+
+const getPriorityWeight = (priority?: string) => {
+    const value = clean(priority).toLowerCase();
+    if (value.includes('critical')) return 4;
+    if (value.includes('high')) return 3;
+    if (value.includes('important')) return 2;
+    if (value.includes('nice')) return 1;
+    return 0;
+};
+
+export default function Story5() {
+    const { analysisResult } = useStory();
+    const reduceMotion = useReducedMotion();
+
+    const data = analysisResult?.data?.data as Record<string, any> | undefined;
+    const rawResumeFixes: ResumeIssue[] = data?.['resume_fixes'] ?? data?.['resumeFixes'] ?? data?.['issues'] ?? data?.['weaknesses'] ?? [];
+    const rawMissingSkills: MissingSkill[] = data?.['skills']?.missing ?? data?.['missing_skills'] ?? data?.['missingSkills'] ?? [];
+    const resumeFixes = Array.isArray(rawResumeFixes) ? rawResumeFixes.filter((item) => getIssueTitle(item).length > 0) : [];
+    const missingSkills = Array.isArray(rawMissingSkills) ? rawMissingSkills.filter((item) => getIssueTitle(item).length > 0) : [];
+    const sortedIssues = [...resumeFixes].sort((a, b) => getPriorityWeight(b.priority || b.severity) - getPriorityWeight(a.priority || a.severity));
+    const primaryIssue = sortedIssues[0];
+    const primaryTitle = getIssueTitle(primaryIssue || {}) || getIssueTitle(missingSkills[0] || {});
+    const primaryDescription = primaryIssue ? getIssueDescription(primaryIssue) : '';
+    const primaryTag = clean(primaryIssue?.priority || primaryIssue?.severity);
+    const isLongPrimary = primaryTitle.length > 42;
+    const usedTitles = new Set<string>(primaryTitle ? [primaryTitle.toLowerCase()] : []);
+    const supportingIssues: SupportingIssue[] = [];
+
+    for (const issue of sortedIssues.slice(1)) {
+        const title = getIssueTitle(issue);
+        if (!title || usedTitles.has(title.toLowerCase())) {
+            continue;
+        }
+        supportingIssues.push({
+            title,
+            description: getIssueDescription(issue),
+            tag: clean(issue.priority || issue.severity) || undefined,
+        });
+        usedTitles.add(title.toLowerCase());
+        if (supportingIssues.length >= 3) {
+            break;
+        }
+    }
+
+    for (const skill of missingSkills) {
+        if (supportingIssues.length >= 3) {
+            break;
+        }
+
+        const title = getIssueTitle(skill);
+        if (!title || usedTitles.has(title.toLowerCase())) {
+            continue;
+        }
+
+        supportingIssues.push({
+            title,
+            tag: clean(skill.priority || skill.importance) || 'Skill gap',
+        });
+
+        usedTitles.add(title.toLowerCase());
+    }
+
+    const anchorSize = 'clamp(56px, 8vw, 92px)';
+    const T = { formation: GLYPH_FORMATION_DURATION, hold: 0.7, preTravel: 0.35, travel: 1.15, land: 0.3 };
+    const ARRIVED_AT = T.formation + T.hold + T.preTravel + T.travel;
+    const anchorRef = useRef<HTMLSpanElement>(null);
+
+    const [target, setTarget] = useState<{
+        x: number;
+        y: number;
+        scale: number;
+    } | null>(null);
+
+    const [phase, setPhase] = useState<Phase>('forming');
+
+    useLayoutEffect(() => {
+        const measure = () => {
+            const el = anchorRef.current;
+            if (!el) return;
+            const r = el.getBoundingClientRect();
+            const big = Math.min(window.innerWidth * 0.42, 300);
+            setTarget({
+                x: r.left + r.width / 2 - window.innerWidth / 2,
+                y: r.top + r.height / 2 - window.innerHeight / 2,
+                scale: (r.width / big) * 1.6,
+            });
+        };
+        measure();
+        window.addEventListener('resize', measure);
+        return () => window.removeEventListener('resize', measure);
+    }, [primaryTitle]);
+
+    useEffect(() => {
+        if (reduceMotion) {
+            setPhase('landed');
+            return;
+        }
+        const timers = [setTimeout(() => setPhase('holding'), T.formation * 1000), setTimeout(() => setPhase('preTravel'), (T.formation + T.hold) * 1000), setTimeout(() => setPhase('traveling'), (T.formation + T.hold + T.preTravel) * 1000), setTimeout(() => setPhase('landed'), ARRIVED_AT * 1000)];
+        return () => timers.forEach(clearTimeout);
+    }, [reduceMotion, primaryTitle]);
+
+    if (!primaryTitle) {
+        return (
+            <section className='relative left-[calc(50%-50vw)] flex h-screen w-screen items-center justify-center overflow-hidden bg-white px-6 text-zinc-900 dark:bg-black dark:text-white'>
+                <span className='font-mono text-[10px] uppercase tracking-[0.35em] text-zinc-500 dark:text-zinc-600'>No critical weaknesses detected</span>
+            </section>
+        );
+    }
+
+    const glyphSize = 'min(42vw, 300px)';
+    const contentDelay = reduceMotion ? 0 : ARRIVED_AT - 0.35;
+
+    return (
+        <section
+            className='relative left-[calc(50%-50vw)] h-screen w-screen overflow-hidden bg-white text-zinc-900 dark:bg-black dark:text-white'
+            style={
+                {
+                    '--story5-accent': 'currentColor',
+                    '--story5-accent-rgb': '228, 228, 231',
+                } as React.CSSProperties
+            }
+        >
+            {!reduceMotion && <GeometricTrail phase={phase} target={target} glyphSize={glyphSize} />}
+
+            <motion.div
+                aria-hidden
+                className='pointer-events-none fixed left-1/2 top-1/2 z-40'
+                style={{ width: glyphSize, height: glyphSize, marginLeft: `calc(${glyphSize} / -2)`, marginTop: `calc(${glyphSize} / -2)` }}
+                initial={reduceMotion ? { x: target?.x ?? 0, y: target?.y ?? 0, scale: target?.scale ?? 0.2 } : { x: 0, y: 0, scale: 1 }}
+                animate={
+                    target && (phase === 'traveling' || phase === 'landed')
+                        ? { x: target.x, y: target.y, scale: target.scale, filter: phase === 'landed' ? `drop-shadow(0 0 18px rgba(var(--story5-accent-rgb), 0.35))` : `drop-shadow(0 0 15px rgba(var(--story5-accent-rgb), 0.24))` }
+                        : {
+                              x: 0,
+                              y: 0,
+                              scale: phase === 'preTravel' ? 0.94 : 1,
+                              filter:
+                                  phase === 'holding'
+                                      ? ['drop-shadow(0 0 0px rgba(var(--story5-accent-rgb), 0))', 'drop-shadow(0 0 35px rgba(var(--story5-accent-rgb), 0.28))', 'drop-shadow(0 0 25px rgba(var(--story5-accent-rgb), 0.20))']
+                                      : phase === 'preTravel'
+                                        ? `drop-shadow(0 0 45px rgba(var(--story5-accent-rgb), 0.30))`
+                                        : 'drop-shadow(0 0 0px rgba(var(--story5-accent-rgb), 0))',
+                          }
+                }
+                transition={
+                    reduceMotion
+                        ? { duration: 0 }
+                        : phase === 'landed'
+                          ? { scale: { duration: T.land, ease: 'easeOut' } }
+                          : phase === 'traveling'
+                            ? { x: { duration: T.travel, ease: TRAVEL_EASE_X }, y: { duration: T.travel, ease: TRAVEL_EASE_Y }, scale: { duration: T.travel, ease: TRAVEL_EASE_Y }, filter: { duration: T.travel, ease: 'easeOut' } }
+                            : { scale: { duration: T.preTravel, ease: 'easeInOut' }, filter: { duration: T.hold, ease: 'easeInOut' } }
+                }
+            >
+                <FaultGlyph phase={phase} still={!!reduceMotion} className='h-full w-full' />
+            </motion.div>
+
+            <div className='relative z-10 mx-auto flex h-full w-full max-w-4xl flex-col items-center justify-center px-6 text-center sm:px-10'>
+                <span ref={anchorRef} className='block shrink-0' style={{ width: anchorSize, height: anchorSize }} />
+
+                <motion.div className='mt-5 flex flex-wrap items-center justify-center gap-3' initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE, delay: contentDelay }}>
+                    <span className='font-mono text-[10px] uppercase tracking-[0.45em] text-zinc-600 dark:text-zinc-500'>Primary weakness</span>
+                    {primaryTag && (
+                        <span className='rounded-full border px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.2em] text-zinc-700 dark:text-zinc-300' style={{ borderColor: 'rgba(var(--story5-accent-rgb), 0.25)' }}>
+                            {primaryTag}
+                        </span>
+                    )}
+                </motion.div>
 
                 <motion.h1
-                    initial={{
-                        opacity: 0,
-                        y: -8,
-                    }}
-                    animate={{
-                        opacity: 1,
-                        y: 0,
-                    }}
-                    transition={{
-                        delay: 0.1,
-                        duration: 0.5,
-                        ease: EASE,
-                    }}
-                    className='mt-3 text-[36px] font-semibold tracking-[-0.03em] text-zinc-900 sm:text-[44px]'
+                    className={`mt-5 max-w-187.5 wrap-break-word font-light leading-[0.98] tracking-[-0.02em] text-zinc-900 dark:text-zinc-100 ${isLongPrimary ? 'text-[clamp(1.55rem,3.4vw,2.8rem)]' : 'text-[clamp(1.9rem,4.4vw,3.6rem)]'}`}
+                    style={{ fontFamily: 'Fraunces, Georgia, serif' }}
+                    initial={{ opacity: 0, y: 14, filter: 'blur(8px)' }}
+                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                    transition={{ duration: 1, ease: EASE, delay: contentDelay + 0.12 }}
                 >
-                    What To Do Next
+                    {primaryTitle}
                 </motion.h1>
 
-                <div className='mx-auto mt-7 mb-5 flex max-w-xs gap-2'>
-                    {roadmap.map((_, i) => (
-                        <div key={i} className='h-0.75 flex-1 overflow-hidden rounded-full bg-zinc-100'>
-                            <motion.div
-                                className='h-full rounded-full bg-zinc-900'
-                                initial={{
-                                    width: '0%',
-                                }}
-                                animate={{
-                                    width: i <= activeIndex ? '100%' : '0%',
-                                }}
-                                transition={
-                                    i === activeIndex
-                                        ? {
-                                              duration: durations[i] / 1000,
-                                              ease: 'linear',
-                                          }
-                                        : {
-                                              duration: 0.3,
-                                          }
-                                }
-                            />
+                {primaryDescription && (
+                    <motion.p className='mt-5 max-w-md text-[0.8rem] leading-relaxed text-zinc-500 dark:text-zinc-500' initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, ease: EASE, delay: contentDelay + 0.45 }}>
+                        {primaryDescription}
+                    </motion.p>
+                )}
+
+                {supportingIssues.length > 0 && (
+                    <div className='mt-8 w-full max-w-2xl sm:mt-10'>
+                        <motion.div className='mx-auto mb-4 h-7 w-px origin-top bg-linear-to-b from-zinc-400/40 to-transparent dark:from-white/25' initial={{ scaleY: 0 }} animate={{ scaleY: 1 }} transition={{ duration: 0.6, ease: EASE, delay: contentDelay + 0.55 }} />
+
+                        <motion.div className='flex items-baseline justify-between border-b border-zinc-200 pb-2.5 dark:border-white/10' initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, ease: EASE, delay: contentDelay + 0.7 }}>
+                            <span className='font-mono text-[9px] uppercase tracking-[0.4em] text-zinc-500 dark:text-zinc-600'>Other weaknesses</span>
+                        </motion.div>
+
+                        <div className='relative'>
+                            {supportingIssues.map((issue, i) => {
+                                const rowDelay = contentDelay + 0.9 + i * 0.28;
+                                return (
+                                    <div key={issue.title} className='relative overflow-hidden'>
+                                        {!reduceMotion && (
+                                            <motion.span
+                                                aria-hidden
+                                                className='absolute bottom-0 top-0 z-10 w-px'
+                                                style={{ background: 'var(--story5-accent)', boxShadow: '0 0 12px rgba(var(--story5-accent-rgb), 0.18)' }}
+                                                initial={{ left: '0%', opacity: 0 }}
+                                                animate={{ left: '100%', opacity: [0, 1, 1, 0] }}
+                                                transition={{ duration: 0.85, ease: [0.7, 0, 0.3, 1], delay: rowDelay, times: [0, 0.1, 0.9, 1] }}
+                                            />
+                                        )}
+
+                                        <motion.div
+                                            className='flex items-start gap-4 py-3.5 text-left sm:gap-5'
+                                            initial={reduceMotion ? { opacity: 0 } : { clipPath: 'inset(0 100% 0 0)', opacity: 1 }}
+                                            animate={reduceMotion ? { opacity: 1 } : { clipPath: 'inset(0 0% 0 0)', opacity: 1 }}
+                                            transition={{ duration: reduceMotion ? 0.5 : 0.85, ease: [0.7, 0, 0.3, 1], delay: rowDelay }}
+                                        >
+                                            <span className='relative mt-1.25 flex h-2.75 w-2.75 shrink-0 items-center justify-center'>
+                                                {!reduceMotion && (
+                                                    <motion.span
+                                                        aria-hidden
+                                                        className='absolute inline-flex h-full w-full rounded-full'
+                                                        style={{ background: 'rgba(var(--story5-accent-rgb), 0.12)' }}
+                                                        animate={{ scale: [1, 1.75, 1], opacity: [0.5, 0, 0.5] }}
+                                                        transition={{ duration: 2.6, ease: 'easeInOut', repeat: Infinity, delay: rowDelay + 0.6 + i * 0.55 }}
+                                                    />
+                                                )}
+                                                <span className='relative inline-flex h-1.25 w-1.25 rounded-full' style={{ background: 'var(--story5-accent)' }} />
+                                            </span>
+                                            <div className='min-w-0 flex-1'>
+                                                <div className='flex flex-wrap items-center gap-x-3 gap-y-1.5'>
+                                                    <h2 className='text-balance text-[clamp(0.95rem,2vw,1.15rem)] font-light leading-snug tracking-[-0.01em] text-zinc-800 dark:text-zinc-100'>{issue.title}</h2>
+                                                    {issue.tag && <span className='rounded-full border border-zinc-200 px-2 py-0.5 font-mono text-[8px] uppercase tracking-[0.2em] text-zinc-500 dark:border-white/10 dark:text-zinc-500'>{issue.tag}</span>}
+                                                </div>
+                                                {issue.description && <p className='mt-1.5 max-w-[52ch] text-[0.72rem] leading-relaxed text-zinc-500'>{issue.description}</p>}
+                                            </div>
+                                        </motion.div>
+                                    </div>
+                                );
+                            })}
                         </div>
-                    ))}
-                </div>
-            </div>
-
-            <div className='relative z-10 mt-[5vh] h-[58vh] w-full max-w-2xl px-8'>
-                <AnimatePresence mode='wait'>
-                    <motion.div
-                        key={section.title}
-                        initial={{
-                            opacity: 0,
-                            y: 32,
-                            filter: 'blur(8px)',
-                        }}
-                        animate={{
-                            opacity: 1,
-                            y: 0,
-                            filter: 'blur(0px)',
-                        }}
-                        exit={{
-                            opacity: 0,
-                            y: -24,
-                            filter: 'blur(8px)',
-                        }}
-                        transition={{
-                            duration: 0.6,
-                            ease: EASE,
-                        }}
-                        className='absolute inset-0'
-                    >
-                        <div className='flex items-baseline justify-between border-b border-zinc-100 pb-4'>
-                            <h2 className='text-[15px] font-semibold uppercase tracking-[0.3em] text-zinc-900'>{section.title}</h2>
-
-                            <span className='text-[12px] uppercase tracking-[0.25em] text-zinc-400'>
-                                {section.items.length} {section.items.length > 1 ? 'actions' : 'action'}
-                            </span>
-                        </div>
-
-                        <div
-                            className='mt-2'
-                            style={{
-                                minHeight: `${maxItems * 118}px`,
-                            }}
-                        >
-                            {section.items.map((item, index) => (
-                                <motion.div
-                                    key={item.id}
-                                    initial={{
-                                        opacity: 0,
-                                        x: -24,
-                                    }}
-                                    animate={{
-                                        opacity: 1,
-                                        x: 0,
-                                    }}
-                                    transition={{
-                                        delay: 0.2 + index * 0.16,
-                                        duration: 0.5,
-                                        ease: EASE,
-                                    }}
-                                    className='flex items-start gap-6 border-b border-zinc-50 py-7'
-                                >
-                                    <span className='w-9 shrink-0 pt-1 font-mono text-[15px] text-zinc-300'>{item.id}</span>
-
-                                    <p className='flex-1 text-[19px] font-normal leading-[1.55] tracking-[-0.01em] text-zinc-700'>{item.action}</p>
-
-                                    <span className={`shrink-0 rounded-full px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] ${item.priority === 'High' ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600'}`}>{item.priority}</span>
-                                </motion.div>
-                            ))}
-                        </div>
-                    </motion.div>
-                </AnimatePresence>
+                    </div>
+                )}
             </div>
         </section>
     );
-};
-
-export default Story5;
+}
