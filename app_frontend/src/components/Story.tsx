@@ -8,8 +8,9 @@ import Story3 from './Story3';
 import Story4 from './Story4';
 import Story5 from './Story5';
 import Story6 from './Story6';
+import Story7 from './Story7';
 
-const STORY_DURATIONS = [8000, 5000, 6000, 6000, 14000, 7000];
+const STORY_DURATIONS = [8000, 5000, 6000, 6000, 10000, 6000, 8000];
 
 const StoryContent = () => {
     const { paused, setPaused } = useStory();
@@ -92,6 +93,7 @@ const StoryContent = () => {
             {currentStory === 3 && <Story4 />}
             {currentStory === 4 && <Story5 />}
             {currentStory === 5 && <Story6 />}
+            {currentStory === 6 && <Story7 />}
         </main>
     );
 };
