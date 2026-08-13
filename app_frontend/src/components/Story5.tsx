@@ -68,9 +68,7 @@ function FaultGlyph({ phase, still = false }: FaultGlyphProps) {
                                     scale: { duration: 0.65, ease: EASE, delay: SEG_AT + i * SEG_STAGGER },
                                 }
                     }
-                    style={{
-                        transformOrigin: ringOrigin,
-                    }}
+                    style={{ transformOrigin: ringOrigin }}
                 />
             ))}
 
@@ -180,6 +178,31 @@ export default function Story5() {
     const { analysisResult } = useStory();
     const reduceMotion = useReducedMotion();
 
+    useEffect(() => {
+        const html = document.documentElement;
+        const body = document.body;
+
+        const previousHtmlOverflow = html.style.overflow;
+        const previousBodyOverflow = body.style.overflow;
+
+        const previousHtmlOverscroll = html.style.overscrollBehavior;
+        const previousBodyOverscroll = body.style.overscrollBehavior;
+
+        html.style.overflow = 'hidden';
+        body.style.overflow = 'hidden';
+
+        html.style.overscrollBehavior = 'none';
+        body.style.overscrollBehavior = 'none';
+
+        return () => {
+            html.style.overflow = previousHtmlOverflow;
+            body.style.overflow = previousBodyOverflow;
+
+            html.style.overscrollBehavior = previousHtmlOverscroll;
+            body.style.overscrollBehavior = previousBodyOverscroll;
+        };
+    }, []);
+
     const data = analysisResult?.data?.data as Record<string, any> | undefined;
     const rawResumeFixes: ResumeIssue[] = data?.['resume_fixes'] ?? data?.['resumeFixes'] ?? data?.['issues'] ?? data?.['weaknesses'] ?? [];
     const rawMissingSkills: MissingSkill[] = data?.['skills']?.missing ?? data?.['missing_skills'] ?? data?.['missingSkills'] ?? [];
@@ -280,7 +303,7 @@ export default function Story5() {
 
     return (
         <section
-            className='relative left-[calc(50%-50vw)] h-screen w-screen overflow-hidden bg-white text-zinc-900 dark:bg-black dark:text-white'
+            className='fixed inset-0 h-dvh w-screen overflow-hidden overscroll-none bg-white text-zinc-900 dark:bg-black dark:text-white'
             style={
                 {
                     '--story5-accent': 'currentColor',
