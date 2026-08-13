@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, type MouseEvent } from 'react';
+import React, { useEffect, useRef, type MouseEvent } from 'react';
 import { motion, useReducedMotion, useMotionValue, useSpring, useTransform, useMotionTemplate } from 'framer-motion';
 import { useStory } from './StoryContext';
 
@@ -304,6 +304,32 @@ const AmbientBackground = ({ reduceMotion }: { reduceMotion: boolean | null }) =
 export default function Story6() {
     const { analysisResult } = useStory();
     const reduceMotion = useReducedMotion();
+
+    useEffect(() => {
+        const html = document.documentElement;
+        const body = document.body;
+
+        const previousHtmlOverflow = html.style.overflow;
+        const previousBodyOverflow = body.style.overflow;
+
+        const previousHtmlOverscroll = html.style.overscrollBehavior;
+        const previousBodyOverscroll = body.style.overscrollBehavior;
+
+        html.style.overflow = 'hidden';
+        body.style.overflow = 'hidden';
+
+        html.style.overscrollBehavior = 'none';
+        body.style.overscrollBehavior = 'none';
+
+        return () => {
+            html.style.overflow = previousHtmlOverflow;
+            body.style.overflow = previousBodyOverflow;
+
+            html.style.overscrollBehavior = previousHtmlOverscroll;
+            body.style.overscrollBehavior = previousBodyOverscroll;
+        };
+    }, []);
+
     const data = analysisResult?.data?.data as Record<string, any> | undefined;
     const resumeFixes: ResumeFix[] = Array.isArray(data?.resume_fixes) ? data.resume_fixes : [];
     const missingSkills: MissingSkill[] = Array.isArray(data?.skills?.missing) ? data.skills.missing : [];
@@ -353,7 +379,7 @@ export default function Story6() {
 
     if (!data) {
         return (
-            <section className='relative left-[calc(50%-50vw)] flex h-screen w-screen items-center justify-center overflow-hidden bg-white px-6 text-zinc-900 dark:bg-black dark:text-white'>
+            <section className='fixed inset-0 flex h-dvh w-screen items-center justify-center overflow-hidden overscroll-none bg-white px-6 text-zinc-900 dark:bg-black dark:text-white'>
                 <span className='font-mono text-[10px] uppercase tracking-[0.35em] text-zinc-500 dark:text-zinc-600'>No improvement priorities detected</span>
             </section>
         );
@@ -362,7 +388,7 @@ export default function Story6() {
     const headingText = 'What to improve next'.split(' ');
 
     return (
-        <section className='relative left-[calc(50%-50vw)] h-screen w-screen overflow-hidden bg-white text-zinc-900 dark:bg-black dark:text-white'>
+        <section className='fixed inset-0 h-dvh w-screen overflow-hidden overscroll-none bg-white text-zinc-900 dark:bg-black dark:text-white'>
             <AmbientBackground reduceMotion={reduceMotion} />
             <div className='relative z-10 mx-auto flex h-full w-full max-w-7xl flex-col items-center justify-center px-6 sm:px-10 lg:px-16'>
                 <div className='flex flex-col items-center text-center'>
