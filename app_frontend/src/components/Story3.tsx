@@ -41,6 +41,29 @@ const Story3 = () => {
     const [visibleRows, setVisibleRows] = useState(reduceMotion ? breakdown.length : 0);
 
     useEffect(() => {
+        const html = document.documentElement;
+        const body = document.body;
+        const previousHtmlOverflow = html.style.overflow;
+        const previousBodyOverflow = body.style.overflow;
+        const previousHtmlOverscroll = html.style.overscrollBehavior;
+        const previousBodyOverscroll = body.style.overscrollBehavior;
+
+        html.style.overflow = 'hidden';
+        body.style.overflow = 'hidden';
+
+        html.style.overscrollBehavior = 'none';
+        body.style.overscrollBehavior = 'none';
+
+        return () => {
+            html.style.overflow = previousHtmlOverflow;
+            body.style.overflow = previousBodyOverflow;
+
+            html.style.overscrollBehavior = previousHtmlOverscroll;
+            body.style.overscrollBehavior = previousBodyOverscroll;
+        };
+    }, []);
+
+    useEffect(() => {
         if (reduceMotion) {
             setVisibleRows(breakdown.length);
             return;
@@ -63,36 +86,21 @@ const Story3 = () => {
     }, [breakdown.length, reduceMotion]);
 
     return (
-        <section className='relative left-[calc(50%-50vw)] flex h-screen w-screen items-center justify-center overflow-hidden bg-white transition-colors duration-300 dark:bg-black'>
-            <div
-                className='pointer-events-none absolute inset-0 dark:hidden'
-                style={{
-                    background: 'radial-gradient(circle at 50% 45%, rgba(0,0,0,.035), transparent 65%)',
-                }}
-            />
-            <div
-                className='pointer-events-none absolute inset-0 hidden dark:block'
-                style={{
-                    background: 'radial-gradient(circle at 42% 45%, rgba(255,255,255,.025), transparent 58%)',
-                }}
-            />
+        <section className='fixed inset-0 flex h-dvh w-screen items-center justify-center overflow-hidden overscroll-none bg-white transition-colors duration-300 dark:bg-black'>
+            <div className='pointer-events-none absolute inset-0 dark:hidden' style={{ background: 'radial-gradient(circle at 50% 45%, rgba(0,0,0,.035), transparent 65%)' }} />
+
+            <div className='pointer-events-none absolute inset-0 hidden dark:block' style={{ background: 'radial-gradient(circle at 42% 45%, rgba(255,255,255,.025), transparent 58%)' }} />
 
             {!reduceMotion && <FilmGrain />}
 
-            <div className='relative z-10 mx-auto flex w-full max-w-375 items-center justify-center gap-24 px-10 sm:px-16 lg:px-24 xl:gap-32'>
+            <div className='relative z-10 mx-auto flex h-full w-full max-w-375 items-center justify-center gap-24 overflow-hidden px-10 sm:px-16 lg:px-24 xl:gap-32'>
                 <motion.div initial={reduceMotion ? { opacity: 1, x: 0, filter: 'blur(0px)' } : { opacity: 0, x: -70, filter: 'blur(8px)' }} animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }} transition={{ duration: 0.9, ease: EASE }} className='flex w-[38%] min-w-0 flex-col'>
                     <motion.p initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -18 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.18, duration: 0.55, ease: EASE }} className='text-[11px] font-medium uppercase tracking-[0.42em] text-zinc-400 dark:text-zinc-500'>
                         Why this score
                     </motion.p>
 
                     <div className='relative mt-7'>
-                        <span
-                            aria-hidden='true'
-                            className='pointer-events-none absolute -left-2 top-2 select-none text-[180px] font-medium leading-none tracking-[-0.09em] text-zinc-950/2.5 dark:text-white/[0.035]'
-                            style={{
-                                fontFamily: '"Fraunces", ui-serif, Georgia, serif',
-                            }}
-                        >
+                        <span aria-hidden='true' className='pointer-events-none absolute -left-2 top-2 select-none text-[180px] font-medium leading-none tracking-[-0.09em] text-zinc-950/2.5 dark:text-white/[0.035]' style={{ fontFamily: '"Fraunces", ui-serif, Georgia, serif' }}>
                             {score}
                         </span>
 
@@ -101,9 +109,7 @@ const Story3 = () => {
                             animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
                             transition={{ delay: 0.28, duration: 0.85, ease: EASE }}
                             className='relative select-none text-[150px] font-medium leading-[0.82] tracking-[-0.04em] text-zinc-900 dark:text-zinc-100 sm:text-[175px]'
-                            style={{
-                                fontFamily: '"Fraunces", ui-serif, Georgia, serif',
-                            }}
+                            style={{ fontFamily: '"Fraunces", ui-serif, Georgia, serif' }}
                         >
                             {score}
                         </motion.h1>
@@ -134,38 +140,18 @@ const Story3 = () => {
                             const visible = index < visibleRows;
                             const percent = item.total > 0 ? Math.min((item.score / item.total) * 100, 100) : 0;
                             const weak = percent < 40;
+
                             return (
-                                <motion.div
-                                    key={item.label}
-                                    initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: 45 }}
-                                    animate={visible ? { opacity: 1, x: 0 } : { opacity: 0, x: 45 }}
-                                    transition={{
-                                        duration: 0.7,
-                                        ease: EASE,
-                                    }}
-                                    className='group relative py-3 first:pt-2'
-                                >
+                                <motion.div key={item.label} initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: 45 }} animate={visible ? { opacity: 1, x: 0 } : { opacity: 0, x: 45 }} transition={{ duration: 0.7, ease: EASE }} className='group relative py-3 first:pt-2'>
                                     <div className='mb-3 flex items-center justify-between'>
-                                        <motion.div
-                                            initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }}
-                                            animate={visible ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }}
-                                            transition={{
-                                                duration: 0.45,
-                                                delay: 0.08,
-                                                ease: EASE,
-                                            }}
-                                            className='flex min-w-0 items-center gap-3'
-                                        >
+                                        <motion.div initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }} animate={visible ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }} transition={{ duration: 0.45, delay: 0.08, ease: EASE }} className='flex min-w-0 items-center gap-3'>
                                             <p className='truncate text-[17px] font-medium tracking-[-0.02em] text-zinc-900 dark:text-zinc-100'>{item.label}</p>
 
                                             {weak && (
                                                 <motion.span
                                                     initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -5 }}
                                                     animate={visible ? { opacity: 1, x: 0 } : { opacity: 0, x: -5 }}
-                                                    transition={{
-                                                        delay: 0.25,
-                                                        duration: 0.4,
-                                                    }}
+                                                    transition={{ delay: 0.25, duration: 0.4 }}
                                                     className='shrink-0 text-[9px] font-medium uppercase tracking-[0.2em] text-red-500 dark:text-red-400'
                                                 >
                                                     Weak spot
@@ -182,6 +168,7 @@ const Story3 = () => {
 
                                     <div className='relative h-0.75 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-900'>
                                         <motion.div initial={{ scaleX: 0, transformOrigin: 'left' }} animate={visible ? { scaleX: 1 } : { scaleX: 0 }} transition={{ duration: 0.6, ease: EASE }} className='absolute inset-0 rounded-full bg-zinc-200/60 dark:bg-zinc-800/70' />
+
                                         <motion.div
                                             initial={{ width: 0 }}
                                             animate={visible ? { width: `${percent}%` } : { width: 0 }}

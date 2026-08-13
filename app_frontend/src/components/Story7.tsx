@@ -34,6 +34,7 @@ const makeConfetti = (count: number): ConfettiPiece[] => {
 
     for (let i = 0; i < count; i++) {
         const side: ConfettiPiece['side'] = i % 2 === 0 ? 'left' : 'right';
+
         pieces.push({
             id: i,
             side,
@@ -53,14 +54,13 @@ const makeConfetti = (count: number): ConfettiPiece[] => {
     return pieces;
 };
 
-type ConfettiFieldProps = {
-    active: boolean;
-    mode?: 'infinite' | 'timed';
-};
+type ConfettiFieldProps = { active: boolean; mode?: 'infinite' | 'timed' };
 
 const ConfettiField = ({ active, mode = 'infinite' }: ConfettiFieldProps) => {
     const pieces = useMemo(() => makeConfetti(mode === 'infinite' ? 84 : 72), [mode]);
+
     if (!active) return null;
+
     return (
         <>
             {(['left', 'right'] as const).map((side) => (
@@ -78,6 +78,7 @@ const ConfettiField = ({ active, mode = 'infinite' }: ConfettiFieldProps) => {
                         .filter((p) => p.side === side)
                         .map((p) => {
                             const driftPx = side === 'left' ? p.drift : -p.drift;
+
                             return (
                                 <motion.span
                                     key={p.id}
@@ -106,9 +107,11 @@ export default function Story7() {
 
     const strengths = useMemo(() => {
         const result: string[] = [];
+
         if (strongestAsset) {
             result.push(strongestAsset);
         }
+
         scoreBreakdown
             .filter((breakdownItem: { label: string; score: number; out_of: number }) => breakdownItem.score > 0)
             .sort((a: { label: string; score: number; out_of: number }, b: { label: string; score: number; out_of: number }) => b.score / b.out_of - a.score / a.out_of)
@@ -120,11 +123,14 @@ export default function Story7() {
 
         matchedSkills.forEach((skillItem: string | { skill: string }) => {
             if (result.length >= 4) return;
+
             const skill = typeof skillItem === 'string' ? skillItem : skillItem.skill;
+
             if (skill) {
                 result.push(`Matched skill: ${skill}`);
             }
         });
+
         return result.slice(0, 4);
     }, [strongestAsset, scoreBreakdown, matchedSkills]);
 
@@ -132,6 +138,29 @@ export default function Story7() {
     const [score, setScore] = useState(0);
     const [bounce, setBounce] = useState(false);
     const [confettiActive, setConfettiActive] = useState(false);
+
+    useEffect(() => {
+        const html = document.documentElement;
+        const body = document.body;
+        const previousHtmlOverflow = html.style.overflow;
+        const previousBodyOverflow = body.style.overflow;
+        const previousHtmlOverscroll = html.style.overscrollBehavior;
+        const previousBodyOverscroll = body.style.overscrollBehavior;
+
+        html.style.overflow = 'hidden';
+        body.style.overflow = 'hidden';
+
+        html.style.overscrollBehavior = 'none';
+        body.style.overscrollBehavior = 'none';
+
+        return () => {
+            html.style.overflow = previousHtmlOverflow;
+            body.style.overflow = previousBodyOverflow;
+
+            html.style.overscrollBehavior = previousHtmlOverscroll;
+            body.style.overscrollBehavior = previousBodyOverscroll;
+        };
+    }, []);
 
     useEffect(() => {
         const controls = animate(0, targetScore, {
@@ -157,8 +186,9 @@ export default function Story7() {
     }, [targetScore]);
 
     return (
-        <section className='relative flex h-screen w-full items-center justify-center overflow-hidden bg-white transition-colors duration-300 dark:bg-black'>
+        <section className='fixed inset-0 flex h-dvh w-screen items-center justify-center overflow-hidden overscroll-none bg-white transition-colors duration-300 dark:bg-black'>
             <div className='pointer-events-none absolute inset-0' style={{ background: 'radial-gradient(circle at center, rgba(0,0,0,.03), transparent 70%)' }} />
+
             <div className='pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 dark:opacity-100' style={{ background: 'radial-gradient(circle at center, rgba(255,255,255,.025), transparent 70%)' }} />
 
             <motion.div

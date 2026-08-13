@@ -1,6 +1,7 @@
 'use client';
 
 import { motion, useReducedMotion, type Variants } from 'framer-motion';
+import { useEffect } from 'react';
 import { useStory } from './StoryContext';
 
 type MatchedSkill = {
@@ -15,21 +16,33 @@ const FALLBACK_ASSET = 'A well-rounded set of skills across your resume';
 export default function Story4() {
     const { analysisResult } = useStory();
     const reduceMotion = useReducedMotion();
-
     const strongestAsset: string = analysisResult?.data?.data?.candidate?.strongest_asset || FALLBACK_ASSET;
-
     const matchedSkills: MatchedSkill[] = (analysisResult?.data?.data?.skills?.matched ?? []).filter((item: any): item is MatchedSkill => typeof item?.skill === 'string' && item.skill.trim().length > 0);
 
-    const T = {
-        eyebrow: 0.1,
-        line1: 0.4,
-        line2: 0.48,
-        divider: 1.05,
-        heroLabel: 1.3,
-        heroReveal: 1.55,
-        heroDuration: 1.15,
-        skills: 2.85,
-    };
+    useEffect(() => {
+        const html = document.documentElement;
+        const body = document.body;
+        const previousHtmlOverflow = html.style.overflow;
+        const previousBodyOverflow = body.style.overflow;
+        const previousHtmlOverscroll = html.style.overscrollBehavior;
+        const previousBodyOverscroll = body.style.overscrollBehavior;
+
+        html.style.overflow = 'hidden';
+        body.style.overflow = 'hidden';
+
+        html.style.overscrollBehavior = 'none';
+        body.style.overscrollBehavior = 'none';
+
+        return () => {
+            html.style.overflow = previousHtmlOverflow;
+            body.style.overflow = previousBodyOverflow;
+
+            html.style.overscrollBehavior = previousHtmlOverscroll;
+            body.style.overscrollBehavior = previousBodyOverscroll;
+        };
+    }, []);
+
+    const T = { eyebrow: 0.1, line1: 0.4, line2: 0.48, divider: 1.05, heroLabel: 1.3, heroReveal: 1.55, heroDuration: 1.15, skills: 2.85 };
 
     const skillsContainer: Variants = {
         hidden: {},
@@ -42,9 +55,10 @@ export default function Story4() {
     };
 
     return (
-        <section className='relative left-[calc(50%-50vw)] h-screen w-screen overflow-hidden bg-white transition-colors duration-500 dark:bg-black'>
+        <section className='fixed inset-0 h-dvh w-screen overflow-hidden overscroll-none bg-white transition-colors duration-500 dark:bg-black'>
             <div aria-hidden className='pointer-events-none absolute inset-0 dark:hidden' style={{ background: 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(0,0,0,0.025), transparent 70%)' }} />
-            <div className='absolute inset-0 z-10 flex w-full items-center justify-center px-6 text-center sm:px-12'>
+
+            <div className='absolute inset-0 z-10 flex h-full w-full items-center justify-center overflow-hidden px-6 text-center sm:px-12'>
                 <div className='flex w-full max-w-275 flex-col items-center'>
                     <div className='flex items-center justify-center gap-6'>
                         <motion.div
@@ -64,6 +78,7 @@ export default function Story4() {
                                 />
                             )}
                         </motion.div>
+
                         <motion.span
                             initial={reduceMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.72 }}
                             animate={{ opacity: 1, scale: 1 }}
@@ -72,6 +87,7 @@ export default function Story4() {
                         >
                             What stands out
                         </motion.span>
+
                         <motion.div
                             initial={reduceMotion ? { scaleX: 1, opacity: 1 } : { scaleX: 0, opacity: 0 }}
                             animate={{ scaleX: 1, opacity: 1 }}
@@ -90,10 +106,11 @@ export default function Story4() {
                             )}
                         </motion.div>
                     </div>
+
                     <div className='mt-8 flex flex-col items-center sm:mt-10'>
                         <div className='relative w-full max-w-170'>
                             <motion.h1
-                                initial={reduceMotion ? { opacity: 0 } : { clipPath: 'inset(0 100% 0 0)', filter: 'blur(14px)' }}
+                                initial={reduceMotion ? { opacity: 1 } : { clipPath: 'inset(0 100% 0 0)', filter: 'blur(14px)' }}
                                 animate={reduceMotion ? { opacity: 1 } : { clipPath: 'inset(0 0% 0 0)', filter: 'blur(0px)' }}
                                 transition={{ duration: T.heroDuration, ease: EASE, delay: T.heroReveal }}
                                 className='text-balance text-[26px] font-bold leading-[1.2] tracking-wide text-zinc-950 dark:text-white sm:text-[36px] lg:text-[46px] xl:text-[50px]'
@@ -101,20 +118,19 @@ export default function Story4() {
                             >
                                 {strongestAsset}
                             </motion.h1>
+
                             {!reduceMotion && (
                                 <motion.span
                                     aria-hidden
                                     initial={{ left: '0%', opacity: 0 }}
                                     animate={{ left: '100%', opacity: [0, 1, 1, 0] }}
-                                    transition={{
-                                        left: { duration: T.heroDuration, ease: EASE, delay: T.heroReveal },
-                                        opacity: { duration: T.heroDuration, ease: EASE, delay: T.heroReveal, times: [0, 0.08, 0.92, 1] },
-                                    }}
-                                    className='pointer-events-none absolute top-0 bottom-0 w-px bg-zinc-900 dark:bg-white'
+                                    transition={{ left: { duration: T.heroDuration, ease: EASE, delay: T.heroReveal }, opacity: { duration: T.heroDuration, ease: EASE, delay: T.heroReveal, times: [0, 0.08, 0.92, 1] } }}
+                                    className='pointer-events-none absolute bottom-0 top-0 w-px bg-zinc-900 dark:bg-white'
                                 />
                             )}
                         </div>
                     </div>
+
                     {matchedSkills.length > 0 && (
                         <motion.div initial='hidden' animate='show' variants={skillsContainer} className='mt-12 flex w-full max-w-190 flex-col items-center sm:mt-14'>
                             <motion.span variants={skillItem} className='mb-3 font-mono text-[11px] font-medium uppercase tracking-[0.3em] text-zinc-400 dark:text-zinc-600'>
