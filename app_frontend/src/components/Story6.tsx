@@ -1,442 +1,412 @@
 'use client';
 
-import { motion, animate } from 'framer-motion';
-import { useEffect, useMemo, useState } from 'react';
+import React, { useRef, type MouseEvent } from 'react';
+import { motion, useReducedMotion, useMotionValue, useSpring, useTransform, useMotionTemplate } from 'framer-motion';
 import { useStory } from './StoryContext';
 
-const EASE = [0.22, 1, 0.36, 1] as const;
-
-type ConfettiPiece = {
-    id: number;
-    side: 'left' | 'right';
-    leftPct: number;
-    size: number;
-    rotateStart: number;
-    rotateEnd: number;
-    fall: number;
-    drift: number;
-    duration: number;
-    delay: number;
-    repeatDelay: number;
-    tone: 'white' | 'mist' | 'sky' | 'mint';
+type ResumeFix = {
+    priority?: string;
+    section?: string;
+    fix?: string;
+    why?: string;
 };
 
-const TONE_CLASS: Record<ConfettiPiece['tone'], string> = {
-    white: 'bg-white',
-    mist: 'bg-zinc-200',
-    sky: 'bg-blue-100',
-    mint: 'bg-emerald-100',
+type MissingSkill = {
+    skill?: string;
+    priority?: string;
+    importance?: string;
 };
 
-const makeConfetti = (count: number): ConfettiPiece[] => {
-    const tones: ConfettiPiece['tone'][] = ['white', 'white', 'mist', 'mist', 'sky', 'mint'];
+type ActionPlanItem = {
+    timeline?: string;
+    action?: string;
+    impact?: string;
+};
 
-    const pieces: ConfettiPiece[] = [];
+type Improvement = {
+    number: string;
+    title: string;
+    description: string;
+    action: string;
+};
 
-    for (let i = 0; i < count; i++) {
-        const side: ConfettiPiece['side'] = i % 2 === 0 ? 'left' : 'right';
+const clean = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
+const lower = (value: unknown) => clean(value).toLowerCase();
 
-        pieces.push({
-            id: i,
-            side,
-            leftPct: 6 + Math.random() * 88,
-            size: 4 + Math.random() * 5,
-            rotateStart: Math.random() * 180 - 90,
-            rotateEnd: Math.random() * 620 - 310,
-            fall: 320 + Math.random() * 220,
-            drift: 60 + Math.random() * 120,
-            duration: 2.2 + Math.random() * 1.8,
-            delay: Math.random() * 3,
-            repeatDelay: 0.3 + Math.random() * 2.4,
-            tone: tones[Math.floor(Math.random() * tones.length)],
-        });
+const matches = (value: unknown, terms: string[]) => {
+    const text = lower(value);
+    return terms.some((term) => text.includes(term.toLowerCase()));
+};
+
+const unique = (items: string[]) => Array.from(new Set(items.filter(Boolean)));
+const decapitalize = (value: string) => (value ? value.charAt(0).toLowerCase() + value.slice(1) : value);
+
+const formatList = (items: string[]) => {
+    if (items.length === 0) return '';
+    if (items.length === 1) return items[0];
+    if (items.length === 2) {
+        return `${items[0]} and ${items[1]}`;
     }
-
-    return pieces;
+    return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
 };
 
-type ConfettiFieldProps = {
-    active: boolean;
-    mode?: 'infinite' | 'timed';
-};
+const GOLD = '199, 169, 108';
 
-const ConfettiField = ({ active, mode = 'infinite' }: ConfettiFieldProps) => {
-    const pieces = useMemo(() => makeConfetti(mode === 'infinite' ? 84 : 72), [mode]);
-
-    if (!active) return null;
-
+const AnimatedWords = ({ text, delay = 0, reduceMotion }: { text: string; delay?: number; reduceMotion: boolean | null }) => {
+    const words = text.split(' ');
     return (
         <>
-            {(['left', 'right'] as const).map((side) => (
-                <div key={side} aria-hidden='true' className={`pointer-events-none absolute top-0 h-full w-[24vw] overflow-hidden ${side === 'left' ? 'left-0' : 'right-0'}`} style={{ zIndex: 5 }}>
-                    {pieces
-                        .filter((p) => p.side === side)
-                        .map((p) => {
-                            const driftPx = side === 'left' ? p.drift : -p.drift;
-
-                            return (
-                                <motion.span
-                                    key={p.id}
-                                    className={`absolute rounded-xs ${TONE_CLASS[p.tone]}`}
-                                    style={{
-                                        left: `${p.leftPct}%`,
-                                        width: p.size,
-                                        height: p.size * 2.4,
-                                        top: -24,
-                                        boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
-                                    }}
-                                    initial={{
-                                        opacity: 0,
-                                        y: -24,
-                                        x: 0,
-                                        rotate: p.rotateStart,
-                                    }}
-                                    animate={{
-                                        opacity: [0, 1, 1, 0],
-                                        y: p.fall,
-                                        x: driftPx,
-                                        rotate: p.rotateEnd,
-                                    }}
-                                    transition={{
-                                        duration: p.duration,
-                                        delay: p.delay,
-                                        ease: 'easeIn',
-                                        times: [0, 0.12, 0.7, 1],
-                                        ...(mode === 'infinite'
-                                            ? {
-                                                  repeat: Infinity,
-                                                  repeatDelay: p.repeatDelay,
-                                              }
-                                            : {}),
-                                    }}
-                                />
-                            );
-                        })}
-                </div>
+            {words.map((word, index) => (
+                <React.Fragment key={`${word}-${index}`}>
+                    <span className='inline-block overflow-hidden align-bottom'>
+                        <motion.span
+                            className='inline-block'
+                            initial={reduceMotion ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: '115%', filter: 'blur(5px)' }}
+                            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                            transition={{ duration: 0.5, delay: reduceMotion ? 0 : delay + index * 0.018, ease: [0.22, 1, 0.36, 1] }}
+                        >
+                            {word}
+                        </motion.span>
+                    </span>
+                    {index < words.length - 1 && ' '}
+                </React.Fragment>
             ))}
         </>
     );
 };
 
-export default function Story6() {
-    const { analysisResult } = useStory();
+const CARD_ENTRANCE_DIRECTIONS = [
+    { x: -120, y: 70, rotateY: -42, rotateX: 22, rotateZ: -5 },
+    { x: 0, y: 150, rotateY: 0, rotateX: -34, rotateZ: 0 },
+    { x: 120, y: 70, rotateY: 42, rotateX: 22, rotateZ: 5 },
+];
 
-    const data = analysisResult?.data?.data;
+const CORNER_MARKS = [
+    { position: '-top-2 -left-2', border: 'border-l border-t', origin: 'top left' },
+    { position: '-top-2 -right-2', border: 'border-r border-t', origin: 'top right' },
+    { position: '-bottom-2 -left-2', border: 'border-l border-b', origin: 'bottom left' },
+    { position: '-bottom-2 -right-2', border: 'border-r border-b', origin: 'bottom right' },
+];
 
-    const targetScore = Number(data?.hero?.ats_score ?? 0);
+const PremiumCard = ({ improvement, index, reduceMotion }: { improvement: Improvement; index: number; reduceMotion: boolean | null }) => {
+    const cardRef = useRef<HTMLDivElement>(null);
+    const tiltX = useMotionValue(0);
+    const tiltY = useMotionValue(0);
+    const rotateX = useSpring(useTransform(tiltY, [-0.5, 0.5], ['6deg', '-6deg']), { damping: 30, stiffness: 200 });
+    const rotateY = useSpring(useTransform(tiltX, [-0.5, 0.5], ['-6deg', '6deg']), { damping: 30, stiffness: 200 });
+    const mouseX = useMotionValue(0);
+    const mouseY = useMotionValue(0);
+    const hoverState = useMotionValue(0);
+    const hoverOpacity = useSpring(hoverState, { damping: 30, stiffness: 200 });
+    const liftY = useTransform(hoverOpacity, [0, 1], [0, -10]);
+    const liftScale = useTransform(hoverOpacity, [0, 1], [1, 1.012]);
+    const cornerScale = useTransform(hoverOpacity, [0, 1], [0.8, 1]);
+    const reticleOpacity = useTransform(hoverOpacity, [0, 1], [0, 0.4]);
+    const dotOpacity = useTransform(hoverOpacity, [0, 1], [0, 0.9]);
+    const actionBorderOpacity = useTransform(hoverOpacity, [0, 1], [0, 0.45]);
+    const actionArrowX = useTransform(hoverOpacity, [0, 1], [-4, 0]);
 
-    const verdict = data?.hero?.verdict ?? 'Needs Work';
+    const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
+        if (!cardRef.current) return;
+        const rect = cardRef.current.getBoundingClientRect();
+        tiltX.set((e.clientX - rect.left) / rect.width - 0.5);
+        tiltY.set((e.clientY - rect.top) / rect.height - 0.5);
+        mouseX.set(e.clientX - rect.left);
+        mouseY.set(e.clientY - rect.top);
+    };
 
-    const strongestAsset = data?.candidate?.strongest_asset;
+    const handleMouseEnter = () => {
+        hoverState.set(1);
+    };
 
-    const scoreBreakdown = data?.score_breakdown ?? [];
+    const handleMouseLeave = () => {
+        hoverState.set(0);
+        tiltX.set(0);
+        tiltY.set(0);
+    };
 
-    const matchedSkills = data?.skills?.matched ?? [];
-
-    const strengths = useMemo(() => {
-        const result: string[] = [];
-
-        // strongest positive point identified by the AI
-        if (strongestAsset) {
-            result.push(strongestAsset);
-        }
-
-        // use real score breakdown information
-        scoreBreakdown
-            .filter((breakdownItem: { label: string; score: number; out_of: number }) => breakdownItem.score > 0)
-            .sort(
-                (
-                    a: {
-                        label: string;
-                        score: number;
-                        out_of: number;
-                    },
-                    b: {
-                        label: string;
-                        score: number;
-                        out_of: number;
-                    },
-                ) => b.score / b.out_of - a.score / a.out_of,
-            )
-            .forEach((breakdownItem: { label: string; score: number; out_of: number; reason: string }) => {
-                if (result.length < 4 && !result.some((existingStrength) => existingStrength.toLowerCase().includes(breakdownItem.label.toLowerCase()))) {
-                    result.push(`${breakdownItem.label}: ${breakdownItem.reason}`);
-                }
-            });
-
-        // use matched skills if available
-        matchedSkills.forEach((skillItem: string | { skill: string }) => {
-            if (result.length >= 4) return;
-
-            const skill = typeof skillItem === 'string' ? skillItem : skillItem.skill;
-
-            if (skill) {
-                result.push(`Matched skill: ${skill}`);
-            }
-        });
-
-        return result.slice(0, 4);
-    }, [strongestAsset, scoreBreakdown, matchedSkills]);
-
-    const finalStrengths = strengths.length > 0 ? strengths : ['Analysis completed successfully'];
-
-    const [score, setScore] = useState(0);
-    const [bounce, setBounce] = useState(false);
-    const [confettiActive, setConfettiActive] = useState(false);
-
-    useEffect(() => {
-        const controls = animate(0, targetScore, {
-            duration: 1.1,
-            delay: 0.9,
-            ease: EASE,
-
-            onUpdate(value) {
-                setScore(Math.round(value));
-            },
-
-            onComplete() {
-                setBounce(true);
-            },
-        });
-
-        const confettiOn = setTimeout(() => setConfettiActive(true), 1000);
-
-        return () => {
-            controls.stop();
-            clearTimeout(confettiOn);
-        };
-    }, [targetScore]);
+    const delay = reduceMotion ? 0 : 0.5 + index * 0.18;
+    const dir = CARD_ENTRANCE_DIRECTIONS[index % CARD_ENTRANCE_DIRECTIONS.length];
+    const entranceDelay = reduceMotion ? 0 : index * 0.16;
+    const revealDelay = entranceDelay + 0.62;
 
     return (
-        <section className='relative flex h-screen w-full items-center justify-center overflow-hidden bg-white'>
-            <div
-                className='pointer-events-none absolute inset-0'
-                style={{
-                    background: 'radial-gradient(circle at center, rgba(0,0,0,.03), transparent 70%)',
-                }}
-            />
-
+        <motion.div
+            className='h-full'
+            style={{ transformStyle: 'preserve-3d', transformOrigin: 'center bottom' }}
+            initial={reduceMotion ? { opacity: 1, x: 0, y: 0, scale: 1, rotateX: 0, rotateY: 0, rotateZ: 0 } : { opacity: 0, x: dir.x, y: dir.y, scale: 0.7, rotateX: dir.rotateX, rotateY: dir.rotateY, rotateZ: dir.rotateZ }}
+            animate={{ opacity: 1, x: 0, y: 0, scale: 1, rotateX: 0, rotateY: 0, rotateZ: 0 }}
+            transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 78, damping: 14, mass: 1.1, delay: entranceDelay }}
+        >
             <motion.div
-                aria-hidden='true'
-                className='pointer-events-none absolute h-130 w-130 rounded-full blur-3xl'
-                style={{
-                    background: 'radial-gradient(circle, rgba(0,0,0,0.05) 0%, transparent 70%)',
-                }}
-                initial={{ opacity: 0 }}
-                animate={{
-                    opacity: [0.5, 0.85, 0.5],
-                }}
-                transition={{
-                    opacity: {
-                        duration: 5,
-                        repeat: Infinity,
-                        ease: 'easeInOut',
-                        delay: 1,
-                    },
-                }}
-            />
-
-            <ConfettiField active={confettiActive} />
-
-            <div className='relative z-10 w-full max-w-xl px-6'>
-                <motion.div
-                    initial={{
-                        opacity: 0,
-                        y: 46,
-                        scale: 0.95,
-                    }}
-                    animate={{
-                        opacity: 1,
-                        y: 0,
-                        scale: 1,
-                    }}
-                    transition={{
-                        duration: 0.75,
-                        ease: EASE,
-                    }}
-                    className='relative overflow-hidden rounded-4xl border border-zinc-200 bg-white shadow-[0_30px_80px_rgba(0,0,0,.07)]'
-                    style={{
-                        padding: 'clamp(2rem,4.5vh,3.25rem) clamp(2rem,4.5vw,3.5rem)',
-                    }}
-                >
-                    <motion.div
-                        aria-hidden='true'
-                        className='pointer-events-none absolute inset-y-0 w-[45%]'
-                        style={{
-                            background: 'linear-gradient(75deg, transparent 0%, rgba(0,0,0,0.035) 45%, transparent 100%)',
-                        }}
-                        initial={{ left: '-55%' }}
-                        animate={{ left: '110%' }}
-                        transition={{
-                            duration: 1.1,
-                            delay: 3.8,
-                            ease: 'easeInOut',
-                        }}
-                    />
-
-                    {(['left', 'right'] as const).map((corner) => (
+                ref={cardRef}
+                onMouseMove={handleMouseMove}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                style={{ rotateX: reduceMotion ? 0 : rotateX, rotateY: reduceMotion ? 0 : rotateY, y: reduceMotion ? 0 : liftY, scale: reduceMotion ? 1 : liftScale, transformStyle: 'preserve-3d' }}
+                className='group relative flex h-full cursor-crosshair flex-col rounded-3xl p-px shadow-2xl transition-shadow duration-500 group-hover:shadow-2xl'
+            >
+                {!reduceMotion &&
+                    CORNER_MARKS.map((corner) => (
                         <motion.span
-                            key={corner}
-                            aria-hidden='true'
-                            className={`pointer-events-none absolute top-6 h-6 w-6 ${corner === 'left' ? 'left-6' : 'right-6'}`}
-                            style={{
-                                background: 'radial-gradient(circle, rgba(0,0,0,0.10) 0%, transparent 70%)',
-                            }}
-                            initial={{
-                                opacity: 0,
-                                scale: 0.4,
-                            }}
-                            animate={{
-                                opacity: [0, 1, 0],
-                                scale: [0.4, 1.3, 1.6],
-                            }}
-                            transition={{
-                                duration: 0.9,
-                                delay: 1.0,
-                                ease: 'easeOut',
-                            }}
+                            key={corner.position}
+                            aria-hidden
+                            className={`pointer-events-none absolute ${corner.position} z-20 h-4 w-4 ${corner.border}`}
+                            style={{ borderColor: `rgba(${GOLD}, 0.85)`, borderWidth: '1.5px', opacity: hoverOpacity, scale: cornerScale, transformOrigin: corner.origin }}
                         />
                     ))}
 
-                    <div className='text-center'>
-                        <p className='text-[12px] uppercase tracking-[0.4em] text-zinc-500'>Final Report</p>
+                <motion.div aria-hidden className='pointer-events-none absolute -inset-3 -z-10 rounded-[28px] blur-2xl' style={{ opacity: reduceMotion ? 0 : useTransform(hoverOpacity, [0, 1], [0, 0.35]), background: `radial-gradient( 60% 60% at 50% 100%, rgba(${GOLD}, 0.25), transparent 75%)` }} />
 
-                        <h1
-                            className='mt-4 font-semibold tracking-[-0.06em] text-zinc-900'
-                            style={{
-                                fontSize: 'clamp(2rem, 4.2vh, 2.75rem)',
-                            }}
-                        >
-                            Resume Ready
-                        </h1>
-                    </div>
+                <div className='pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-3xl'>
+                    <div className='absolute inset-0 rounded-3xl bg-zinc-100 dark:bg-zinc-900/80' />
+                    <div className='absolute left-1/2 top-0 h-px w-[60%] -translate-x-1/2 bg-linear-to-r from-transparent via-zinc-400/50 to-transparent opacity-50 dark:via-zinc-400/50' />
+                    <motion.div
+                        className='absolute inset-0 z-10'
+                        style={{
+                            opacity: hoverOpacity,
+                            background: useMotionTemplate`
+                                    radial-gradient( 250px circle at ${mouseX}px ${mouseY}px, rgba(0, 0, 0, 0.05), transparent 80%)`,
+                        }}
+                    />
+                </div>
 
-                    <div className='mt-[clamp(1.5rem,3.5vh,2.5rem)] text-center'>
-                        <p className='text-[13px] uppercase tracking-[0.35em] text-zinc-400'>ATS Score</p>
+                <div className='relative z-10 flex h-full flex-col overflow-hidden rounded-[23px] bg-white p-6 text-left dark:bg-[#030303]'>
+                    <div
+                        className='pointer-events-none absolute inset-0 opacity-[0.015] mix-blend-overlay'
+                        style={{
+                            backgroundImage:
+                                'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")',
+                        }}
+                    />
+                    <motion.div className='pointer-events-none absolute inset-0 z-0 mix-blend-screen' style={{ opacity: hoverOpacity, background: useMotionTemplate` radial-gradient( 350px circle at ${mouseX}px ${mouseY}px, rgba(255,255,255,0.015), transparent 70%)` }} />
 
-                        <motion.div
-                            className='mt-2 leading-none tracking-[-0.07em] text-zinc-900'
-                            style={{
-                                fontSize: 'clamp(4.5rem, 11vh, 6.75rem)',
-                                fontWeight: 600,
-                            }}
-                            animate={
-                                bounce
-                                    ? {
-                                          scale: [1, 1.1, 1],
-                                      }
-                                    : {}
-                            }
-                            transition={{
-                                duration: 0.5,
-                                ease: EASE,
-                            }}
-                        >
-                            {score}
-                        </motion.div>
+                    {!reduceMotion && (
+                        <>
+                            <motion.div aria-hidden className='pointer-events-none absolute inset-x-0 z-0 h-px' style={{ top: mouseY, opacity: reticleOpacity, background: `linear-gradient( 90deg, transparent, rgba(${GOLD}, 0.9), transparent)` }} />
+                            <motion.div aria-hidden className='pointer-events-none absolute inset-y-0 z-0 w-px' style={{ left: mouseX, opacity: reticleOpacity, background: `linear-gradient( 180deg, transparent, rgba(${GOLD}, 0.9), transparent )` }} />
 
-                        <p className='mt-1 text-[16px] text-zinc-500'>out of 100</p>
-                    </div>
+                            <motion.div aria-hidden className='pointer-events-none absolute z-0 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full' style={{ left: mouseX, top: mouseY, opacity: dotOpacity, background: `rgba(${GOLD}, 1)`, boxShadow: `0 0 10px rgba(${GOLD}, 0.8)` }} />
+                        </>
+                    )}
 
-                    <div className='mt-[clamp(1.25rem,2.8vh,2rem)] flex justify-center'>
-                        <motion.div
-                            initial={{
-                                opacity: 0,
-                                scale: 0.8,
-                            }}
-                            animate={{
-                                opacity: 1,
-                                scale: 1,
-                            }}
-                            transition={{
-                                delay: 2.0,
-                                duration: 0.45,
-                                ease: EASE,
-                            }}
-                            className='rounded-full bg-zinc-100 px-5 py-2.5'
-                        >
-                            <span className='text-[12px] font-semibold uppercase tracking-[0.16em] text-zinc-700'>{verdict}</span>
-                        </motion.div>
-                    </div>
-
-                    <div className='mt-[clamp(1.5rem,3.2vh,2.25rem)] grid grid-cols-2 gap-x-6 gap-y-4'>
-                        {finalStrengths.map((item, index) => (
-                            <motion.div
-                                key={`${item}-${index}`}
-                                initial={{
-                                    opacity: 0,
-                                    x: -14,
-                                }}
-                                animate={{
-                                    opacity: 1,
-                                    x: 0,
-                                }}
-                                transition={{
-                                    delay: 2.5 + index * 0.15,
-                                    duration: 0.4,
-                                    ease: EASE,
-                                }}
-                                className='flex items-center gap-2.5'
+                    <div className='relative z-10 flex h-full flex-col'>
+                        <div className='flex items-center justify-between border-b border-zinc-200 pb-3 dark:border-zinc-800/80' style={{ transform: 'translateZ(20px)' }}>
+                            <motion.span
+                                className='font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-500'
+                                initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -12, filter: 'blur(4px)' }}
+                                animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                                transition={{ duration: 0.55, delay: delay + 0.12, ease: [0.22, 1, 0.36, 1] }}
                             >
-                                <div className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-[11px] text-white'>✓</div>
+                                Priority area
+                            </motion.span>
 
-                                <p className='text-[14.5px] leading-snug text-zinc-700'>{item}</p>
+                            <motion.span
+                                className='relative inline-flex items-center justify-center font-mono text-[11px] font-medium tracking-[0.25em] text-zinc-700 dark:text-zinc-300'
+                                initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: 14 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.5, delay: delay + 0.22, ease: [0.22, 1, 0.36, 1] }}
+                            >
+                                {!reduceMotion && <motion.span aria-hidden className='absolute -inset-2.5 rounded-full border' style={{ borderColor: `rgba(${GOLD}, 0.5)`, opacity: hoverOpacity, scale: cornerScale }} />}
+
+                                {improvement.number}
+                            </motion.span>
+                        </div>
+
+                        <motion.h2 className='mt-7 text-[clamp(1.25rem,2vw,1.5rem)] font-light leading-tight tracking-tight text-zinc-900 dark:text-zinc-100' style={{ fontFamily: '"Fraunces", ui-serif, Georgia, serif', transform: 'translateZ(30px)' }}>
+                            <AnimatedWords text={improvement.title} delay={delay + 0.38} reduceMotion={reduceMotion} />
+                        </motion.h2>
+
+                        <motion.div className='mt-5 grow' style={{ transform: 'translateZ(20px)' }} initial={reduceMotion ? { opacity: 1 } : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: delay + 0.58 }}>
+                            <motion.div className='mb-3 flex items-center gap-2' initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.45, delay: delay + 0.62, ease: [0.22, 1, 0.36, 1] }}>
+                                <span className='h-px w-4 bg-zinc-300 dark:bg-zinc-700' />
                             </motion.div>
+                            <p className='line-clamp-5 text-[0.82rem] leading-[1.75] text-zinc-600 dark:text-zinc-400'>
+                                <AnimatedWords text={improvement.description} delay={delay + 0.68} reduceMotion={reduceMotion} />
+                            </p>
+                        </motion.div>
+
+                        {improvement.action && (
+                            <motion.div
+                                className='relative mt-6 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 p-5 backdrop-blur-sm dark:border-zinc-800/70 dark:bg-zinc-900/25'
+                                style={{ transform: 'translateZ(35px)' }}
+                                initial={reduceMotion ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 16, scale: 0.97 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                transition={{ duration: 0.65, delay: delay + 1.0, ease: [0.22, 1, 0.36, 1] }}
+                            >
+                                {!reduceMotion && (
+                                    <motion.div aria-hidden className='absolute bottom-0 left-0 top-0 w-px bg-zinc-400 dark:bg-zinc-400' initial={{ y: '100%', opacity: 0 }} animate={{ y: '0%', opacity: 0.7 }} transition={{ duration: 0.55, delay: delay + 1.08, ease: [0.76, 0, 0.24, 1] }} />
+                                )}
+
+                                {!reduceMotion && <motion.div aria-hidden className='pointer-events-none absolute inset-0 rounded-lg border' style={{ borderColor: `rgba(${GOLD}, 0.5)`, opacity: actionBorderOpacity }} />}
+                                <motion.p
+                                    className='mb-2 flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.15em] text-zinc-500'
+                                    initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -8 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ duration: 0.45, delay: delay + 1.12 }}
+                                >
+                                    <span>Suggested action</span>
+
+                                    {!reduceMotion && (
+                                        <motion.span aria-hidden style={{ opacity: hoverOpacity, x: actionArrowX, color: `rgba(${GOLD}, 1)` }} className='text-[11px]'>
+                                            →
+                                        </motion.span>
+                                    )}
+                                </motion.p>
+
+                                <p className='text-[0.75rem] font-medium leading-relaxed text-zinc-800 dark:text-zinc-200'>
+                                    <AnimatedWords text={improvement.action} delay={delay + 1.18} reduceMotion={reduceMotion} />
+                                </p>
+                            </motion.div>
+                        )}
+                    </div>
+
+                    {!reduceMotion && (
+                        <div className='pointer-events-none absolute inset-0 z-30 overflow-hidden rounded-3xl'>
+                            <motion.div className='absolute inset-0 bg-white dark:bg-[#030303]' style={{ transformOrigin: 'right center' }} initial={{ scaleX: 1 }} animate={{ scaleX: 0 }} transition={{ duration: 0.85, delay: revealDelay, ease: [0.76, 0, 0.24, 1] }} />
+
+                            <motion.div
+                                className='absolute inset-y-0 w-1/4 skew-x-[-18deg] bg-linear-to-r from-transparent via-black/10 to-transparent dark:via-white/10'
+                                initial={{ x: '-160%' }}
+                                animate={{ x: '360%' }}
+                                transition={{ duration: 1, delay: revealDelay + 0.1, ease: [0.16, 1, 0.3, 1] }}
+                            />
+                        </div>
+                    )}
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+};
+
+const AmbientBackground = ({ reduceMotion }: { reduceMotion: boolean | null }) => (
+    <div aria-hidden className='pointer-events-none absolute inset-0 z-0 overflow-hidden'>
+        <div className='absolute inset-0 opacity-[0.025] dark:opacity-[0.025]' style={{ backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.5) 1px, transparent 1px)', backgroundSize: '34px 34px' }} />
+
+        <div className='absolute inset-0 opacity-0 dark:opacity-[0.025]' style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)', backgroundSize: '34px 34px' }} />
+
+        <motion.div
+            className='absolute -left-40 top-1/4 h-130 w-130 rounded-full blur-[130px]'
+            style={{ background: `radial-gradient(circle, rgba(${GOLD}, 0.12), transparent 70%)` }}
+            animate={reduceMotion ? undefined : { x: [0, 40, 0], y: [0, 30, 0] }}
+            transition={reduceMotion ? undefined : { duration: 22, repeat: Infinity, ease: 'easeInOut' }}
+        />
+
+        <motion.div
+            className='absolute -right-40 bottom-0 h-140 w-140 rounded-full blur-[140px]'
+            style={{ background: 'radial-gradient(circle, rgba(120, 135, 170, 0.09), transparent 70%)' }}
+            animate={reduceMotion ? undefined : { x: [0, -30, 0], y: [0, -25, 0] }}
+            transition={reduceMotion ? undefined : { duration: 26, repeat: Infinity, ease: 'easeInOut' }}
+        />
+    </div>
+);
+
+export default function Story6() {
+    const { analysisResult } = useStory();
+    const reduceMotion = useReducedMotion();
+    const data = analysisResult?.data?.data as Record<string, any> | undefined;
+    const resumeFixes: ResumeFix[] = Array.isArray(data?.resume_fixes) ? data.resume_fixes : [];
+    const missingSkills: MissingSkill[] = Array.isArray(data?.skills?.missing) ? data.skills.missing : [];
+    const actionPlan: ActionPlanItem[] = Array.isArray(data?.action_plan) ? data.action_plan : [];
+    const backendBlocker = clean(data?.candidate?.biggest_blocker);
+
+    const backendSkills = unique(missingSkills.filter((item) => matches(item.skill, ['node', 'express', 'rest', 'api', 'mongo'])).map((item) => clean(item.skill))).slice(0, 4);
+    const backendAction = actionPlan.find((item) => matches(item.action, ['node.js/express/mongodb', 'node', 'express', 'mongodb']));
+    const projectsFix = resumeFixes.find((item) => matches(item.section, ['projects']));
+    const productionActions = actionPlan.filter((item) => matches(item.action, ['docker', 'open-source', 'open source', 'production', 'github actions']));
+    const productionSkills = unique(missingSkills.filter((item) => matches(item.skill, ['git/github actions', 'github actions', 'docker', 'testing'])).map((item) => clean(item.skill))).slice(0, 4);
+
+    const backendDescription = backendBlocker
+        ? backendSkills.length > 0
+            ? `${backendBlocker}, particularly around ${formatList(backendSkills)}.`
+            : `${backendBlocker}.`
+        : 'Backend depth is the clearest gap holding this resume back — real project experience with server-side technologies is what separates a frontend portfolio from a full-stack one.';
+
+    const projectsDescription = clean(projectsFix?.fix) ? `${clean(projectsFix?.fix)}${projectsFix?.why ? ` — ${decapitalize(clean(projectsFix.why))}.` : '.'}` : 'Projects need clearer, more specific write-ups that show real technical ownership and impact.';
+
+    const productionDescription = backendBlocker
+        ? `${backendBlocker}${productionSkills.length > 0 ? `, with ${formatList(productionSkills)} still missing from the skill set` : ''}. The plan from here is to ${
+              productionActions[0] ? decapitalize(clean(productionActions[0].action)) : 'build a Dockerized full-stack app (React + Node + Mongo)'
+          }${productionActions[1] ? ` and ${decapitalize(clean(productionActions[1].action))}` : ''}.`
+        : 'Production exposure — deploying, containerizing, and shipping real software — is the missing piece between building projects and being job-ready.';
+
+    const improvements: Improvement[] = [
+        {
+            number: '01',
+            title: 'Backend depth',
+            description: backendDescription,
+            action: clean(backendAction?.action) || 'Add Node.js/Express/MongoDB projects to GitHub',
+        },
+        {
+            number: '02',
+            title: 'Project impact',
+            description: projectsDescription,
+            action: clean(projectsFix?.fix) || 'Add 1–2 sentences per project on tech stack and impact',
+        },
+        {
+            number: '03',
+            title: 'Production exposure',
+            description: productionDescription,
+            action: clean(productionActions[0]?.action) || 'Build a Dockerized full-stack app (React + Node + Mongo)',
+        },
+    ];
+
+    if (!data) {
+        return (
+            <section className='relative left-[calc(50%-50vw)] flex h-screen w-screen items-center justify-center overflow-hidden bg-white px-6 text-zinc-900 dark:bg-black dark:text-white'>
+                <span className='font-mono text-[10px] uppercase tracking-[0.35em] text-zinc-500 dark:text-zinc-600'>No improvement priorities detected</span>
+            </section>
+        );
+    }
+
+    const headingText = 'What to improve next'.split(' ');
+
+    return (
+        <section className='relative left-[calc(50%-50vw)] h-screen w-screen overflow-hidden bg-white text-zinc-900 dark:bg-black dark:text-white'>
+            <AmbientBackground reduceMotion={reduceMotion} />
+            <div className='relative z-10 mx-auto flex h-full w-full max-w-7xl flex-col items-center justify-center px-6 sm:px-10 lg:px-16'>
+                <div className='flex flex-col items-center text-center'>
+                    <motion.div className='mb-2 overflow-hidden' initial={{ opacity: 1 }}>
+                        <motion.p
+                            className='font-mono text-[10px] font-medium uppercase tracking-[0.45em] text-zinc-500'
+                            initial={reduceMotion ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: '100%', filter: 'blur(4px)' }}
+                            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                        >
+                            Top improvements
+                        </motion.p>
+                    </motion.div>
+
+                    <h1 className='flex flex-wrap justify-center gap-[0.25em] text-center text-[clamp(2.5rem,5.5vw,4.8rem)] font-light leading-[1.1] tracking-[-0.045em] text-zinc-900 dark:text-white' style={{ fontFamily: '"Fraunces", ui-serif, Georgia, serif' }}>
+                        {headingText.map((word, i) => (
+                            <span key={`${word}-${i}`} className='overflow-hidden pb-2 pt-1'>
+                                <motion.span
+                                    className='inline-block'
+                                    initial={reduceMotion ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: '110%', filter: 'blur(8px)' }}
+                                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                                    transition={{ duration: 0.8, delay: 0.15 + i * 0.08, ease: [0.16, 1, 0.3, 1] }}
+                                >
+                                    {word}
+                                </motion.span>
+                            </span>
                         ))}
-                    </div>
+                    </h1>
 
-                    <div className='mt-[clamp(1.75rem,3.5vh,2.5rem)] flex justify-center gap-3'>
-                        <motion.button
-                            initial={{
-                                opacity: 0,
-                                y: 12,
-                            }}
-                            animate={{
-                                opacity: 1,
-                                y: 0,
-                            }}
-                            transition={{
-                                delay: 4.3,
-                                duration: 0.45,
-                                ease: EASE,
-                            }}
-                            whileHover={{
-                                scale: 1.03,
-                            }}
-                            whileTap={{
-                                scale: 0.97,
-                            }}
-                            className='rounded-full bg-zinc-900 px-7 py-3.5 text-[14px] font-medium text-white shadow-[0_8px_24px_rgba(0,0,0,0.18)]'
-                        >
-                            Download PDF
-                        </motion.button>
+                    <motion.p
+                        className='mt-4 max-w-lg text-center text-[0.85rem] leading-relaxed text-zinc-500 dark:text-zinc-400'
+                        initial={reduceMotion ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 15, filter: 'blur(4px)' }}
+                        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                        transition={{ duration: 0.8, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                    >
+                        Three areas that can make the biggest difference to your resume
+                    </motion.p>
+                </div>
 
-                        <motion.button
-                            initial={{
-                                opacity: 0,
-                                y: 12,
-                            }}
-                            animate={{
-                                opacity: 1,
-                                y: 0,
-                            }}
-                            transition={{
-                                delay: 4.45,
-                                duration: 0.45,
-                                ease: EASE,
-                            }}
-                            whileHover={{
-                                scale: 1.03,
-                            }}
-                            whileTap={{
-                                scale: 0.97,
-                            }}
-                            className='rounded-full border border-zinc-300 px-7 py-3.5 text-[14px] font-medium text-zinc-900'
-                        >
-                            Analyze Again
-                        </motion.button>
-                    </div>
-                </motion.div>
+                <div className='mt-15 grid w-full grid-cols-1 gap-6 md:grid-cols-3 xl:gap-8 perspective-[1000px]'>
+                    {improvements.map((improvement, index) => (
+                        <PremiumCard key={improvement.number} improvement={improvement} index={index} reduceMotion={reduceMotion} />
+                    ))}
+                </div>
             </div>
         </section>
     );
