@@ -76,7 +76,6 @@ const StoryControls = () => {
 
     return (
         <div className='fixed right-4 top-7.5 z-70 flex items-center gap-1 rounded-full px-2 py-1.5' onPointerDown={stopPointerPropagation} onPointerUp={stopPointerPropagation} onPointerMove={stopPointerPropagation}>
-
             <button
                 type='button'
                 aria-label={paused ? 'Resume story' : 'Pause story'}
@@ -127,9 +126,12 @@ const StoryControls = () => {
 
 const StoryContent = () => {
     const { paused, setPaused } = useStory();
+
     const [currentStory, setCurrentStory] = useState(0);
     const [progress, setProgress] = useState(0);
+
     const totalStories = STORY_DURATIONS.length;
+
     const holdTimer = useRef<number | null>(null);
     const didHold = useRef(false);
     const suppressNextClick = useRef(false);
@@ -142,7 +144,6 @@ const StoryContent = () => {
                 if (prev >= 100) {
                     if (currentStory < totalStories - 1) {
                         setCurrentStory((story) => story + 1);
-
                         return 0;
                     }
                     return 100;
@@ -165,8 +166,10 @@ const StoryContent = () => {
 
     const handlePointerDown = () => {
         clearHoldTimer();
+
         didHold.current = false;
         suppressNextClick.current = false;
+
         holdTimer.current = window.setTimeout(() => {
             didHold.current = true;
             suppressNextClick.current = true;
@@ -215,6 +218,56 @@ const StoryContent = () => {
             setProgress(0);
         }
     };
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            const target = event.target as HTMLElement | null;
+
+            const isTyping = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.tagName === 'SELECT' || target?.isContentEditable;
+
+            if (isTyping) {
+                return;
+            }
+
+            switch (event.key) {
+                case 'ArrowLeft':
+                    event.preventDefault();
+                    handlePrevious();
+                    break;
+
+                case 'ArrowRight':
+                    event.preventDefault();
+                    handleNext();
+                    break;
+
+                case ' ':
+                case 'Spacebar':
+                    event.preventDefault();
+                    handleNext();
+                    break;
+
+                case 'p':
+                case 'P':
+                    event.preventDefault();
+                    setPaused((current) => !current);
+                    break;
+
+                case 'Escape':
+                    event.preventDefault();
+                    window.history.back();
+                    break;
+
+                default:
+                    break;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [currentStory, suppressNextClick]);
 
     return (
         <main className='relative flex h-screen select-none items-center justify-center overflow-hidden bg-white dark:bg-black' onPointerDown={handlePointerDown} onPointerUp={handlePointerUp} onPointerLeave={handlePointerLeave}>
