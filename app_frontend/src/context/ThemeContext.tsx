@@ -16,18 +16,15 @@ type ThemeProviderProps = {
 export function ThemeProvider({ children }: ThemeProviderProps) {
     const [theme, setTheme] = useState<Theme>(() => {
         const savedTheme = localStorage.getItem('theme');
-
         if (savedTheme === 'light' || savedTheme === 'dark') {
             return savedTheme;
         }
-
         return 'light';
     });
 
     useEffect(() => {
         document.documentElement.classList.remove('light', 'dark');
         document.documentElement.classList.add(theme);
-
         localStorage.setItem('theme', theme);
     }, [theme]);
 

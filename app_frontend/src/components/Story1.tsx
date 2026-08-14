@@ -124,7 +124,7 @@ const Story1 = () => {
                             Meet
                         </motion.p>
 
-                        <h1 className='font-display mt-4 text-[60px] font-medium tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-[88px]'>
+                        <h1 className='font-display mt-4 text-[40px] font-medium tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-[60px]'>
                             <CreditsText text={NAME} delayStart={0.5} />
                         </h1>
 
