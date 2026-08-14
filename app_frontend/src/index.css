@@ -119,3 +119,34 @@ body {
 .dark .role-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #52525b;
 }
+
+html,
+body,
+#root {
+    min-height: 100%;
+    background: #ffffff;
+}
+
+html.dark,
+html.dark body,
+html.dark #root {
+    background: #09090b;
+}
+
+::view-transition {
+    background: transparent;
+}
+
+::view-transition-image-pair(root) {
+    isolation: isolate;
+}
+
+::view-transition-old(root) {
+    animation: none;
+    z-index: 0;
+}
+
+::view-transition-new(root) {
+    mix-blend-mode: normal;
+    z-index: 1;
+}
