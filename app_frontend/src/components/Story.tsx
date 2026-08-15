@@ -243,7 +243,7 @@ const StoryContent = () => {
                 case ' ':
                 case 'Spacebar':
                     event.preventDefault();
-                    handleNext();
+                    setPaused((current) => !current);
                     break;
 
                 case 'p':
