@@ -440,10 +440,19 @@ export default function Story5() {
                                                 <span className='relative inline-flex h-1.25 w-1.25 rounded-full' style={{ background: 'var(--story5-accent)' }} />
                                             </span>
                                             <div className='min-w-0 flex-1'>
-                                                <div className='flex flex-wrap items-center gap-x-3 gap-y-1.5'>
-                                                    <h2 className='text-balance text-[clamp(0.95rem,2vw,1.15rem)] font-light leading-snug tracking-[-0.01em] text-zinc-800 dark:text-zinc-100'>{issue.title}</h2>
-                                                    {issue.tag && <span className='rounded-full border border-zinc-200 px-2 py-0.5 font-mono text-[8px] uppercase tracking-[0.2em] text-zinc-500 dark:border-white/10 dark:text-zinc-500'>{issue.tag}</span>}
+                                                <div className='flex w-full items-center justify-between gap-8'>
+                                                    <h2 className='min-w-0 flex-1 text-balance text-[clamp(0.95rem,2vw,1.15rem)] font-light leading-snug tracking-[-0.01em] text-zinc-800 dark:text-zinc-100'>{issue.title}</h2>
+
+                                                    {issue.tag && (
+                                                        <span className='min-w-27.5 shrink-0 text-right'>
+                                                            <span className='inline-flex min-w-25 items-center justify-center rounded-full border border-zinc-200/80 bg-zinc-50/40 px-3 py-1 font-mono text-[8px] font-medium uppercase tracking-[0.18em] text-zinc-500 dark:border-white/10 dark:bg-white/2.5 dark:text-zinc-400'>
+                                                                {issue.tag}
+                                                            </span>
+                                                        </span>
+                                                    )}
                                                 </div>
+
+                                                {issue.description && <p className='mt-1.5 max-w-[52ch] text-[0.72rem] leading-relaxed text-zinc-500'>{issue.description}</p>}
                                                 {issue.description && <p className='mt-1.5 max-w-[52ch] text-[0.72rem] leading-relaxed text-zinc-500'>{issue.description}</p>}
                                             </div>
                                         </motion.div>
