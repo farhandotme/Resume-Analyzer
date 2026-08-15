@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion, type Variants } from 'framer-motion';
 import { StoryProvider, useStory } from './StoryContext';
 import { useTheme } from '../hooks/useTheme';
 
@@ -14,6 +15,41 @@ import Story6 from './Story6';
 import Story7 from './Story7';
 
 const STORY_DURATIONS = [8000, 5000, 6000, 6000, 10000, 6000, 8000];
+
+const storyTransitionVariants: Variants = {
+    wrapperEnter: (direction: number) => ({
+        x: direction > 0 ? '30%' : '-30%',
+        scale: 0.94,
+        opacity: 0,
+        rotateY: direction > 0 ? -6 : 6,
+        filter: 'blur(8px)',
+    }),
+    wrapperCenter: {
+        x: '0%',
+        scale: 1,
+        opacity: 1,
+        rotateY: 0,
+        filter: 'blur(0px)',
+        transition: {
+            x: { duration: 0.55, ease: [0.16, 1, 0.3, 1] },
+            scale: { duration: 0.55, ease: [0.16, 1, 0.3, 1] },
+            rotateY: { duration: 0.55, ease: [0.16, 1, 0.3, 1] },
+            opacity: { duration: 0.3, ease: 'easeOut' },
+            filter: { duration: 0.35, ease: 'easeOut' },
+        },
+    },
+    wrapperExit: (direction: number) => ({
+        x: direction > 0 ? '-12%' : '12%',
+        scale: 0.9,
+        opacity: 0,
+        rotateY: direction > 0 ? 5 : -5,
+        filter: 'blur(6px)',
+        transition: {
+            duration: 0.4,
+            ease: [0.7, 0, 0.84, 0],
+        },
+    }),
+};
 
 const SunIcon = () => (
     <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round' className='h-6 w-6' aria-hidden>
@@ -128,6 +164,7 @@ const StoryContent = () => {
 
     const [currentStory, setCurrentStory] = useState(0);
     const [progress, setProgress] = useState(0);
+    const [direction, setDirection] = useState(1);
 
     const totalStories = STORY_DURATIONS.length;
 
@@ -142,6 +179,7 @@ const StoryContent = () => {
             setProgress((prev) => {
                 if (prev >= 100) {
                     if (currentStory < totalStories - 1) {
+                        setDirection(1);
                         setCurrentStory((story) => story + 1);
                         return 0;
                     }
@@ -200,6 +238,7 @@ const StoryContent = () => {
         }
 
         if (currentStory > 0) {
+            setDirection(-1);
             setCurrentStory((story) => story - 1);
             setProgress(0);
         }
@@ -213,6 +252,7 @@ const StoryContent = () => {
         }
 
         if (currentStory < totalStories - 1) {
+            setDirection(1);
             setCurrentStory((story) => story + 1);
             setProgress(0);
         }
@@ -269,31 +309,42 @@ const StoryContent = () => {
     }, [currentStory, suppressNextClick]);
 
     return (
-        <main className='relative flex h-screen select-none items-center justify-center overflow-hidden bg-white dark:bg-black' onPointerDown={handlePointerDown} onPointerUp={handlePointerUp} onPointerLeave={handlePointerLeave}>
+        <main className='relative flex h-dvh w-full select-none items-center justify-center overflow-hidden bg-white dark:bg-black' style={{ perspective: 1600 }} onPointerDown={handlePointerDown} onPointerUp={handlePointerUp} onPointerLeave={handlePointerLeave}>
             <StoryControls />
 
             <div className='absolute inset-0 z-40 flex'>
                 <button type='button' aria-label='Previous story' className='h-full w-1/2 cursor-default bg-transparent outline-none' onClick={handlePrevious} />
-
                 <button type='button' aria-label='Next story' className='h-full w-1/2 cursor-default bg-transparent outline-none' onClick={handleNext} />
             </div>
 
             <StoryProgress totalStories={totalStories} currentStory={currentStory} progress={progress} />
 
-            {currentStory === 0 && <Story1 />}
-            {currentStory === 1 && <Story2 />}
-            {currentStory === 2 && <Story3 />}
-            {currentStory === 3 && <Story4 />}
-            {currentStory === 4 && <Story5 />}
-            {currentStory === 5 && <Story6 />}
-            {currentStory === 6 && <Story7 />}
+            <AnimatePresence initial={false} custom={direction}>
+                <motion.div
+                    key={currentStory}
+                    custom={direction}
+                    variants={storyTransitionVariants}
+                    initial='wrapperEnter'
+                    animate='wrapperCenter'
+                    exit='wrapperExit'
+                    className='absolute inset-0 z-10 h-full w-full overflow-hidden'
+                    style={{ originX: 0.5, originY: 0.5, transformStyle: 'preserve-3d', willChange: 'transform, opacity, filter' }}
+                >
+                    {currentStory === 0 && <Story1 />}
+                    {currentStory === 1 && <Story2 />}
+                    {currentStory === 2 && <Story3 />}
+                    {currentStory === 3 && <Story4 />}
+                    {currentStory === 4 && <Story5 />}
+                    {currentStory === 5 && <Story6 />}
+                    {currentStory === 6 && <Story7 />}
+                </motion.div>
+            </AnimatePresence>
         </main>
     );
 };
 
 const Story = () => {
     const location = useLocation();
-
     const analysisResult = location.state?.analysisResult;
 
     return (

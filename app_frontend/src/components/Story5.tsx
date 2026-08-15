@@ -276,10 +276,27 @@ export default function Story5() {
                 scale: (r.width / big) * 1.6,
             });
         };
+
         measure();
+        
+        const isLocked = phase === 'traveling' || phase === 'landed';
+        let rafId: number | null = null;
+
+        if (!isLocked) {
+            const tick = () => {
+                measure();
+                rafId = requestAnimationFrame(tick);
+            };
+            rafId = requestAnimationFrame(tick);
+        }
+
         window.addEventListener('resize', measure);
-        return () => window.removeEventListener('resize', measure);
-    }, [primaryTitle]);
+
+        return () => {
+            if (rafId !== null) cancelAnimationFrame(rafId);
+            window.removeEventListener('resize', measure);
+        };
+    }, [primaryTitle, phase]);
 
     useEffect(() => {
         if (reduceMotion) {
