@@ -252,7 +252,13 @@ export default function Story5() {
     }
 
     const anchorSize = 'clamp(56px, 8vw, 92px)';
-    const T = { formation: GLYPH_FORMATION_DURATION, hold: 0.7, preTravel: 0.35, travel: 1.15, land: 0.3 };
+    const T = {
+        formation: GLYPH_FORMATION_DURATION * 0.7,
+        hold: 0.5,
+        preTravel: 0.25,
+        travel: 0.9,
+        land: 0.25,
+    };
     const ARRIVED_AT = T.formation + T.hold + T.preTravel + T.travel;
     const anchorRef = useRef<HTMLSpanElement>(null);
 
@@ -278,7 +284,7 @@ export default function Story5() {
         };
 
         measure();
-        
+
         const isLocked = phase === 'traveling' || phase === 'landed';
         let rafId: number | null = null;
 
