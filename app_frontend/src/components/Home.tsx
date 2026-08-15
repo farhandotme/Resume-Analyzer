@@ -455,7 +455,7 @@ export default function Home() {
     };
 
     return (
-        <div className='h-screen w-full overflow-hidden select-none bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 antialiased transition-colors duration-300'>
+        <div className='h-screen w-full overflow-hidden select-none bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 antialiased'>
             <AnimatePresence mode='wait'>
                 {isAnalyzing && (
                     <motion.div
@@ -467,7 +467,7 @@ export default function Home() {
                         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                         role='status'
                         aria-live='polite'
-                        className='fixed inset-0 z-100 flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-white dark:bg-zinc-950 px-6 text-zinc-900 dark:text-zinc-100 font-sans transition-colors duration-300'
+                        className='fixed inset-0 z-100 flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-white dark:bg-zinc-950 px-6 text-zinc-900 dark:text-zinc-100 font-sans'
                     >
                         <div data-gsap='status' className='absolute left-6 top-6 z-20 flex items-center gap-2'>
                             <span className='h-1.5 w-1.5 rounded-full bg-zinc-500 dark:bg-zinc-400' />
@@ -629,7 +629,7 @@ export default function Home() {
                         <button
                             type='button'
                             aria-label='Toggle Theme'
-                            onClick={toggleTheme}
+                            onClick={() => toggleTheme()}
                             className='flex h-10 w-10 cursor-pointer outline-none items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-zinc-100'
                         >
                             {theme === 'light' ? <Moon size={18} strokeWidth={1.8} /> : <SunMedium size={18} strokeWidth={1.8} />}
