@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, useReducedMotion, type Variants } from 'framer-motion';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useStory } from './StoryContext';
 
 type MatchedSkill = {
@@ -19,9 +19,22 @@ export default function Story4() {
     const strongestAsset: string = analysisResult?.data?.data?.candidate?.strongest_asset || FALLBACK_ASSET;
     const matchedSkills: MatchedSkill[] = (analysisResult?.data?.data?.skills?.matched ?? []).filter((item: any): item is MatchedSkill => typeof item?.skill === 'string' && item.skill.trim().length > 0);
 
+    const [hasStarted, setHasStarted] = useState(false);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            setHasStarted(true);
+        }, 50);
+
+        return () => {
+            window.clearTimeout(timer);
+        };
+    }, []);
+
     useEffect(() => {
         const html = document.documentElement;
         const body = document.body;
+
         const previousHtmlOverflow = html.style.overflow;
         const previousBodyOverflow = body.style.overflow;
         const previousHtmlOverscroll = html.style.overscrollBehavior;
@@ -42,16 +55,40 @@ export default function Story4() {
         };
     }, []);
 
-    const T = { eyebrow: 0.1, line1: 0.4, line2: 0.48, divider: 1.05, heroLabel: 1.3, heroReveal: 1.55, heroDuration: 1.15, skills: 2.85 };
+    const T = {
+        eyebrow: 0.1,
+        line1: 0.4,
+        line2: 0.48,
+        divider: 1.05,
+        heroLabel: 1.3,
+        heroReveal: 1.55,
+        heroDuration: 1.15,
+        skills: 2.85,
+    };
 
     const skillsContainer: Variants = {
         hidden: {},
-        show: { transition: { staggerChildren: reduceMotion ? 0 : 0.045, delayChildren: T.skills } },
+        show: {
+            transition: {
+                staggerChildren: reduceMotion ? 0 : 0.045,
+                delayChildren: T.skills,
+            },
+        },
     };
 
     const skillItem: Variants = {
-        hidden: { opacity: 0, y: reduceMotion ? 0 : 8 },
-        show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
+        hidden: {
+            opacity: 0,
+            y: reduceMotion ? 0 : 8,
+        },
+        show: {
+            opacity: 1,
+            y: 0,
+            transition: {
+                duration: 0.55,
+                ease: EASE,
+            },
+        },
     };
 
     return (
@@ -63,7 +100,7 @@ export default function Story4() {
                     <div className='flex items-center justify-center gap-6'>
                         <motion.div
                             initial={reduceMotion ? { scaleX: 1, opacity: 1 } : { scaleX: 0, opacity: 0 }}
-                            animate={{ scaleX: 1, opacity: 1 }}
+                            animate={hasStarted || reduceMotion ? { scaleX: 1, opacity: 1 } : { scaleX: 0, opacity: 0 }}
                             transition={reduceMotion ? { duration: 0 } : { duration: 0.65, ease: EASE, delay: 0.85 }}
                             style={{ originX: 0 }}
                             className='relative h-px w-20 overflow-hidden bg-zinc-300 dark:bg-zinc-800'
@@ -73,7 +110,7 @@ export default function Story4() {
                                     aria-hidden
                                     className='absolute top-0 h-px w-10 bg-zinc-950 shadow-[0_0_6px_rgba(24,24,27,0.45)] dark:bg-white dark:shadow-[0_0_8px_rgba(255,255,255,0.7)]'
                                     initial={{ left: '100%' }}
-                                    animate={{ left: '-40px' }}
+                                    animate={hasStarted ? { left: '-40px' } : { left: '100%' }}
                                     transition={{ duration: 1.3, ease: [0.7, 0, 0.3, 1], repeat: Infinity, repeatType: 'loop', repeatDelay: 1, delay: 1.5 }}
                                 />
                             )}
@@ -81,7 +118,7 @@ export default function Story4() {
 
                         <motion.span
                             initial={reduceMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.72 }}
-                            animate={{ opacity: 1, scale: 1 }}
+                            animate={hasStarted || reduceMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.72 }}
                             transition={reduceMotion ? { duration: 0 } : { duration: 0.75, ease: [0.16, 1, 0.3, 1], delay: 0 }}
                             className='shrink-0 font-mono text-[11px] font-medium uppercase tracking-[0.35em] text-zinc-500 dark:text-zinc-400'
                         >
@@ -90,7 +127,7 @@ export default function Story4() {
 
                         <motion.div
                             initial={reduceMotion ? { scaleX: 1, opacity: 1 } : { scaleX: 0, opacity: 0 }}
-                            animate={{ scaleX: 1, opacity: 1 }}
+                            animate={hasStarted || reduceMotion ? { scaleX: 1, opacity: 1 } : { scaleX: 0, opacity: 0 }}
                             transition={reduceMotion ? { duration: 0 } : { duration: 0.65, ease: EASE, delay: 0.85 }}
                             style={{ originX: 1 }}
                             className='relative h-px w-20 overflow-hidden bg-zinc-300 dark:bg-zinc-800'
@@ -100,7 +137,7 @@ export default function Story4() {
                                     aria-hidden
                                     className='absolute top-0 h-px w-10 bg-zinc-950 shadow-[0_0_6px_rgba(24,24,27,0.45)] dark:bg-white dark:shadow-[0_0_8px_rgba(255,255,255,0.7)]'
                                     initial={{ left: '-40px' }}
-                                    animate={{ left: '100%' }}
+                                    animate={hasStarted ? { left: '100%' } : { left: '-40px' }}
                                     transition={{ duration: 1.3, ease: [0.7, 0, 0.3, 1], repeat: Infinity, repeatType: 'loop', repeatDelay: 1, delay: 1.5 }}
                                 />
                             )}
@@ -111,8 +148,8 @@ export default function Story4() {
                         <div className='relative w-full max-w-170'>
                             <motion.h1
                                 initial={reduceMotion ? { opacity: 1 } : { clipPath: 'inset(0 100% 0 0)', filter: 'blur(14px)' }}
-                                animate={reduceMotion ? { opacity: 1 } : { clipPath: 'inset(0 0% 0 0)', filter: 'blur(0px)' }}
-                                transition={{ duration: T.heroDuration, ease: EASE, delay: T.heroReveal }}
+                                animate={hasStarted || reduceMotion ? { clipPath: 'inset(0 0% 0 0)', filter: 'blur(0px)' } : { clipPath: 'inset(0 100% 0 0)', filter: 'blur(14px)' }}
+                                transition={reduceMotion ? { duration: 0 } : { duration: T.heroDuration, ease: EASE, delay: T.heroReveal }}
                                 className='text-balance text-[26px] font-bold leading-[1.2] tracking-wide text-zinc-950 dark:text-white sm:text-[36px] lg:text-[46px] xl:text-[50px]'
                                 style={{ fontFamily: '"Fraunces", ui-serif, Georgia, serif', fontWeight: 300, fontVariationSettings: '"wght" 300' }}
                             >
@@ -123,8 +160,11 @@ export default function Story4() {
                                 <motion.span
                                     aria-hidden
                                     initial={{ left: '0%', opacity: 0 }}
-                                    animate={{ left: '100%', opacity: [0, 1, 1, 0] }}
-                                    transition={{ left: { duration: T.heroDuration, ease: EASE, delay: T.heroReveal }, opacity: { duration: T.heroDuration, ease: EASE, delay: T.heroReveal, times: [0, 0.08, 0.92, 1] } }}
+                                    animate={hasStarted ? { left: '100%', opacity: [0, 1, 1, 0] } : { left: '0%', opacity: 0 }}
+                                    transition={{
+                                        left: { duration: T.heroDuration, ease: EASE, delay: T.heroReveal },
+                                        opacity: { duration: T.heroDuration, ease: EASE, delay: T.heroReveal, times: [0, 0.08, 0.92, 1] },
+                                    }}
                                     className='pointer-events-none absolute bottom-0 top-0 w-px bg-zinc-900 dark:bg-white'
                                 />
                             )}
@@ -132,7 +172,7 @@ export default function Story4() {
                     </div>
 
                     {matchedSkills.length > 0 && (
-                        <motion.div initial='hidden' animate='show' variants={skillsContainer} className='mt-12 flex w-full max-w-190 flex-col items-center sm:mt-14'>
+                        <motion.div initial='hidden' animate={hasStarted ? 'show' : 'hidden'} variants={skillsContainer} className='mt-12 flex w-full max-w-190 flex-col items-center sm:mt-14'>
                             <motion.span variants={skillItem} className='mb-3 font-mono text-[11px] font-medium uppercase tracking-[0.3em] text-zinc-400 dark:text-zinc-600'>
                                 Supported by
                             </motion.span>
@@ -141,6 +181,7 @@ export default function Story4() {
                                 {matchedSkills.map((item, index) => (
                                     <motion.span key={`${item.skill}-${index}`} variants={skillItem} className='flex items-center font-mono text-[13px] tracking-wide text-zinc-600 dark:text-zinc-400 sm:text-[14px]'>
                                         {item.skill}
+
                                         {index < matchedSkills.length - 1 && <span className='ml-4 text-zinc-300 dark:text-zinc-700'>/</span>}
                                     </motion.span>
                                 ))}

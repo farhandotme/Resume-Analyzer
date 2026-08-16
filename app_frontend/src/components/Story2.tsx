@@ -1,7 +1,7 @@
 'use client';
 
 import { animate, motion, useMotionTemplate, useMotionValue, useReducedMotion, useTransform } from 'framer-motion';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useStory } from './StoryContext';
 
 const EASE_CINE = [0.16, 1, 0.3, 1] as const;
@@ -81,10 +81,21 @@ const Story2 = () => {
     const HIRE_PROBABILITY = analysisResult?.data?.data?.hero?.hire_probability ?? 'Unknown';
     const ONE_LINER = analysisResult?.data?.data?.hero?.one_liner ?? '';
     const reduceMotion = useReducedMotion();
+    const [hasStarted, setHasStarted] = useState(false);
     const rawScore = useMotionValue(reduceMotion ? ATS_SCORE : 0);
     const roundedScore = useTransform(rawScore, (value) => Math.round(value));
     const scoreY = useTransform(rawScore, [0, ATS_SCORE * 0.15, ATS_SCORE], [8, 3, 0]);
     const scoreOpacity = useTransform(rawScore, [0, Math.max(1, ATS_SCORE * 0.08), ATS_SCORE], [0.65, 0.9, 1]);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            setHasStarted(true);
+        }, 50);
+
+        return () => {
+            window.clearTimeout(timer);
+        };
+    }, []);
 
     useEffect(() => {
         const html = document.documentElement;
@@ -110,18 +121,25 @@ const Story2 = () => {
     }, []);
 
     useEffect(() => {
+        if (!hasStarted) return;
+
         if (reduceMotion) {
             rawScore.set(ATS_SCORE);
             return;
         }
+
         rawScore.set(0);
 
-        const scoreControls = animate(rawScore, ATS_SCORE, { delay: 0.35, duration: 1.45, ease: [0.12, 0.85, 0.25, 1] });
+        const scoreControls = animate(rawScore, ATS_SCORE, {
+            delay: 0.35,
+            duration: 1.45,
+            ease: [0.12, 0.85, 0.25, 1],
+        });
 
         return () => {
             scoreControls.stop();
         };
-    }, [ATS_SCORE, reduceMotion, rawScore]);
+    }, [hasStarted, ATS_SCORE, reduceMotion, rawScore]);
 
     return (
         <section className='fixed inset-0 flex h-dvh w-screen items-center justify-center overflow-hidden overscroll-none bg-white transition-colors duration-300 dark:bg-black'>
@@ -147,7 +165,7 @@ const Story2 = () => {
 
                 <motion.p
                     initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    animate={hasStarted ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                     transition={reduceMotion ? { duration: 0 } : { delay: 1.65, duration: 0.5, ease: EASE_CINE }}
                     className='mt-5 text-[12px] font-semibold uppercase tracking-[0.4em] text-zinc-500 dark:text-zinc-400 sm:text-[13px]'
                 >
@@ -157,7 +175,7 @@ const Story2 = () => {
                 {ONE_LINER && (
                     <motion.p
                         initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
+                        animate={hasStarted ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                         transition={reduceMotion ? { duration: 0 } : { delay: 1.9, duration: 0.55, ease: EASE_CINE }}
                         className='mt-6 max-w-md text-[16px] leading-relaxed text-zinc-600 dark:text-zinc-300 sm:text-[18px]'
                     >
@@ -165,7 +183,12 @@ const Story2 = () => {
                     </motion.p>
                 )}
 
-                <motion.div initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={reduceMotion ? { duration: 0 } : { delay: 2.2, duration: 0.5, ease: EASE_CINE }} className='mt-8 flex items-center justify-center gap-8 sm:gap-12'>
+                <motion.div
+                    initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                    animate={hasStarted ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
+                    transition={reduceMotion ? { duration: 0 } : { delay: 2.2, duration: 0.5, ease: EASE_CINE }}
+                    className='mt-8 flex items-center justify-center gap-8 sm:gap-12'
+                >
                     <div className='text-center'>
                         <p className='text-base font-semibold text-zinc-900 dark:text-zinc-100 sm:text-lg'>{VERDICT}</p>
 

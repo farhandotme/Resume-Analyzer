@@ -3,13 +3,15 @@ import { createContext, useContext, useState } from 'react';
 type StoryContextType = {
     paused: boolean;
     setPaused: React.Dispatch<React.SetStateAction<boolean>>;
+    isRestored: boolean;
+    setIsRestored: React.Dispatch<React.SetStateAction<boolean>>;
     analysisResult: any;
     setAnalysisResult: React.Dispatch<React.SetStateAction<any>>;
 };
 
 const StoryContext = createContext<StoryContextType | null>(null);
 
-export const StoryProvider = ({ children, initialAnalysisResult }: { children: React.ReactNode; initialAnalysisResult: any }) => {
+export const StoryProvider = ({ children, initialAnalysisResult, isRestored, setIsRestored }: { children: React.ReactNode; initialAnalysisResult: any; isRestored: boolean; setIsRestored: React.Dispatch<React.SetStateAction<boolean>> }) => {
     const [paused, setPaused] = useState(false);
     const [analysisResult, setAnalysisResult] = useState<any>(initialAnalysisResult);
 
@@ -18,6 +20,8 @@ export const StoryProvider = ({ children, initialAnalysisResult }: { children: R
             value={{
                 paused,
                 setPaused,
+                isRestored,
+                setIsRestored,
                 analysisResult,
                 setAnalysisResult,
             }}

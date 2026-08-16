@@ -36,10 +36,22 @@ type FaultGlyphProps = {
 };
 
 function FaultGlyph({ phase, still = false }: FaultGlyphProps) {
+    const [formationStarted, setFormationStarted] = useState(false);
+
     const ringOrigin = `${CX}px ${CY}px`;
     const barOrigin = `${CX}px 45px`;
     const dotOrigin = `${CX}px 68px`;
     const isLanded = phase === 'landed';
+
+    useEffect(() => {
+        const frame = requestAnimationFrame(() => {
+            setFormationStarted(true);
+        });
+
+        return () => {
+            cancelAnimationFrame(frame);
+        };
+    }, []);
 
     return (
         <motion.svg viewBox='0 0 120 120' fill='none' className='h-full w-full text-zinc-900 dark:text-white' aria-hidden initial={{ color: 'currentColor' }} animate={{ color: 'currentColor' }} transition={{ duration: 0 }}>
@@ -56,17 +68,13 @@ function FaultGlyph({ phase, still = false }: FaultGlyphProps) {
                     strokeDasharray={`${SEGMENT_LEN} 82`}
                     strokeDashoffset={-(i * 25)}
                     initial={still ? { rotate: 0, opacity: 1, scale: 1 } : { rotate: SEGMENT_START_ROTATION[i], opacity: 0, scale: 0.4 }}
-                    animate={still ? { rotate: 0, opacity: 1, scale: 1 } : isLanded ? { rotate: 0, opacity: 1, scale: 1 } : { rotate: [SEGMENT_START_ROTATION[i], i % 2 === 0 ? -7 : 7, 0], opacity: 1, scale: 1 }}
+                    animate={still ? { rotate: 0, opacity: 1, scale: 1 } : !formationStarted ? { rotate: SEGMENT_START_ROTATION[i], opacity: 0, scale: 0.4 } : isLanded ? { rotate: 0, opacity: 1, scale: 1 } : { rotate: [SEGMENT_START_ROTATION[i], i % 2 === 0 ? -7 : 7, 0], opacity: 1, scale: 1 }}
                     transition={
                         still
                             ? { duration: 0 }
                             : isLanded
                               ? { duration: 0 }
-                              : {
-                                    rotate: { duration: 1.05, ease: EASE_DRAW, delay: SEG_AT + i * SEG_STAGGER, times: [0, 0.72, 1] },
-                                    opacity: { duration: 0.4, delay: SEG_AT + i * SEG_STAGGER },
-                                    scale: { duration: 0.65, ease: EASE, delay: SEG_AT + i * SEG_STAGGER },
-                                }
+                              : { rotate: { duration: 1.05, ease: EASE_DRAW, delay: SEG_AT + i * SEG_STAGGER, times: [0, 0.72, 1] }, opacity: { duration: 0.4, delay: SEG_AT + i * SEG_STAGGER }, scale: { duration: 0.65, ease: EASE, delay: SEG_AT + i * SEG_STAGGER } }
                     }
                     style={{ transformOrigin: ringOrigin }}
                 />
@@ -81,17 +89,18 @@ function FaultGlyph({ phase, still = false }: FaultGlyphProps) {
                 strokeWidth={4.5}
                 strokeLinecap='round'
                 initial={still ? { scaleY: 1, opacity: 1, filter: 'blur(0px)' } : { scaleY: 0, opacity: 0, filter: 'blur(6px)' }}
-                animate={still ? { scaleY: 1, opacity: 1, filter: 'blur(0px)' } : isLanded ? { scaleY: 1, opacity: 1, filter: 'blur(0px)' } : { scaleY: 1, opacity: 1, filter: 'blur(0px)' }}
+                animate={still ? { scaleY: 1, opacity: 1, filter: 'blur(0px)' } : !formationStarted ? { scaleY: 0, opacity: 0, filter: 'blur(6px)' } : { scaleY: 1, opacity: 1, filter: 'blur(0px)' }}
                 transition={still ? { duration: 0 } : isLanded ? { duration: 0 } : { scaleY: { duration: 0.5, ease: EASE_DRAW, delay: BAR_AT }, opacity: { duration: 0.3, delay: BAR_AT }, filter: { duration: 0.45, delay: BAR_AT } }}
                 style={{ transformOrigin: barOrigin }}
             />
+
             <motion.circle
                 cx={CX}
                 cy={68}
                 r={3.5}
                 fill='currentColor'
                 initial={still ? { scale: 1, opacity: 1 } : { scale: 1, opacity: 0 }}
-                animate={still ? { scale: 1, opacity: 1 } : isLanded ? { scale: 1, opacity: [1, 0.4, 1] } : { scale: 1, opacity: 1 }}
+                animate={still ? { scale: 1, opacity: 1 } : !formationStarted ? { scale: 1, opacity: 0 } : isLanded ? { scale: 1, opacity: [1, 0.4, 1] } : { scale: 1, opacity: 1 }}
                 transition={still ? { duration: 0 } : isLanded ? { duration: 1.5, ease: 'easeInOut', repeat: Infinity, repeatType: 'reverse' } : { duration: 0.4, ease: EASE, delay: DOT_AT }}
                 style={{ transformOrigin: dotOrigin }}
             />
@@ -101,11 +110,14 @@ function FaultGlyph({ phase, still = false }: FaultGlyphProps) {
 
 function GeometricTrail({ phase, target, glyphSize }: { phase: Phase; target: any; glyphSize: string }) {
     if (!target) return null;
+
     const active = phase === 'traveling';
+
     return (
         <>
             {[1, 2, 3].map((i) => {
                 const delay = i * 0.06;
+
                 return (
                     <motion.div
                         key={`trail-${i}`}
@@ -157,9 +169,11 @@ const clean = (value: unknown) => (typeof value === 'string' ? value.trim() : ''
 
 const getIssueTitle = (item: ResumeIssue | MissingSkill) => {
     const any = item as ResumeIssue & MissingSkill;
+
     if ('skill' in item) {
         return clean(any.skill) || clean(any.name);
     }
+
     return clean(any.title) || clean(any.issue) || clean(any.name) || clean(any.problem);
 };
 
@@ -167,16 +181,30 @@ const getIssueDescription = (item: ResumeIssue) => clean(item.description) || cl
 
 const getPriorityWeight = (priority?: string) => {
     const value = clean(priority).toLowerCase();
+
     if (value.includes('critical')) return 4;
     if (value.includes('high')) return 3;
     if (value.includes('important')) return 2;
     if (value.includes('nice')) return 1;
+
     return 0;
 };
 
 export default function Story5() {
     const { analysisResult } = useStory();
     const reduceMotion = useReducedMotion();
+
+    const [hasStarted, setHasStarted] = useState(false);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            setHasStarted(true);
+        }, 50);
+
+        return () => {
+            window.clearTimeout(timer);
+        };
+    }, []);
 
     useEffect(() => {
         const html = document.documentElement;
@@ -219,15 +247,19 @@ export default function Story5() {
 
     for (const issue of sortedIssues.slice(1)) {
         const title = getIssueTitle(issue);
+
         if (!title || usedTitles.has(title.toLowerCase())) {
             continue;
         }
+
         supportingIssues.push({
             title,
             description: getIssueDescription(issue),
             tag: clean(issue.priority || issue.severity) || undefined,
         });
+
         usedTitles.add(title.toLowerCase());
+
         if (supportingIssues.length >= 3) {
             break;
         }
@@ -239,6 +271,7 @@ export default function Story5() {
         }
 
         const title = getIssueTitle(skill);
+
         if (!title || usedTitles.has(title.toLowerCase())) {
             continue;
         }
@@ -252,7 +285,15 @@ export default function Story5() {
     }
 
     const anchorSize = 'clamp(56px, 8vw, 92px)';
-    const T = { formation: GLYPH_FORMATION_DURATION, hold: 0.7, preTravel: 0.35, travel: 1.15, land: 0.3 };
+
+    const T = {
+        formation: GLYPH_FORMATION_DURATION * 0.7,
+        hold: 0.5,
+        preTravel: 0.25,
+        travel: 0.9,
+        land: 0.25,
+    };
+
     const ARRIVED_AT = T.formation + T.hold + T.preTravel + T.travel;
     const anchorRef = useRef<HTMLSpanElement>(null);
 
@@ -267,28 +308,66 @@ export default function Story5() {
     useLayoutEffect(() => {
         const measure = () => {
             const el = anchorRef.current;
+
             if (!el) return;
+
             const r = el.getBoundingClientRect();
             const big = Math.min(window.innerWidth * 0.42, 300);
+
             setTarget({
                 x: r.left + r.width / 2 - window.innerWidth / 2,
                 y: r.top + r.height / 2 - window.innerHeight / 2,
                 scale: (r.width / big) * 1.6,
             });
         };
+
         measure();
+
+        const isLocked = phase === 'traveling' || phase === 'landed';
+
+        let rafId: number | null = null;
+
+        if (!isLocked) {
+            const tick = () => {
+                measure();
+                rafId = requestAnimationFrame(tick);
+            };
+
+            rafId = requestAnimationFrame(tick);
+        }
+
         window.addEventListener('resize', measure);
-        return () => window.removeEventListener('resize', measure);
-    }, [primaryTitle]);
+
+        return () => {
+            if (rafId !== null) {
+                cancelAnimationFrame(rafId);
+            }
+
+            window.removeEventListener('resize', measure);
+        };
+    }, [primaryTitle, phase]);
 
     useEffect(() => {
+        if (!hasStarted) return;
+
         if (reduceMotion) {
             setPhase('landed');
             return;
         }
-        const timers = [setTimeout(() => setPhase('holding'), T.formation * 1000), setTimeout(() => setPhase('preTravel'), (T.formation + T.hold) * 1000), setTimeout(() => setPhase('traveling'), (T.formation + T.hold + T.preTravel) * 1000), setTimeout(() => setPhase('landed'), ARRIVED_AT * 1000)];
-        return () => timers.forEach(clearTimeout);
-    }, [reduceMotion, primaryTitle]);
+
+        setPhase('forming');
+
+        const timers = [
+            window.setTimeout(() => setPhase('holding'), T.formation * 1000),
+            window.setTimeout(() => setPhase('preTravel'), (T.formation + T.hold) * 1000),
+            window.setTimeout(() => setPhase('traveling'), (T.formation + T.hold + T.preTravel) * 1000),
+            window.setTimeout(() => setPhase('landed'), ARRIVED_AT * 1000),
+        ];
+
+        return () => {
+            timers.forEach(window.clearTimeout);
+        };
+    }, [hasStarted, reduceMotion, primaryTitle]);
 
     if (!primaryTitle) {
         return (
@@ -299,7 +378,7 @@ export default function Story5() {
     }
 
     const glyphSize = 'min(42vw, 300px)';
-    const contentDelay = reduceMotion ? 0 : ARRIVED_AT - 0.35;
+    const contentVisible = reduceMotion || phase === 'landed';
 
     return (
         <section
@@ -319,19 +398,21 @@ export default function Story5() {
                 style={{ width: glyphSize, height: glyphSize, marginLeft: `calc(${glyphSize} / -2)`, marginTop: `calc(${glyphSize} / -2)` }}
                 initial={reduceMotion ? { x: target?.x ?? 0, y: target?.y ?? 0, scale: target?.scale ?? 0.2 } : { x: 0, y: 0, scale: 1 }}
                 animate={
-                    target && (phase === 'traveling' || phase === 'landed')
-                        ? { x: target.x, y: target.y, scale: target.scale, filter: phase === 'landed' ? `drop-shadow(0 0 18px rgba(var(--story5-accent-rgb), 0.35))` : `drop-shadow(0 0 15px rgba(var(--story5-accent-rgb), 0.24))` }
-                        : {
-                              x: 0,
-                              y: 0,
-                              scale: phase === 'preTravel' ? 0.94 : 1,
-                              filter:
-                                  phase === 'holding'
-                                      ? ['drop-shadow(0 0 0px rgba(var(--story5-accent-rgb), 0))', 'drop-shadow(0 0 35px rgba(var(--story5-accent-rgb), 0.28))', 'drop-shadow(0 0 25px rgba(var(--story5-accent-rgb), 0.20))']
-                                      : phase === 'preTravel'
-                                        ? `drop-shadow(0 0 45px rgba(var(--story5-accent-rgb), 0.30))`
-                                        : 'drop-shadow(0 0 0px rgba(var(--story5-accent-rgb), 0))',
-                          }
+                    !hasStarted
+                        ? { x: 0, y: 0, scale: 1, filter: 'drop-shadow(0 0 0px rgba(var(--story5-accent-rgb), 0))' }
+                        : target && (phase === 'traveling' || phase === 'landed')
+                          ? { x: target.x, y: target.y, scale: target.scale, filter: phase === 'landed' ? `drop-shadow(0 0 18px rgba(var(--story5-accent-rgb), 0.35))` : `drop-shadow(0 0 15px rgba(var(--story5-accent-rgb), 0.24))` }
+                          : {
+                                x: 0,
+                                y: 0,
+                                scale: phase === 'preTravel' ? 0.94 : 1,
+                                filter:
+                                    phase === 'holding'
+                                        ? ['drop-shadow(0 0 0px rgba(var(--story5-accent-rgb), 0))', 'drop-shadow(0 0 35px rgba(var(--story5-accent-rgb), 0.28))', 'drop-shadow(0 0 25px rgba(var(--story5-accent-rgb), 0.20))']
+                                        : phase === 'preTravel'
+                                          ? `drop-shadow(0 0 45px rgba(var(--story5-accent-rgb), 0.30))`
+                                          : 'drop-shadow(0 0 0px rgba(var(--story5-accent-rgb), 0))',
+                            }
                 }
                 transition={
                     reduceMotion
@@ -343,14 +424,15 @@ export default function Story5() {
                             : { scale: { duration: T.preTravel, ease: 'easeInOut' }, filter: { duration: T.hold, ease: 'easeInOut' } }
                 }
             >
-                <FaultGlyph phase={phase} still={!!reduceMotion} className='h-full w-full' />
+                {hasStarted && <FaultGlyph phase={phase} still={!!reduceMotion} className='h-full w-full' />}
             </motion.div>
 
             <div className='relative z-10 mx-auto flex h-full w-full max-w-4xl flex-col items-center justify-center px-6 text-center sm:px-10'>
                 <span ref={anchorRef} className='block shrink-0' style={{ width: anchorSize, height: anchorSize }} />
 
-                <motion.div className='mt-5 flex flex-wrap items-center justify-center gap-3' initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE, delay: contentDelay }}>
+                <motion.div className='mt-5 flex flex-wrap items-center justify-center gap-3' initial={{ opacity: 0, y: 8 }} animate={contentVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }} transition={{ duration: 0.7, ease: EASE, delay: contentVisible ? 0.05 : 0 }}>
                     <span className='font-mono text-[10px] uppercase tracking-[0.45em] text-zinc-600 dark:text-zinc-500'>Primary weakness</span>
+
                     {primaryTag && (
                         <span className='rounded-full border px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.2em] text-zinc-700 dark:text-zinc-300' style={{ borderColor: 'rgba(var(--story5-accent-rgb), 0.25)' }}>
                             {primaryTag}
@@ -362,29 +444,35 @@ export default function Story5() {
                     className={`mt-5 max-w-187.5 wrap-break-word font-light leading-[0.98] tracking-[-0.02em] text-zinc-900 dark:text-zinc-100 ${isLongPrimary ? 'text-[clamp(1.55rem,3.4vw,2.8rem)]' : 'text-[clamp(1.9rem,4.4vw,3.6rem)]'}`}
                     style={{ fontFamily: 'Fraunces, Georgia, serif' }}
                     initial={{ opacity: 0, y: 14, filter: 'blur(8px)' }}
-                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                    transition={{ duration: 1, ease: EASE, delay: contentDelay + 0.12 }}
+                    animate={contentVisible ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 14, filter: 'blur(8px)' }}
+                    transition={{ duration: 1, ease: EASE, delay: contentVisible ? 0.12 : 0 }}
                 >
                     {primaryTitle}
                 </motion.h1>
 
                 {primaryDescription && (
-                    <motion.p className='mt-5 max-w-md text-[0.8rem] leading-relaxed text-zinc-500 dark:text-zinc-500' initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, ease: EASE, delay: contentDelay + 0.45 }}>
+                    <motion.p className='mt-5 max-w-md text-[0.8rem] leading-relaxed text-zinc-500 dark:text-zinc-500' initial={{ opacity: 0 }} animate={contentVisible ? { opacity: 1 } : { opacity: 0 }} transition={{ duration: 1, ease: EASE, delay: contentVisible ? 0.45 : 0 }}>
                         {primaryDescription}
                     </motion.p>
                 )}
 
                 {supportingIssues.length > 0 && (
                     <div className='mt-8 w-full max-w-2xl sm:mt-10'>
-                        <motion.div className='mx-auto mb-4 h-7 w-px origin-top bg-linear-to-b from-zinc-400/40 to-transparent dark:from-white/25' initial={{ scaleY: 0 }} animate={{ scaleY: 1 }} transition={{ duration: 0.6, ease: EASE, delay: contentDelay + 0.55 }} />
+                        <motion.div
+                            className='mx-auto mb-4 h-7 w-px origin-top bg-linear-to-b from-zinc-400/40 to-transparent dark:from-white/25'
+                            initial={{ scaleY: 0 }}
+                            animate={contentVisible ? { scaleY: 1 } : { scaleY: 0 }}
+                            transition={{ duration: 0.6, ease: EASE, delay: contentVisible ? 0.55 : 0 }}
+                        />
 
-                        <motion.div className='flex items-baseline justify-between border-b border-zinc-200 pb-2.5 dark:border-white/10' initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, ease: EASE, delay: contentDelay + 0.7 }}>
+                        <motion.div className='flex items-baseline justify-between border-b border-zinc-200 pb-2.5 dark:border-white/10' initial={{ opacity: 0 }} animate={contentVisible ? { opacity: 1 } : { opacity: 0 }} transition={{ duration: 0.6, ease: EASE, delay: contentVisible ? 0.7 : 0 }}>
                             <span className='font-mono text-[9px] uppercase tracking-[0.4em] text-zinc-500 dark:text-zinc-600'>Other weaknesses</span>
                         </motion.div>
 
                         <div className='relative'>
                             {supportingIssues.map((issue, i) => {
-                                const rowDelay = contentDelay + 0.9 + i * 0.28;
+                                const rowDelay = 0.9 + i * 0.28;
+
                                 return (
                                     <div key={issue.title} className='relative overflow-hidden'>
                                         {!reduceMotion && (
@@ -393,7 +481,7 @@ export default function Story5() {
                                                 className='absolute bottom-0 top-0 z-10 w-px'
                                                 style={{ background: 'var(--story5-accent)', boxShadow: '0 0 12px rgba(var(--story5-accent-rgb), 0.18)' }}
                                                 initial={{ left: '0%', opacity: 0 }}
-                                                animate={{ left: '100%', opacity: [0, 1, 1, 0] }}
+                                                animate={contentVisible ? { left: '100%', opacity: [0, 1, 1, 0] } : { left: '0%', opacity: 0 }}
                                                 transition={{ duration: 0.85, ease: [0.7, 0, 0.3, 1], delay: rowDelay, times: [0, 0.1, 0.9, 1] }}
                                             />
                                         )}
@@ -401,7 +489,7 @@ export default function Story5() {
                                         <motion.div
                                             className='flex items-start gap-4 py-3.5 text-left sm:gap-5'
                                             initial={reduceMotion ? { opacity: 0 } : { clipPath: 'inset(0 100% 0 0)', opacity: 1 }}
-                                            animate={reduceMotion ? { opacity: 1 } : { clipPath: 'inset(0 0% 0 0)', opacity: 1 }}
+                                            animate={contentVisible ? { clipPath: 'inset(0 0% 0 0)', opacity: 1 } : { clipPath: 'inset(0 100% 0 0)', opacity: 0 }}
                                             transition={{ duration: reduceMotion ? 0.5 : 0.85, ease: [0.7, 0, 0.3, 1], delay: rowDelay }}
                                         >
                                             <span className='relative mt-1.25 flex h-2.75 w-2.75 shrink-0 items-center justify-center'>
@@ -414,13 +502,28 @@ export default function Story5() {
                                                         transition={{ duration: 2.6, ease: 'easeInOut', repeat: Infinity, delay: rowDelay + 0.6 + i * 0.55 }}
                                                     />
                                                 )}
-                                                <span className='relative inline-flex h-1.25 w-1.25 rounded-full' style={{ background: 'var(--story5-accent)' }} />
+
+                                                <span
+                                                    className='relative inline-flex h-1.25 w-1.25 rounded-full'
+                                                    style={{
+                                                        background: 'var(--story5-accent)',
+                                                    }}
+                                                />
                                             </span>
+
                                             <div className='min-w-0 flex-1'>
-                                                <div className='flex flex-wrap items-center gap-x-3 gap-y-1.5'>
-                                                    <h2 className='text-balance text-[clamp(0.95rem,2vw,1.15rem)] font-light leading-snug tracking-[-0.01em] text-zinc-800 dark:text-zinc-100'>{issue.title}</h2>
-                                                    {issue.tag && <span className='rounded-full border border-zinc-200 px-2 py-0.5 font-mono text-[8px] uppercase tracking-[0.2em] text-zinc-500 dark:border-white/10 dark:text-zinc-500'>{issue.tag}</span>}
+                                                <div className='flex w-full items-center justify-between gap-8'>
+                                                    <h2 className='min-w-0 flex-1 text-balance text-[clamp(0.95rem,2vw,1.15rem)] font-light leading-snug tracking-[-0.01em] text-zinc-800 dark:text-zinc-100'>{issue.title}</h2>
+
+                                                    {issue.tag && (
+                                                        <span className='min-w-27.5 shrink-0 text-right'>
+                                                            <span className='inline-flex min-w-25 items-center justify-center rounded-full border border-zinc-200/80 bg-zinc-50/40 px-3 py-1 font-mono text-[8px] font-medium uppercase tracking-[0.18em] text-zinc-500 dark:border-white/10 dark:bg-white/2.5 dark:text-zinc-400'>
+                                                                {issue.tag}
+                                                            </span>
+                                                        </span>
+                                                    )}
                                                 </div>
+
                                                 {issue.description && <p className='mt-1.5 max-w-[52ch] text-[0.72rem] leading-relaxed text-zinc-500'>{issue.description}</p>}
                                             </div>
                                         </motion.div>
