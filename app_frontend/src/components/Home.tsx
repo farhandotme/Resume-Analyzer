@@ -94,6 +94,7 @@ export default function Home() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [showFileError, setShowFileError] = useState(false);
+    const [analysisError, setAnalysisError] = useState('');
     const fileErrorTimeoutRef = useRef<number | null>(null);
     const [targetRole, setTargetRole] = useState('');
     const [isRoleSelected, setIsRoleSelected] = useState(false);
@@ -354,6 +355,7 @@ export default function Home() {
         }
 
         setShowFileError(false);
+        setAnalysisError('');
         if (fileErrorTimeoutRef.current !== null) {
             window.clearTimeout(fileErrorTimeoutRef.current);
             fileErrorTimeoutRef.current = null;
@@ -394,6 +396,7 @@ export default function Home() {
         setIsAnalyzing(true);
         setIsComplete(false);
         setAnalysisStep(0);
+        setAnalysisError('');
         animationCompleteRef.current = false;
 
         const animationStartTime = Date.now();
@@ -418,11 +421,13 @@ export default function Home() {
                 }),
             });
 
+            const responseData = await response.json();
+
             if (!response.ok) {
-                throw new Error(`Analysis request failed: ${response.status}`);
+                throw new Error(responseData?.message || responseData?.error || responseData?.detail || 'Unable to analyze this resume');
             }
 
-            const result = await response.json();
+            const result = responseData;
 
             console.log('Resume analysis completed\nAnalysis result:', JSON.stringify(result, null, 2));
 
@@ -449,8 +454,26 @@ export default function Home() {
             });
         } catch (error) {
             console.error('Resume analysis failed:', error);
+
             setIsComplete(false);
             setIsAnalyzing(false);
+
+            const message = error instanceof Error ? error.message : 'Unable to analyze this resume';
+
+            setSelectedFile(null);
+            setTargetRole('');
+            setIsRoleSelected(false);
+
+            setAnalysisError(message);
+
+            if (fileErrorTimeoutRef.current !== null) {
+                window.clearTimeout(fileErrorTimeoutRef.current);
+            }
+
+            fileErrorTimeoutRef.current = window.setTimeout(() => {
+                setAnalysisError('');
+                fileErrorTimeoutRef.current = null;
+            }, 4500);
         }
     };
 
@@ -655,10 +678,7 @@ export default function Home() {
                                             initial={{ opacity: 0, y: 18 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0, y: -18 }}
-                                            transition={{
-                                                duration: 0.45,
-                                                ease: [0.22, 1, 0.36, 1],
-                                            }}
+                                            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                                             className='absolute left-0 top-0 whitespace-nowrap text-zinc-400 italic dark:text-zinc-500'
                                         >
                                             {headlinePhrases[headlineIndex]}
@@ -708,7 +728,7 @@ export default function Home() {
                                 <p className='mt-2 text-sm text-zinc-500 dark:text-zinc-400'>{selectedFile ? `Choose the role you're targeting — your analysis will be tailored to it.` : 'Drag and drop your PDF here, or click to browse.'}</p>
 
                                 <AnimatePresence>
-                                    {showFileError && (
+                                    {(showFileError || analysisError) && (
                                         <motion.div
                                             initial={{ opacity: 0, scale: 0.92 }}
                                             animate={{ opacity: 1, scale: 1 }}
@@ -718,8 +738,8 @@ export default function Home() {
                                         >
                                             <AlertCircle className='h-3.5 w-3.5 shrink-0 text-rose-500 dark:text-rose-400' />
                                             <div className='text-left'>
-                                                <p className='text-[13px] font-medium leading-tight text-rose-700 dark:text-rose-300 mb-0.5'>Invalid file type</p>
-                                                <p className='text-[12px] leading-tight text-rose-500/90 dark:text-rose-400/80'>Please upload a PDF file only</p>
+                                                <p className='mb-0.5 text-[13px] font-medium leading-tight text-rose-700 dark:text-rose-300'>{analysisError ? 'Invalid resume' : 'Invalid file type'}</p>
+                                                <p className='text-[12px] leading-tight text-rose-500/90 dark:text-rose-400/80'>{analysisError || 'Please upload a PDF file only'}</p>
                                             </div>
                                         </motion.div>
                                     )}
