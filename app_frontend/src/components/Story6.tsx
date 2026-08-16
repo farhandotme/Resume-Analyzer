@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, type MouseEvent } from 'react';
+import React, { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { motion, useReducedMotion, useMotionValue, useSpring, useTransform, useMotionTemplate } from 'framer-motion';
 import { useStory } from './StoryContext';
 
@@ -107,7 +107,7 @@ const CORNER_MARKS = [
     { position: '-bottom-2 -right-2', border: 'border-r border-b', origin: 'bottom right' },
 ];
 
-const PremiumCard = ({ improvement, index, reduceMotion }: { improvement: Improvement; index: number; reduceMotion: boolean | null }) => {
+const PremiumCard = ({ improvement, index, reduceMotion, hasStarted }: { improvement: Improvement; index: number; reduceMotion: boolean | null; hasStarted: boolean }) => {
     const cardRef = useRef<HTMLDivElement>(null);
 
     const tiltX = useMotionValue(0);
@@ -142,12 +142,9 @@ const PremiumCard = ({ improvement, index, reduceMotion }: { improvement: Improv
 
     const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
         if (!cardRef.current) return;
-
         const rect = cardRef.current.getBoundingClientRect();
-
         tiltX.set((e.clientX - rect.left) / rect.width - 0.5);
         tiltY.set((e.clientY - rect.top) / rect.height - 0.5);
-
         mouseX.set(e.clientX - rect.left);
         mouseY.set(e.clientY - rect.top);
     };
@@ -172,7 +169,7 @@ const PremiumCard = ({ improvement, index, reduceMotion }: { improvement: Improv
             className='h-full'
             style={{ transformStyle: 'preserve-3d', transformOrigin: 'center bottom' }}
             initial={reduceMotion ? { opacity: 1, x: 0, y: 0, scale: 1, rotateX: 0, rotateY: 0, rotateZ: 0 } : { opacity: 0, x: dir.x, y: dir.y, scale: 0.7, rotateX: dir.rotateX, rotateY: dir.rotateY, rotateZ: dir.rotateZ }}
-            animate={{ opacity: 1, x: 0, y: 0, scale: 1, rotateX: 0, rotateY: 0, rotateZ: 0 }}
+            animate={hasStarted ? { opacity: 1, x: 0, y: 0, scale: 1, rotateX: 0, rotateY: 0, rotateZ: 0 } : { opacity: 0, x: dir.x, y: dir.y, scale: 0.7, rotateX: dir.rotateX, rotateY: dir.rotateY, rotateZ: dir.rotateZ }}
             transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 78, damping: 14, mass: 1.1, delay: entranceDelay }}
         >
             <motion.div
@@ -205,12 +202,12 @@ const PremiumCard = ({ improvement, index, reduceMotion }: { improvement: Improv
                         style={{
                             opacity: hoverOpacity,
                             background: useMotionTemplate`
-                                    radial-gradient(
-                                        250px circle at ${mouseX}px ${mouseY}px,
-                                        rgba(0, 0, 0, 0.05),
-                                        transparent 80%
-                                    )
-                                `,
+                                radial-gradient(
+                                    250px circle at ${mouseX}px ${mouseY}px,
+                                    rgba(0, 0, 0, 0.05),
+                                    transparent 80%
+                                )
+                            `,
                         }}
                     />
                 </div>
@@ -229,12 +226,12 @@ const PremiumCard = ({ improvement, index, reduceMotion }: { improvement: Improv
                         style={{
                             opacity: hoverOpacity,
                             background: useMotionTemplate`
-                                    radial-gradient(
-                                        350px circle at ${mouseX}px ${mouseY}px,
-                                        rgba(255,255,255,0.015),
-                                        transparent 70%
-                                    )
-                                `,
+                                radial-gradient(
+                                    350px circle at ${mouseX}px ${mouseY}px,
+                                    rgba(255,255,255,0.015),
+                                    transparent 70%
+                                )
+                            `,
                         }}
                     />
 
@@ -253,7 +250,7 @@ const PremiumCard = ({ improvement, index, reduceMotion }: { improvement: Improv
                             <motion.span
                                 className='font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-500'
                                 initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -12, filter: 'blur(4px)' }}
-                                animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                                animate={hasStarted ? { opacity: 1, x: 0, filter: 'blur(0px)' } : { opacity: 0, x: -12, filter: 'blur(4px)' }}
                                 transition={{ duration: 0.55, delay: delay + 0.12, ease: [0.22, 1, 0.36, 1] }}
                             >
                                 Priority area
@@ -262,7 +259,7 @@ const PremiumCard = ({ improvement, index, reduceMotion }: { improvement: Improv
                             <motion.span
                                 className='relative inline-flex items-center justify-center font-mono text-[11px] font-medium tracking-[0.25em] text-zinc-700 dark:text-zinc-300'
                                 initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: 14 }}
-                                animate={{ opacity: 1, x: 0 }}
+                                animate={hasStarted ? { opacity: 1, x: 0 } : { opacity: 0, x: 14 }}
                                 transition={{ duration: 0.5, delay: delay + 0.22, ease: [0.22, 1, 0.36, 1] }}
                             >
                                 {!reduceMotion && <motion.span aria-hidden className='absolute -inset-2.5 rounded-full border' style={{ borderColor: `rgba(${GOLD}, 0.5)`, opacity: hoverOpacity, scale: cornerScale }} />}
@@ -275,8 +272,8 @@ const PremiumCard = ({ improvement, index, reduceMotion }: { improvement: Improv
                             <AnimatedWords text={improvement.title} delay={delay + 0.38} reduceMotion={reduceMotion} />
                         </motion.h2>
 
-                        <motion.div className='mt-5 grow' style={{ transform: 'translateZ(20px)' }} initial={reduceMotion ? { opacity: 1 } : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: delay + 0.58 }}>
-                            <motion.div className='mb-3 flex items-center gap-2' initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.45, delay: delay + 0.62, ease: [0.22, 1, 0.36, 1] }}>
+                        <motion.div className='mt-5 grow' style={{ transform: 'translateZ(20px)' }} initial={reduceMotion ? { opacity: 1 } : { opacity: 0 }} animate={hasStarted ? { opacity: 1 } : { opacity: 0 }} transition={{ duration: 0.5, delay: delay + 0.58 }}>
+                            <motion.div className='mb-3 flex items-center gap-2' initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -8 }} animate={hasStarted ? { opacity: 1, x: 0 } : { opacity: 0, x: -8 }} transition={{ duration: 0.45, delay: delay + 0.62, ease: [0.22, 1, 0.36, 1] }}>
                                 <span className='h-px w-4 bg-zinc-300 dark:bg-zinc-700' />
                             </motion.div>
 
@@ -288,21 +285,29 @@ const PremiumCard = ({ improvement, index, reduceMotion }: { improvement: Improv
                         {(improvement.action || improvement.why) && (
                             <motion.div
                                 className='relative mt-6 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 p-5 backdrop-blur-sm dark:border-zinc-800/70 dark:bg-zinc-900/25'
-                                style={{ transform: 'translateZ(35px)' }}
+                                style={{
+                                    transform: 'translateZ(35px)',
+                                }}
                                 initial={reduceMotion ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 16, scale: 0.97 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                animate={hasStarted ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 16, scale: 0.97 }}
                                 transition={{ duration: 0.65, delay: delay + 1, ease: [0.22, 1, 0.36, 1] }}
                             >
                                 {!reduceMotion && (
-                                    <motion.div aria-hidden className='absolute bottom-0 left-0 top-0 w-px bg-zinc-400 dark:bg-zinc-400' initial={{ y: '100%', opacity: 0 }} animate={{ y: '0%', opacity: 0.7 }} transition={{ duration: 0.55, delay: delay + 1.08, ease: [0.76, 0, 0.24, 1] }} />
+                                    <motion.div
+                                        aria-hidden
+                                        className='absolute bottom-0 left-0 top-0 w-px bg-zinc-400 dark:bg-zinc-400'
+                                        initial={{ y: '100%', opacity: 0 }}
+                                        animate={hasStarted ? { y: '0%', opacity: 0.7 } : { y: '100%', opacity: 0 }}
+                                        transition={{ duration: 0.55, delay: delay + 1.08, ease: [0.76, 0, 0.24, 1] }}
+                                    />
                                 )}
 
-                                {!reduceMotion && <motion.div aria-hidden className='pointer-events-none absolute inset-0 rounded-lg border' style={{ borderColor: `rgba(${GOLD}, 0.5)`, opacity: actionBorderOpacity }} />}
+                                {!reduceMotion && <motion.div aria-hidden className='absolute inset-0 rounded-lg border' style={{ borderColor: `rgba(${GOLD}, 0.5)`, opacity: actionBorderOpacity }} />}
 
                                 <motion.p
                                     className='mb-2 flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.15em] text-zinc-500'
                                     initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -8 }}
-                                    animate={{ opacity: 1, x: 0 }}
+                                    animate={hasStarted ? { opacity: 1, x: 0 } : { opacity: 0, x: -8 }}
                                     transition={{ duration: 0.45, delay: delay + 1.12 }}
                                 >
                                     <span>{improvement.action ? 'Suggested action' : 'Why it matters'}</span>
@@ -323,12 +328,12 @@ const PremiumCard = ({ improvement, index, reduceMotion }: { improvement: Improv
 
                     {!reduceMotion && (
                         <div className='pointer-events-none absolute inset-0 z-30 overflow-hidden rounded-3xl'>
-                            <motion.div className='absolute inset-0 bg-white dark:bg-[#030303]' style={{ transformOrigin: 'right center' }} initial={{ scaleX: 1 }} animate={{ scaleX: 0 }} transition={{ duration: 0.85, delay: revealDelay, ease: [0.76, 0, 0.24, 1] }} />
+                            <motion.div className='absolute inset-0 bg-white dark:bg-[#030303]' style={{ transformOrigin: 'right center' }} initial={{ scaleX: 1 }} animate={hasStarted ? { scaleX: 0 } : { scaleX: 1 }} transition={{ duration: 0.85, delay: revealDelay, ease: [0.76, 0, 0.24, 1] }} />
 
                             <motion.div
                                 className='absolute inset-y-0 w-1/4 skew-x-[-18deg] bg-linear-to-r from-transparent via-black/10 to-transparent dark:via-white/10'
                                 initial={{ x: '-160%' }}
-                                animate={{ x: '360%' }}
+                                animate={hasStarted ? { x: '360%' } : { x: '-160%' }}
                                 transition={{ duration: 1, delay: revealDelay + 0.1, ease: [0.16, 1, 0.3, 1] }}
                             />
                         </div>
@@ -365,6 +370,18 @@ export default function Story6() {
     const { analysisResult } = useStory();
     const reduceMotion = useReducedMotion();
 
+    const [hasStarted, setHasStarted] = useState(false);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            setHasStarted(true);
+        }, 50);
+
+        return () => {
+            window.clearTimeout(timer);
+        };
+    }, []);
+
     useEffect(() => {
         const html = document.documentElement;
         const body = document.body;
@@ -391,8 +408,11 @@ export default function Story6() {
     }, []);
 
     const data = analysisResult?.data?.data as Record<string, any> | undefined;
+
     const resumeFixes: ResumeFix[] = Array.isArray(data?.resume_fixes) ? data.resume_fixes : [];
+
     const actionPlan: ActionPlanItem[] = Array.isArray(data?.action_plan) ? data.action_plan : [];
+
     const usedActions = new Set<number>();
 
     const improvements: Improvement[] = resumeFixes
@@ -404,6 +424,7 @@ export default function Story6() {
             const why = clean(fix.why);
             const description = [fixText, why ? `— ${why}` : ''].filter(Boolean).join(' ');
             const action = findActionForFix(fix, actionPlan, usedActions);
+
             return {
                 number: String(index + 1).padStart(2, '0'),
                 title: section || fixText,
@@ -434,7 +455,7 @@ export default function Story6() {
                         <motion.p
                             className='font-mono text-[10px] font-medium uppercase tracking-[0.45em] text-zinc-500'
                             initial={reduceMotion ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: '100%', filter: 'blur(4px)' }}
-                            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                            animate={hasStarted ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: '100%', filter: 'blur(4px)' }}
                             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
                         >
                             Top improvements
@@ -447,7 +468,7 @@ export default function Story6() {
                                 <motion.span
                                     className='inline-block'
                                     initial={reduceMotion ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: '110%', filter: 'blur(8px)' }}
-                                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                                    animate={hasStarted ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: '110%', filter: 'blur(8px)' }}
                                     transition={{ duration: 0.8, delay: 0.15 + i * 0.08, ease: [0.16, 1, 0.3, 1] }}
                                 >
                                     {word}
@@ -459,7 +480,7 @@ export default function Story6() {
                     <motion.p
                         className='mt-4 max-w-lg text-center text-[0.85rem] leading-relaxed text-zinc-500 dark:text-zinc-400'
                         initial={reduceMotion ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 15, filter: 'blur(4px)' }}
-                        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                        animate={hasStarted ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 15, filter: 'blur(4px)' }}
                         transition={{ duration: 0.8, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
                     >
                         Three areas that can make the biggest difference to your resume
@@ -468,7 +489,7 @@ export default function Story6() {
 
                 <div className='mt-15 grid w-full grid-cols-1 gap-6 perspective-[1000px] md:grid-cols-3 xl:gap-8'>
                     {improvements.map((improvement, index) => (
-                        <PremiumCard key={improvement.number} improvement={improvement} index={index} reduceMotion={reduceMotion} />
+                        <PremiumCard key={improvement.number} improvement={improvement} index={index} reduceMotion={reduceMotion} hasStarted={hasStarted} />
                     ))}
                 </div>
             </div>
