@@ -100,28 +100,11 @@ const CARD_ENTRANCE_DIRECTIONS = [
     { x: 120, y: 70, rotateY: 42, rotateX: 22, rotateZ: 5 },
 ];
 
-const CORNER_MARKS = [
-    { position: '-top-2 -left-2', border: 'border-l border-t', origin: 'top left' },
-    { position: '-top-2 -right-2', border: 'border-r border-t', origin: 'top right' },
-    { position: '-bottom-2 -left-2', border: 'border-l border-b', origin: 'bottom left' },
-    { position: '-bottom-2 -right-2', border: 'border-r border-b', origin: 'bottom right' },
-];
-
 const PremiumCard = ({ improvement, index, reduceMotion, hasStarted }: { improvement: Improvement; index: number; reduceMotion: boolean | null; hasStarted: boolean }) => {
     const cardRef = useRef<HTMLDivElement>(null);
 
     const tiltX = useMotionValue(0);
     const tiltY = useMotionValue(0);
-
-    const rotateX = useSpring(useTransform(tiltY, [-0.5, 0.5], ['6deg', '-6deg']), {
-        damping: 30,
-        stiffness: 200,
-    });
-
-    const rotateY = useSpring(useTransform(tiltX, [-0.5, 0.5], ['-6deg', '6deg']), {
-        damping: 30,
-        stiffness: 200,
-    });
 
     const mouseX = useMotionValue(0);
     const mouseY = useMotionValue(0);
@@ -131,14 +114,6 @@ const PremiumCard = ({ improvement, index, reduceMotion, hasStarted }: { improve
         damping: 30,
         stiffness: 200,
     });
-
-    const liftY = useTransform(hoverOpacity, [0, 1], [0, -10]);
-    const liftScale = useTransform(hoverOpacity, [0, 1], [1, 1.012]);
-    const cornerScale = useTransform(hoverOpacity, [0, 1], [0.8, 1]);
-    const reticleOpacity = useTransform(hoverOpacity, [0, 1], [0, 0.4]);
-    const dotOpacity = useTransform(hoverOpacity, [0, 1], [0, 0.9]);
-    const actionBorderOpacity = useTransform(hoverOpacity, [0, 1], [0, 0.45]);
-    const actionArrowX = useTransform(hoverOpacity, [0, 1], [-4, 0]);
 
     const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
         if (!cardRef.current) return;
@@ -172,24 +147,7 @@ const PremiumCard = ({ improvement, index, reduceMotion, hasStarted }: { improve
             animate={hasStarted ? { opacity: 1, x: 0, y: 0, scale: 1, rotateX: 0, rotateY: 0, rotateZ: 0 } : { opacity: 0, x: dir.x, y: dir.y, scale: 0.7, rotateX: dir.rotateX, rotateY: dir.rotateY, rotateZ: dir.rotateZ }}
             transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 78, damping: 14, mass: 1.1, delay: entranceDelay }}
         >
-            <motion.div
-                ref={cardRef}
-                onMouseMove={handleMouseMove}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-                style={{ rotateX: reduceMotion ? 0 : rotateX, rotateY: reduceMotion ? 0 : rotateY, y: reduceMotion ? 0 : liftY, scale: reduceMotion ? 1 : liftScale, transformStyle: 'preserve-3d' }}
-                className='group relative flex h-full cursor-crosshair flex-col rounded-3xl p-px shadow-2xl transition-shadow duration-500 group-hover:shadow-2xl'
-            >
-                {!reduceMotion &&
-                    CORNER_MARKS.map((corner) => (
-                        <motion.span
-                            key={corner.position}
-                            aria-hidden
-                            className={`pointer-events-none absolute ${corner.position} z-20 h-4 w-4 ${corner.border}`}
-                            style={{ borderColor: `rgba(${GOLD}, 0.85)`, borderWidth: '1.5px', opacity: hoverOpacity, scale: cornerScale, transformOrigin: corner.origin }}
-                        />
-                    ))}
-
+            <motion.div ref={cardRef} onMouseMove={handleMouseMove} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} style={{ rotateX: 0, rotateY: 0, y: 0, scale: 1, transformStyle: 'preserve-3d' }} className='relative flex h-full flex-col rounded-3xl p-px shadow-2xl'>
                 <motion.div aria-hidden className='pointer-events-none absolute -inset-3 -z-10 rounded-[28px] blur-2xl' style={{ opacity: reduceMotion ? 0 : useTransform(hoverOpacity, [0, 1], [0, 0.35]), background: `radial-gradient(60% 60% at 50% 100%, rgba(${GOLD}, 0.25), transparent 75%)` }} />
 
                 <div className='pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-3xl'>
@@ -234,17 +192,6 @@ const PremiumCard = ({ improvement, index, reduceMotion, hasStarted }: { improve
                             `,
                         }}
                     />
-
-                    {!reduceMotion && (
-                        <>
-                            <motion.div aria-hidden className='pointer-events-none absolute inset-x-0 z-0 h-px' style={{ top: mouseY, opacity: reticleOpacity, background: `linear-gradient(90deg, transparent, rgba(${GOLD}, 0.9), transparent)` }} />
-
-                            <motion.div aria-hidden className='pointer-events-none absolute inset-y-0 z-0 w-px' style={{ left: mouseX, opacity: reticleOpacity, background: `linear-gradient(180deg, transparent, rgba(${GOLD}, 0.9), transparent)` }} />
-
-                            <motion.div aria-hidden className='pointer-events-none absolute z-0 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full' style={{ left: mouseX, top: mouseY, opacity: dotOpacity, background: `rgba(${GOLD}, 1)`, boxShadow: `0 0 10px rgba(${GOLD}, 0.8)` }} />
-                        </>
-                    )}
-
                     <div className='relative z-10 flex h-full flex-col'>
                         <div className='flex items-center justify-between border-b border-zinc-200 pb-3 dark:border-zinc-800/80' style={{ transform: 'translateZ(20px)' }}>
                             <motion.span
@@ -262,8 +209,6 @@ const PremiumCard = ({ improvement, index, reduceMotion, hasStarted }: { improve
                                 animate={hasStarted ? { opacity: 1, x: 0 } : { opacity: 0, x: 14 }}
                                 transition={{ duration: 0.5, delay: delay + 0.22, ease: [0.22, 1, 0.36, 1] }}
                             >
-                                {!reduceMotion && <motion.span aria-hidden className='absolute -inset-2.5 rounded-full border' style={{ borderColor: `rgba(${GOLD}, 0.5)`, opacity: hoverOpacity, scale: cornerScale }} />}
-
                                 {improvement.number}
                             </motion.span>
                         </div>
@@ -302,8 +247,6 @@ const PremiumCard = ({ improvement, index, reduceMotion, hasStarted }: { improve
                                     />
                                 )}
 
-                                {!reduceMotion && <motion.div aria-hidden className='absolute inset-0 rounded-lg border' style={{ borderColor: `rgba(${GOLD}, 0.5)`, opacity: actionBorderOpacity }} />}
-
                                 <motion.p
                                     className='mb-2 flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.15em] text-zinc-500'
                                     initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -8 }}
@@ -311,12 +254,6 @@ const PremiumCard = ({ improvement, index, reduceMotion, hasStarted }: { improve
                                     transition={{ duration: 0.45, delay: delay + 1.12 }}
                                 >
                                     <span>{improvement.action ? 'Suggested action' : 'Why it matters'}</span>
-
-                                    {!reduceMotion && (
-                                        <motion.span aria-hidden style={{ opacity: hoverOpacity, x: actionArrowX, color: `rgba(${GOLD}, 1)` }} className='text-[11px]'>
-                                            →
-                                        </motion.span>
-                                    )}
                                 </motion.p>
 
                                 <p className='text-[0.75rem] font-medium leading-relaxed text-zinc-800 dark:text-zinc-200'>

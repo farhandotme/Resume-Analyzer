@@ -6,11 +6,13 @@ interface TargetRoleSelectorProps {
     value: string;
     onChange: (value: string) => void;
     onSelectionChange: (selected: boolean) => void;
+    onEnter: (role: string) => void;
+    isSelected: boolean;
 }
 
 const LISTBOX_ID = 'target-role-listbox';
 
-export default function TargetRoleSelector({ value, onChange, onSelectionChange }: TargetRoleSelectorProps) {
+export default function TargetRoleSelector({ value, onChange, onSelectionChange, onEnter, isSelected }: TargetRoleSelectorProps) {
     const [query, setQuery] = useState(value);
     const [isOpen, setIsOpen] = useState(false);
     const [showAllRoles, setShowAllRoles] = useState(false);
@@ -63,25 +65,48 @@ export default function TargetRoleSelector({ value, onChange, onSelectionChange 
     };
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (!isOpen && (event.key === 'ArrowDown' || event.key === 'Enter')) {
-            setIsOpen(true);
+        if (event.key === 'Enter') {
+            event.preventDefault();
+
+            if (!isOpen) {
+                if (isSelected && value.trim()) {
+                    onEnter(value.trim());
+                    return;
+                }
+
+                setIsOpen(true);
+                return;
+            }
+
+            if (highlightedIndex < results.length && results[highlightedIndex]) {
+                const selectedRole = results[highlightedIndex].title;
+
+                commitSelection(selectedRole);
+                onEnter(selectedRole);
+            }
+
             return;
         }
-        if (!isOpen) return;
+
+        if (!isOpen) {
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                setIsOpen(true);
+            }
+
+            return;
+        }
 
         if (event.key === 'ArrowDown') {
             event.preventDefault();
+
             setHighlightedIndex((prev) => (prev + 1) % Math.max(totalOptions, 1));
         } else if (event.key === 'ArrowUp') {
             event.preventDefault();
-            setHighlightedIndex((prev) => (prev - 1 + totalOptions) % Math.max(totalOptions, 1));
-        } else if (event.key === 'Enter') {
-            event.preventDefault();
 
-            if (highlightedIndex < results.length && results[highlightedIndex]) {
-                commitSelection(results[highlightedIndex].title);
-            }
+            setHighlightedIndex((prev) => (prev - 1 + totalOptions) % Math.max(totalOptions, 1));
         } else if (event.key === 'Escape') {
+            event.preventDefault();
             setIsOpen(false);
         }
     };
