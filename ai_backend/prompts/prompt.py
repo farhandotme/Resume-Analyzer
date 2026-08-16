@@ -92,12 +92,14 @@ Return ONLY raw JSON. No markdown. No backticks. Nothing outside the JSON.
   }},
 
   "score_breakdown": [
-    {{ "label": "Skills Match",     "score": <0-30>, "out_of": 30, "reason": "<10 words max>" }},
-    {{ "label": "Experience",       "score": <0-25>, "out_of": 25, "reason": "<10 words max>" }},
-    {{ "label": "Projects",         "score": <0-20>, "out_of": 20, "reason": "<10 words max>" }},
-    {{ "label": "Resume Structure", "score": <0-15>, "out_of": 15, "reason": "<10 words max>" }},
-    {{ "label": "ATS Keywords",     "score": <0-10>, "out_of": 10, "reason": "<10 words max>" }}
+    {{ "label": "Skills Match",     "score": <0-30 - not more then that>, "out_of": 30, "reason": "<10 words max>" }},
+    {{ "label": "Experience",       "score": <0-25 - not more then that>, "out_of": 25, "reason": "<10 words max>" }},
+    {{ "label": "Projects",         "score": <0-20 - not more then that>, "out_of": 20, "reason": "<10 words max>" }},
+    {{ "label": "Resume Structure", "score": <0-15 - not more then that>, "out_of": 15, "reason": "<10 words max>" }},
+    {{ "label": "ATS Keywords",     "score": <0-10 - not more then that>, "out_of": 10, "reason": "<10 words max>" }}
   ],
+  
+  NOTE : IN Score Breakdown do not 
 
   "candidate": {{
     "level": "<one of: Fresher | Junior | Mid | Senior>",
@@ -126,7 +128,7 @@ Return ONLY raw JSON. No markdown. No backticks. Nothing outside the JSON.
       {{ "skill": "<skill>", "strength": "<one of: Strong | Basic>" }}
     ],
     "missing": [
-      {{ "skill": "<skill>", "priority": "<one of: Critical | Important | Nice To Have>" }}
+      {{ "skill": "<skill> - <short description about the skill> For Example: Git - Version Control", "priority": "<one of: Critical | Important | Nice To Have>" }}
     ],
     "ats_keywords_missing": ["<exact keyword>", "<exact keyword>", "<exact keyword>"]
   }},
