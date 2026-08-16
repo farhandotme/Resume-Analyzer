@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, animate } from 'framer-motion';
+import { AnimatePresence, motion, animate } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
@@ -9,6 +9,7 @@ import html2canvas from 'html2canvas-pro';
 import { jsPDF } from 'jspdf';
 import { useTheme } from '../hooks/useTheme';
 import ReportDocument from './ReportDocument';
+import { ChevronDown, FileImage, FileText } from 'lucide-react';
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -167,6 +168,7 @@ export default function Story7() {
     const [hasStarted, setHasStarted] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
+    const [showDownloadOptions, setShowDownloadOptions] = useState(false);
 
     const handleDownloadPDF = async () => {
         flushSync(() => {
@@ -217,6 +219,56 @@ export default function Story7() {
             pdf.save(`${name}-resume-analysis.pdf`);
         } catch (error) {
             console.error('Failed to generate PDF:', error);
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
+    const handleDownloadImage = async () => {
+        flushSync(() => {
+            setIsDownloading(true);
+        });
+
+        const report = document.getElementById('resume-report');
+
+        if (!report) {
+            console.error('Report document not found');
+            setIsDownloading(false);
+            return;
+        }
+
+        try {
+            await document.fonts.ready;
+
+            await new Promise<void>((resolve) => {
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        resolve();
+                    });
+                });
+            });
+
+            const canvas = await html2canvas(report, {
+                scale: 3,
+                useCORS: true,
+                backgroundColor: theme === 'dark' ? '#030303' : '#ffffff',
+                logging: false,
+                width: report.scrollWidth,
+                height: report.scrollHeight,
+                windowWidth: report.scrollWidth,
+                windowHeight: report.scrollHeight,
+            });
+
+            const imageData = canvas.toDataURL('image/jpeg', 0.95);
+
+            const link = document.createElement('a');
+            const name = data?.hero?.name?.trim().replace(/\s+/g, '-') || 'resume-analysis';
+
+            link.href = imageData;
+            link.download = `${name}-resume-analysis.jpg`;
+            link.click();
+        } catch (error) {
+            console.error('Failed to generate image:', error);
         } finally {
             setIsDownloading(false);
         }
@@ -329,7 +381,7 @@ export default function Story7() {
                     initial={{ opacity: 0, y: 46, scale: 0.95 }}
                     animate={hasStarted ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 46, scale: 0.95 }}
                     transition={{ duration: 0.75, ease: EASE }}
-                    className='relative overflow-hidden rounded-4xl border border-zinc-200 bg-white shadow-[0_30px_80px_rgba(0,0,0,.07)] transition-colors duration-300 dark:border-white/8 dark:bg-zinc-950 dark:shadow-[0_30px_80px_rgba(0,0,0,.5)]'
+                    className='relative overflow-visible rounded-4xl border border-zinc-200 bg-white shadow-[0_30px_80px_rgba(0,0,0,.07)] transition-colors duration-300 dark:border-white/8 dark:bg-zinc-950 dark:shadow-[0_30px_80px_rgba(0,0,0,.5)]'
                     style={{ padding: 'clamp(1.5rem,3vh,2.25rem) clamp(1.25rem,3vw,2.5rem)' }}
                 >
                     <motion.div
@@ -386,23 +438,70 @@ export default function Story7() {
                     </div>
 
                     <div className='mt-[clamp(3.25rem,2.5vh,1.75rem)] flex justify-center gap-3'>
-                        <motion.button
-                            type='button'
-                            disabled={isDownloading}
-                            onPointerDown={(event) => event.stopPropagation()}
-                            onClick={(event) => {
-                                event.stopPropagation();
-                                handleDownloadPDF();
-                            }}
-                            initial={{ opacity: 0, y: 12 }}
-                            animate={hasStarted ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
-                            transition={{ delay: 4.3, duration: 0.45, ease: EASE }}
-                            whileHover={isDownloading ? {} : { y: -2 }}
-                            whileTap={isDownloading ? {} : { scale: 0.97 }}
-                            className='cursor-pointer rounded-full bg-zinc-900 px-7 py-3.5 text-[14px] font-medium text-white transition-colors duration-200 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-white dark:text-black dark:hover:bg-zinc-200'
-                        >
-                            {isDownloading ? 'Preparing PDF...' : 'Download PDF'}
-                        </motion.button>
+                        <div className='relative'>
+                            <motion.button
+                                type='button'
+                                disabled={isDownloading}
+                                onPointerDown={(event) => event.stopPropagation()}
+                                onClick={(event) => {
+                                    event.stopPropagation();
+
+                                    if (!isDownloading) {
+                                        setShowDownloadOptions((current) => !current);
+                                    }
+                                }}
+                                initial={{ opacity: 0, y: 12 }}
+                                animate={hasStarted ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+                                transition={{ delay: 4.3, duration: 0.45, ease: EASE }}
+                                whileHover={isDownloading ? {} : { y: -2 }}
+                                whileTap={isDownloading ? {} : { scale: 0.97 }}
+                                className='inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-zinc-900 px-7 py-3.5 text-[14px] font-medium text-white transition-colors duration-200 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-white dark:text-black dark:hover:bg-zinc-200'
+                            >
+                                <span>{isDownloading ? 'Preparing...' : 'Download Report'}</span>
+
+                                {!isDownloading && <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showDownloadOptions ? 'rotate-180' : ''}`} />}
+                            </motion.button>
+
+                            <AnimatePresence>
+                                {showDownloadOptions && !isDownloading && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                                        transition={{ duration: 0.2, ease: EASE }}
+                                        className='absolute left-1/2 top-full z-20 mt-2 w-48 -translate-x-1/2 overflow-hidden rounded-xl border border-zinc-200 bg-white p-1.5 shadow-xl shadow-zinc-200/40 dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-black/40'
+                                    >
+                                        <button
+                                            type='button'
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                setShowDownloadOptions(false);
+                                                handleDownloadPDF();
+                                            }}
+                                            className='flex w-full cursor-pointer items-center gap-3 rounded-lg px-3.5 py-2.5 text-left text-[13px] font-medium text-zinc-700 transition-colors duration-150 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white'
+                                        >
+                                            <FileText className='h-4 w-4 text-zinc-400 dark:text-zinc-500' />
+
+                                            <span>Download PDF</span>
+                                        </button>
+
+                                        <button
+                                            type='button'
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                setShowDownloadOptions(false);
+                                                handleDownloadImage();
+                                            }}
+                                            className='flex w-full cursor-pointer items-center gap-3 rounded-lg px-3.5 py-2.5 text-left text-[13px] font-medium text-zinc-700 transition-colors duration-150 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white'
+                                        >
+                                            <FileImage className='h-4 w-4 text-zinc-400 dark:text-zinc-500' />
+
+                                            <span>Download Image</span>
+                                        </button>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
 
                         <motion.button
                             type='button'
