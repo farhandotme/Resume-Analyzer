@@ -22,6 +22,7 @@ type Improvement = {
     title: string;
     description: string;
     action?: string;
+    why?: string;
 };
 
 const clean = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
@@ -279,12 +280,12 @@ const PremiumCard = ({ improvement, index, reduceMotion }: { improvement: Improv
                                 <span className='h-px w-4 bg-zinc-300 dark:bg-zinc-700' />
                             </motion.div>
 
-                            <p className='line-clamp-5 text-[0.82rem] leading-[1.75] text-zinc-600 dark:text-zinc-400'>
+                            <p className='line-clamp-7 overflow-hidden text-[0.82rem] leading-[1.75] text-zinc-600 dark:text-zinc-400'>
                                 <AnimatedWords text={improvement.description} delay={delay + 0.68} reduceMotion={reduceMotion} />
                             </p>
                         </motion.div>
 
-                        {improvement.action && (
+                        {(improvement.action || improvement.why) && (
                             <motion.div
                                 className='relative mt-6 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 p-5 backdrop-blur-sm dark:border-zinc-800/70 dark:bg-zinc-900/25'
                                 style={{ transform: 'translateZ(35px)' }}
@@ -304,7 +305,7 @@ const PremiumCard = ({ improvement, index, reduceMotion }: { improvement: Improv
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ duration: 0.45, delay: delay + 1.12 }}
                                 >
-                                    <span>Suggested action</span>
+                                    <span>{improvement.action ? 'Suggested action' : 'Why it matters'}</span>
 
                                     {!reduceMotion && (
                                         <motion.span aria-hidden style={{ opacity: hoverOpacity, x: actionArrowX, color: `rgba(${GOLD}, 1)` }} className='text-[11px]'>
@@ -314,7 +315,7 @@ const PremiumCard = ({ improvement, index, reduceMotion }: { improvement: Improv
                                 </motion.p>
 
                                 <p className='text-[0.75rem] font-medium leading-relaxed text-zinc-800 dark:text-zinc-200'>
-                                    <AnimatedWords text={improvement.action} delay={delay + 1.18} reduceMotion={reduceMotion} />
+                                    <AnimatedWords text={improvement.action || improvement.why || ''} delay={delay + 1.18} reduceMotion={reduceMotion} />
                                 </p>
                             </motion.div>
                         )}
@@ -408,6 +409,7 @@ export default function Story6() {
                 title: section || fixText,
                 description,
                 action,
+                why,
             };
         })
         .filter((improvement) => improvement.title && improvement.description);
