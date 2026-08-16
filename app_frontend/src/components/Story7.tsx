@@ -59,8 +59,6 @@ type ConfettiFieldProps = { active: boolean; mode?: 'infinite' | 'timed' };
 const ConfettiField = ({ active, mode = 'infinite' }: ConfettiFieldProps) => {
     const pieces = useMemo(() => makeConfetti(mode === 'infinite' ? 84 : 72), [mode]);
 
-    if (!active) return null;
-
     return (
         <>
             {(['left', 'right'] as const).map((side) => (
@@ -84,8 +82,27 @@ const ConfettiField = ({ active, mode = 'infinite' }: ConfettiFieldProps) => {
                                     key={p.id}
                                     className={`absolute rounded-xs ${TONE_CLASS[p.tone]}`}
                                     style={{ left: `${p.leftPct}%`, width: p.size, height: p.size * 2.4, top: -24, boxShadow: '0 1px 2px rgba(0,0,0,0.06)' }}
-                                    initial={{ opacity: 0, y: -24, x: 0, rotate: p.rotateStart }}
-                                    animate={{ opacity: [0, 1, 1, 0], y: p.fall, x: driftPx, rotate: p.rotateEnd }}
+                                    initial={{
+                                        opacity: 0,
+                                        y: -24,
+                                        x: 0,
+                                        rotate: p.rotateStart,
+                                    }}
+                                    animate={
+                                        active
+                                            ? {
+                                                  opacity: [0, 1, 1, 0],
+                                                  y: p.fall,
+                                                  x: driftPx,
+                                                  rotate: p.rotateEnd,
+                                              }
+                                            : {
+                                                  opacity: 0,
+                                                  y: -24,
+                                                  x: 0,
+                                                  rotate: p.rotateStart,
+                                              }
+                                    }
                                     transition={{ duration: p.duration, delay: p.delay, ease: 'easeIn', times: [0, 0.12, 0.7, 1], ...(mode === 'infinite' ? { repeat: Infinity, repeatDelay: p.repeatDelay } : {}) }}
                                 />
                             );
@@ -137,7 +154,30 @@ export default function Story7() {
     const finalStrengths = strengths.length > 0 ? strengths : ['Analysis completed successfully'];
     const [score, setScore] = useState(0);
     const [bounce, setBounce] = useState(false);
-    const [confettiActive, setConfettiActive] = useState(false);
+    const [hasStarted, setHasStarted] = useState(false);
+    const [showConfetti, setShowConfetti] = useState(false);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            setHasStarted(true);
+        }, 50);
+
+        return () => {
+            window.clearTimeout(timer);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!hasStarted) return;
+
+        const timer = window.setTimeout(() => {
+            setShowConfetti(true);
+        }, 750);
+
+        return () => {
+            window.clearTimeout(timer);
+        };
+    }, [hasStarted]);
 
     useEffect(() => {
         const html = document.documentElement;
@@ -163,6 +203,11 @@ export default function Story7() {
     }, []);
 
     useEffect(() => {
+        if (!hasStarted) return;
+
+        setScore(0);
+        setBounce(false);
+
         const controls = animate(0, targetScore, {
             duration: 1.1,
             delay: 0.9,
@@ -177,13 +222,10 @@ export default function Story7() {
             },
         });
 
-        const confettiOn = setTimeout(() => setConfettiActive(true), 1000);
-
         return () => {
             controls.stop();
-            clearTimeout(confettiOn);
         };
-    }, [targetScore]);
+    }, [hasStarted, targetScore]);
 
     return (
         <section className='fixed inset-0 flex h-dvh w-screen items-center justify-center overflow-hidden overscroll-none bg-white transition-colors duration-300 dark:bg-black'>
@@ -202,12 +244,12 @@ export default function Story7() {
 
             <div className='pointer-events-none absolute h-130 w-130 rounded-full opacity-0 blur-3xl transition-opacity duration-300 dark:opacity-100' style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.025) 0%, transparent 70%)' }} />
 
-            <ConfettiField active={confettiActive} />
+            <ConfettiField active={showConfetti} />
 
             <div className='relative z-20 w-full max-w-xl px-6'>
                 <motion.div
                     initial={{ opacity: 0, y: 46, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    animate={hasStarted ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 46, scale: 0.95 }}
                     transition={{ duration: 0.75, ease: EASE }}
                     className='relative overflow-hidden rounded-4xl border border-zinc-200 bg-white shadow-[0_30px_80px_rgba(0,0,0,.07)] transition-colors duration-300 dark:border-white/8 dark:bg-zinc-950 dark:shadow-[0_30px_80px_rgba(0,0,0,.5)]'
                     style={{ padding: 'clamp(1.5rem,3vh,2.25rem) clamp(1.25rem,3vw,2.5rem)' }}
@@ -217,7 +259,7 @@ export default function Story7() {
                         className='pointer-events-none absolute inset-y-0 w-[45%] dark:opacity-60'
                         style={{ background: 'linear-gradient(75deg, transparent 0%, rgba(0,0,0,0.035) 45%, transparent 100%)' }}
                         initial={{ left: '-55%' }}
-                        animate={{ left: '110%' }}
+                        animate={hasStarted ? { left: '110%' } : { left: '-55%' }}
                         transition={{ duration: 1.1, delay: 3.8, ease: 'easeInOut' }}
                     />
 
@@ -228,7 +270,7 @@ export default function Story7() {
                             className={`pointer-events-none absolute top-6 h-6 w-6 ${corner === 'left' ? 'left-6' : 'right-6'}`}
                             style={{ background: 'radial-gradient(circle, rgba(0,0,0,0.10) 0%, transparent 70%)' }}
                             initial={{ opacity: 0, scale: 0.4 }}
-                            animate={{ opacity: [0, 1, 0], scale: [0.4, 1.3, 1.6] }}
+                            animate={hasStarted ? { opacity: [0, 1, 0], scale: [0.4, 1.3, 1.6] } : { opacity: 0, scale: 0.4 }}
                             transition={{ duration: 0.9, delay: 1.0, ease: 'easeOut' }}
                         />
                     ))}
@@ -250,14 +292,14 @@ export default function Story7() {
                     </div>
 
                     <div className='mt-[clamp(1.25rem,2.8vh,2rem)] flex justify-center'>
-                        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 2.0, duration: 0.45, ease: EASE }} className='rounded-full bg-zinc-100 px-5 py-2.5 dark:bg-white/6'>
+                        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={hasStarted ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }} transition={{ delay: 2.0, duration: 0.45, ease: EASE }} className='rounded-full bg-zinc-100 px-5 py-2.5 dark:bg-white/6'>
                             <span className='text-[12px] font-semibold uppercase tracking-[0.16em] text-zinc-700 dark:text-zinc-300'>{verdict}</span>
                         </motion.div>
                     </div>
 
                     <div className='mt-[clamp(2.25rem,2.5vh,1.75rem)] grid grid-cols-2 justify-items-center gap-x-5 gap-y-3.5'>
                         {finalStrengths.map((item, index) => (
-                            <motion.div key={`${item}-${index}`} initial={{ opacity: 0, x: -14 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 2.5 + index * 0.15, duration: 0.4, ease: EASE }} className='flex items-center justify-start gap-2.5 text-left'>
+                            <motion.div key={`${item}-${index}`} initial={{ opacity: 0, x: -14 }} animate={hasStarted ? { opacity: 1, x: 0 } : { opacity: 0, x: -14 }} transition={{ delay: 2.5 + index * 0.15, duration: 0.4, ease: EASE }} className='flex items-center justify-start gap-2.5 text-left'>
                                 <div className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-[11px] text-white dark:bg-white dark:text-black'>✓</div>
 
                                 <p className='text-[14px] leading-[1.4] text-zinc-700 dark:text-zinc-300'>{item}</p>
@@ -268,7 +310,7 @@ export default function Story7() {
                     <div className='mt-[clamp(3.25rem,2.5vh,1.75rem)] flex justify-center gap-3'>
                         <motion.button
                             initial={{ opacity: 0, y: 12 }}
-                            animate={{ opacity: 1, y: 0 }}
+                            animate={hasStarted ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
                             transition={{ delay: 4.3, duration: 0.45, ease: EASE }}
                             whileHover={{ scale: 1.03 }}
                             whileTap={{ scale: 0.97 }}
@@ -279,7 +321,7 @@ export default function Story7() {
 
                         <motion.button
                             initial={{ opacity: 0, y: 12 }}
-                            animate={{ opacity: 1, y: 0 }}
+                            animate={hasStarted ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
                             transition={{ delay: 4.45, duration: 0.45, ease: EASE }}
                             whileHover={{ scale: 1.03 }}
                             whileTap={{ scale: 0.97 }}
