@@ -319,6 +319,8 @@ const StoryContent = () => {
 
                 case 'Escape':
                     event.preventDefault();
+                    sessionStorage.removeItem('story-current');
+                    setIsRestored(false);
                     window.history.back();
                     break;
 
