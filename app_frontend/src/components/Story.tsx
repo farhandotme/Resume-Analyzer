@@ -159,6 +159,21 @@ const StoryControls = () => {
 };
 
 const StoryContent = () => {
+    const handleStoryClick = (event: React.MouseEvent<HTMLElement>) => {
+        const target = event.target as HTMLElement;
+
+        if (target.closest('button') || target.closest('a') || target.closest('[data-story-control]')) {
+            return;
+        }
+
+        const midpoint = window.innerWidth / 2;
+
+        if (event.clientX < midpoint) {
+            handlePrevious();
+        } else {
+            handleNext();
+        }
+    };
     const { paused, setPaused, setIsRestored } = useStory();
 
     const [currentStory, setCurrentStory] = useState(() => {
@@ -320,13 +335,8 @@ const StoryContent = () => {
     }, [currentStory, suppressNextClick]);
 
     return (
-        <main className='relative flex h-dvh w-full select-none items-center justify-center overflow-hidden bg-white dark:bg-black' style={{ perspective: 1600 }} onPointerDown={handlePointerDown} onPointerUp={handlePointerUp} onPointerLeave={handlePointerLeave}>
+        <main className='relative flex h-dvh w-full select-none items-center justify-center overflow-hidden bg-white dark:bg-black' style={{ perspective: 1600 }} onPointerDown={handlePointerDown} onPointerUp={handlePointerUp} onPointerLeave={handlePointerLeave} onClick={handleStoryClick}>
             <StoryControls />
-
-            <div className='absolute inset-0 z-40 flex'>
-                <button type='button' aria-label='Previous story' className='h-full w-1/2 cursor-default bg-transparent outline-none' onClick={handlePrevious} />
-                <button type='button' aria-label='Next story' className='h-full w-1/2 cursor-default bg-transparent outline-none' onClick={handleNext} />
-            </div>
 
             <StoryProgress totalStories={totalStories} currentStory={currentStory} progress={progress} />
 

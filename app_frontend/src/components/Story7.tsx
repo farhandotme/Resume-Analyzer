@@ -2,7 +2,13 @@
 
 import { motion, animate } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
+import { flushSync } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { useStory } from './StoryContext';
+import html2canvas from 'html2canvas-pro';
+import { jsPDF } from 'jspdf';
+import { useTheme } from '../hooks/useTheme';
+import ReportDocument from './ReportDocument';
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -30,6 +36,7 @@ const TONE_CLASS: Record<ConfettiPiece['tone'], string> = {
 
 const makeConfetti = (count: number): ConfettiPiece[] => {
     const tones: ConfettiPiece['tone'][] = ['white', 'white', 'mist', 'mist', 'sky', 'mint'];
+
     const pieces: ConfettiPiece[] = [];
 
     for (let i = 0; i < count; i++) {
@@ -54,7 +61,10 @@ const makeConfetti = (count: number): ConfettiPiece[] => {
     return pieces;
 };
 
-type ConfettiFieldProps = { active: boolean; mode?: 'infinite' | 'timed' };
+type ConfettiFieldProps = {
+    active: boolean;
+    mode?: 'infinite' | 'timed';
+};
 
 const ConfettiField = ({ active, mode = 'infinite' }: ConfettiFieldProps) => {
     const pieces = useMemo(() => makeConfetti(mode === 'infinite' ? 84 : 72), [mode]);
@@ -73,37 +83,18 @@ const ConfettiField = ({ active, mode = 'infinite' }: ConfettiFieldProps) => {
                     }}
                 >
                     {pieces
-                        .filter((p) => p.side === side)
-                        .map((p) => {
-                            const driftPx = side === 'left' ? p.drift : -p.drift;
+                        .filter((piece) => piece.side === side)
+                        .map((piece) => {
+                            const driftPx = side === 'left' ? piece.drift : -piece.drift;
 
                             return (
                                 <motion.span
-                                    key={p.id}
-                                    className={`absolute rounded-xs ${TONE_CLASS[p.tone]}`}
-                                    style={{ left: `${p.leftPct}%`, width: p.size, height: p.size * 2.4, top: -24, boxShadow: '0 1px 2px rgba(0,0,0,0.06)' }}
-                                    initial={{
-                                        opacity: 0,
-                                        y: -24,
-                                        x: 0,
-                                        rotate: p.rotateStart,
-                                    }}
-                                    animate={
-                                        active
-                                            ? {
-                                                  opacity: [0, 1, 1, 0],
-                                                  y: p.fall,
-                                                  x: driftPx,
-                                                  rotate: p.rotateEnd,
-                                              }
-                                            : {
-                                                  opacity: 0,
-                                                  y: -24,
-                                                  x: 0,
-                                                  rotate: p.rotateStart,
-                                              }
-                                    }
-                                    transition={{ duration: p.duration, delay: p.delay, ease: 'easeIn', times: [0, 0.12, 0.7, 1], ...(mode === 'infinite' ? { repeat: Infinity, repeatDelay: p.repeatDelay } : {}) }}
+                                    key={piece.id}
+                                    className={`absolute rounded-xs ${TONE_CLASS[piece.tone]}`}
+                                    style={{ left: `${piece.leftPct}%`, width: piece.size, height: piece.size * 2.4, top: -24, boxShadow: '0 1px 2px rgba(0,0,0,0.06)' }}
+                                    initial={{ opacity: 0, y: -24, x: 0, rotate: piece.rotateStart }}
+                                    animate={active ? { opacity: [0, 1, 1, 0], y: piece.fall, x: driftPx, rotate: piece.rotateEnd } : { opacity: 0, y: -24, x: 0, rotate: piece.rotateStart }}
+                                    transition={{ duration: piece.duration, delay: piece.delay, ease: 'easeIn', times: [0, 0.12, 0.7, 1], ...(mode === 'infinite' ? { repeat: Infinity, repeatDelay: piece.repeatDelay } : {}) }}
                                 />
                             );
                         })}
@@ -115,6 +106,9 @@ const ConfettiField = ({ active, mode = 'infinite' }: ConfettiFieldProps) => {
 
 export default function Story7() {
     const { analysisResult } = useStory();
+    const { theme } = useTheme();
+    const navigate = useNavigate();
+
     const data = analysisResult?.data?.data;
     const targetScore = Number(data?.hero?.ats_score ?? 0);
     const verdict = data?.hero?.verdict ?? 'Needs Work';
@@ -131,7 +125,20 @@ export default function Story7() {
 
         scoreBreakdown
             .filter((breakdownItem: { label: string; score: number; out_of: number }) => breakdownItem.score > 0)
-            .sort((a: { label: string; score: number; out_of: number }, b: { label: string; score: number; out_of: number }) => b.score / b.out_of - a.score / a.out_of)
+            .sort(
+                (
+                    a: {
+                        label: string;
+                        score: number;
+                        out_of: number;
+                    },
+                    b: {
+                        label: string;
+                        score: number;
+                        out_of: number;
+                    },
+                ) => b.score / b.out_of - a.score / a.out_of,
+            )
             .forEach((breakdownItem: { label: string; score: number; out_of: number; reason: string }) => {
                 if (result.length < 4 && !result.some((existingStrength) => existingStrength.toLowerCase().includes(breakdownItem.label.toLowerCase()))) {
                     result.push(`${breakdownItem.label}: ${breakdownItem.reason}`);
@@ -139,7 +146,9 @@ export default function Story7() {
             });
 
         matchedSkills.forEach((skillItem: string | { skill: string }) => {
-            if (result.length >= 4) return;
+            if (result.length >= 4) {
+                return;
+            }
 
             const skill = typeof skillItem === 'string' ? skillItem : skillItem.skill;
 
@@ -152,10 +161,70 @@ export default function Story7() {
     }, [strongestAsset, scoreBreakdown, matchedSkills]);
 
     const finalStrengths = strengths.length > 0 ? strengths : ['Analysis completed successfully'];
+
     const [score, setScore] = useState(0);
     const [bounce, setBounce] = useState(false);
     const [hasStarted, setHasStarted] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
+
+    const handleDownloadPDF = async () => {
+        flushSync(() => {
+            setIsDownloading(true);
+        });
+
+        const report = document.getElementById('resume-report');
+
+        if (!report) {
+            console.error('Report document not found');
+            setIsDownloading(false);
+            return;
+        }
+
+        try {
+            await document.fonts.ready;
+
+            await new Promise<void>((resolve) => {
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        resolve();
+                    });
+                });
+            });
+
+            const canvas = await html2canvas(report, {
+                scale: 3,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+                width: report.scrollWidth,
+                height: report.scrollHeight,
+                windowWidth: report.scrollWidth,
+                windowHeight: report.scrollHeight,
+            });
+
+            const imageData = canvas.toDataURL('image/png');
+
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4',
+                compress: true,
+            });
+
+            pdf.addImage(imageData, 'PNG', 0, 0, 210, 297, undefined, 'FAST');
+            const name = data?.hero?.name?.trim().replace(/\s+/g, '-') || 'resume-analysis';
+            pdf.save(`${name}-resume-analysis.pdf`);
+        } catch (error) {
+            console.error('Failed to generate PDF:', error);
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
+    const handleAnalyzeAgain = () => {
+        navigate('/');
+    };
 
     useEffect(() => {
         const timer = window.setTimeout(() => {
@@ -168,7 +237,9 @@ export default function Story7() {
     }, []);
 
     useEffect(() => {
-        if (!hasStarted) return;
+        if (!hasStarted) {
+            return;
+        }
 
         const timer = window.setTimeout(() => {
             setShowConfetti(true);
@@ -182,6 +253,7 @@ export default function Story7() {
     useEffect(() => {
         const html = document.documentElement;
         const body = document.body;
+
         const previousHtmlOverflow = html.style.overflow;
         const previousBodyOverflow = body.style.overflow;
         const previousHtmlOverscroll = html.style.overscrollBehavior;
@@ -203,7 +275,9 @@ export default function Story7() {
     }, []);
 
     useEffect(() => {
-        if (!hasStarted) return;
+        if (!hasStarted) {
+            return;
+        }
 
         setScore(0);
         setBounce(false);
@@ -229,6 +303,10 @@ export default function Story7() {
 
     return (
         <section className='fixed inset-0 flex h-dvh w-screen items-center justify-center overflow-hidden overscroll-none bg-white transition-colors duration-300 dark:bg-black'>
+            <div className='pointer-events-none fixed left-[-10000px] top-0' aria-hidden='true'>
+                <ReportDocument analysisResult={analysisResult} theme={theme} />
+            </div>
+
             <div className='pointer-events-none absolute inset-0' style={{ background: 'radial-gradient(circle at center, rgba(0,0,0,.03), transparent 70%)' }} />
 
             <div className='pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 dark:opacity-100' style={{ background: 'radial-gradient(circle at center, rgba(255,255,255,.025), transparent 70%)' }} />
@@ -309,23 +387,36 @@ export default function Story7() {
 
                     <div className='mt-[clamp(3.25rem,2.5vh,1.75rem)] flex justify-center gap-3'>
                         <motion.button
+                            type='button'
+                            disabled={isDownloading}
+                            onPointerDown={(event) => event.stopPropagation()}
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                handleDownloadPDF();
+                            }}
                             initial={{ opacity: 0, y: 12 }}
                             animate={hasStarted ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
                             transition={{ delay: 4.3, duration: 0.45, ease: EASE }}
-                            whileHover={{ scale: 1.03 }}
-                            whileTap={{ scale: 0.97 }}
-                            className='rounded-full bg-zinc-900 px-7 py-3.5 text-[14px] font-medium text-white shadow-[0_8px_24px_rgba(0,0,0,0.18)] dark:bg-white dark:text-black dark:shadow-[0_8px_24px_rgba(255,255,255,0.08)]'
+                            whileHover={isDownloading ? {} : { y: -2 }}
+                            whileTap={isDownloading ? {} : { scale: 0.97 }}
+                            className='cursor-pointer rounded-full bg-zinc-900 px-7 py-3.5 text-[14px] font-medium text-white transition-colors duration-200 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-white dark:text-black dark:hover:bg-zinc-200'
                         >
-                            Download PDF
+                            {isDownloading ? 'Preparing PDF...' : 'Download PDF'}
                         </motion.button>
 
                         <motion.button
+                            type='button'
+                            onPointerDown={(event) => event.stopPropagation()}
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                handleAnalyzeAgain();
+                            }}
                             initial={{ opacity: 0, y: 12 }}
                             animate={hasStarted ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
                             transition={{ delay: 4.45, duration: 0.45, ease: EASE }}
                             whileHover={{ scale: 1.03 }}
                             whileTap={{ scale: 0.97 }}
-                            className='rounded-full border border-zinc-300 px-7 py-3.5 text-[14px] font-medium text-zinc-900 transition-colors duration-300 dark:border-white/[0.14] dark:text-white'
+                            className='cursor-pointer rounded-full border border-zinc-300 px-7 py-3.5 text-[14px] font-medium text-zinc-900 transition-colors duration-300 dark:border-white/[0.14] dark:text-white'
                         >
                             Analyze Again
                         </motion.button>
