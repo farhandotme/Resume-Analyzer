@@ -3,9 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion, type Variants } from 'framer-motion';
 import { StoryProvider, useStory } from './StoryContext';
 import { useTheme } from '../hooks/useTheme';
-
 import StoryProgress from './StoryProgress';
-
 import Story1 from './Story1';
 import Story2 from './Story2';
 import Story3 from './Story3';
@@ -104,6 +102,7 @@ const StoryControls = () => {
 
     const handleClose = (event: React.MouseEvent) => {
         event.stopPropagation();
+        sessionStorage.removeItem('story-current');
         navigate(-1);
     };
 
@@ -160,13 +159,22 @@ const StoryControls = () => {
 };
 
 const StoryContent = () => {
-    const { paused, setPaused } = useStory();
+    const { paused, setPaused, setIsRestored } = useStory();
 
-    const [currentStory, setCurrentStory] = useState(0);
+    const [currentStory, setCurrentStory] = useState(() => {
+        const savedStory = sessionStorage.getItem('story-current');
+        const storyIndex = Number(savedStory);
+        return Number.isInteger(storyIndex) && storyIndex >= 0 && storyIndex < STORY_DURATIONS.length ? storyIndex : 0;
+    });
+
     const [progress, setProgress] = useState(0);
     const [direction, setDirection] = useState(1);
 
     const totalStories = STORY_DURATIONS.length;
+
+    useEffect(() => {
+        sessionStorage.setItem('story-current', String(currentStory));
+    }, [currentStory]);
 
     const holdTimer = useRef<number | null>(null);
     const didHold = useRef(false);
@@ -179,6 +187,7 @@ const StoryContent = () => {
             setProgress((prev) => {
                 if (prev >= 100) {
                     if (currentStory < totalStories - 1) {
+                        setIsRestored(false);
                         setDirection(1);
                         setCurrentStory((story) => story + 1);
                         return 0;
@@ -238,6 +247,7 @@ const StoryContent = () => {
         }
 
         if (currentStory > 0) {
+            setIsRestored(false);
             setDirection(-1);
             setCurrentStory((story) => story - 1);
             setProgress(0);
@@ -252,6 +262,7 @@ const StoryContent = () => {
         }
 
         if (currentStory < totalStories - 1) {
+            setIsRestored(false);
             setDirection(1);
             setCurrentStory((story) => story + 1);
             setProgress(0);
@@ -347,8 +358,12 @@ const Story = () => {
     const location = useLocation();
     const analysisResult = location.state?.analysisResult;
 
+    const [isRestored, setIsRestored] = useState(() => {
+        return sessionStorage.getItem('story-current') !== null;
+    });
+
     return (
-        <StoryProvider initialAnalysisResult={analysisResult}>
+        <StoryProvider initialAnalysisResult={analysisResult} isRestored={isRestored} setIsRestored={setIsRestored}>
             <StoryContent />
         </StoryProvider>
     );

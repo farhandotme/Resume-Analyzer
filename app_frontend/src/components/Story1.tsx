@@ -6,14 +6,14 @@ import { useStory } from './StoryContext';
 
 const EASE_CINE = [0.16, 1, 0.3, 1] as const;
 
-const CreditsText = ({ text, delayStart = 0, className = '' }: { text: string; delayStart?: number; className?: string }) => (
+const CreditsText = ({ text, delayStart = 0, className = '', skipAnimation = false }: { text: string; delayStart?: number; className?: string; skipAnimation?: boolean }) => (
     <>
         {text.split('').map((char, i) => (
             <motion.span
                 key={`${char}-${i}`}
-                initial={{ opacity: 0, y: 24, filter: 'blur(6px)' }}
+                initial={skipAnimation ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 24, filter: 'blur(6px)' }}
                 animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                transition={{ duration: 0.6, delay: delayStart + i * 0.035, ease: EASE_CINE }}
+                transition={skipAnimation ? { duration: 0 } : { duration: 0.6, delay: delayStart + i * 0.035, ease: EASE_CINE }}
                 style={{ display: 'inline-block' }}
                 aria-hidden='true'
                 className={className}
