@@ -388,8 +388,8 @@ export default function Home() {
         handleFile(file);
     };
 
-    const handleAnalyze = async () => {
-        const trimmedRole = targetRole.trim();
+    const handleAnalyze = async (roleOverride?: string) => {
+        const trimmedRole = (roleOverride ?? targetRole).trim();
 
         if (!selectedFile || !isRoleSelected) return;
 
@@ -745,7 +745,7 @@ export default function Home() {
                                     )}
                                 </AnimatePresence>
                             </div>
-                            {selectedFile && <TargetRoleSelector value={targetRole} onChange={setTargetRole} onSelectionChange={setIsRoleSelected} />}
+                            {selectedFile && <TargetRoleSelector value={targetRole} onChange={setTargetRole} onSelectionChange={setIsRoleSelected} onEnter={handleAnalyze} isSelected={isRoleSelected} />}
                             {selectedFile ? (
                                 <div className='mt-3 flex w-full gap-2.5'>
                                     <button
