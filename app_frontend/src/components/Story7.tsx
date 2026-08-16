@@ -275,6 +275,7 @@ export default function Story7() {
     };
 
     const handleAnalyzeAgain = () => {
+        sessionStorage.removeItem('story-current');
         navigate('/');
     };
 
