@@ -384,14 +384,18 @@ export default function Story7() {
                     className='relative overflow-visible rounded-4xl border border-zinc-200 bg-white shadow-[0_30px_80px_rgba(0,0,0,.07)] transition-colors duration-300 dark:border-white/8 dark:bg-zinc-950 dark:shadow-[0_30px_80px_rgba(0,0,0,.5)]'
                     style={{ padding: 'clamp(1.5rem,3vh,2.25rem) clamp(1.25rem,3vw,2.5rem)' }}
                 >
-                    <motion.div
-                        aria-hidden='true'
-                        className='pointer-events-none absolute inset-y-0 w-[45%] dark:opacity-60'
-                        style={{ background: 'linear-gradient(75deg, transparent 0%, rgba(0,0,0,0.035) 45%, transparent 100%)' }}
-                        initial={{ left: '-55%' }}
-                        animate={hasStarted ? { left: '110%' } : { left: '-55%' }}
-                        transition={{ duration: 1.1, delay: 3.8, ease: 'easeInOut' }}
-                    />
+                    <div className='pointer-events-none absolute inset-0 overflow-hidden rounded-4xl'>
+                        <motion.div
+                            aria-hidden='true'
+                            className='absolute inset-y-0 w-[45%] dark:opacity-60'
+                            style={{
+                                background: theme === 'dark' ? 'linear-gradient(75deg, transparent 0%, rgba(255,255,255,0.08) 45%, transparent 100%)' : 'linear-gradient(75deg, transparent 0%, rgba(0,0,0,0.035) 45%, transparent 100%)',
+                            }}
+                            initial={{ left: '-55%' }}
+                            animate={hasStarted ? { left: '110%' } : { left: '-55%' }}
+                            transition={{ duration: 0.6, delay: 3.8, ease: 'easeInOut' }}
+                        />
+                    </div>
 
                     {(['left', 'right'] as const).map((corner) => (
                         <motion.span
