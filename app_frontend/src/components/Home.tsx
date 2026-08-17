@@ -96,6 +96,7 @@ export default function Home() {
     const [showFileError, setShowFileError] = useState(false);
     const [analysisError, setAnalysisError] = useState('');
     const fileErrorTimeoutRef = useRef<number | null>(null);
+    const dragCounterRef = useRef(0);
     const [targetRole, setTargetRole] = useState('');
     const [isRoleSelected, setIsRoleSelected] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -369,22 +370,52 @@ export default function Home() {
         handleFile(file);
     };
 
+    const handleDragEnter = (event: React.DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+
+        if (selectedFile || isAnalyzing) return;
+        if (!event.dataTransfer.types.includes('Files')) return;
+
+        dragCounterRef.current += 1;
+        setIsDragging(true);
+    };
+
     const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
         event.preventDefault();
+
+        if (selectedFile || isAnalyzing) return;
+        if (!event.dataTransfer.types.includes('Files')) return;
+
+        event.dataTransfer.dropEffect = 'copy';
         setIsDragging(true);
     };
 
     const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
         event.preventDefault();
-        setIsDragging(false);
+
+        if (selectedFile || isAnalyzing) return;
+        if (!event.dataTransfer.types.includes('Files')) return;
+
+        dragCounterRef.current -= 1;
+
+        if (dragCounterRef.current <= 0) {
+            dragCounterRef.current = 0;
+            setIsDragging(false);
+        }
     };
 
     const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
         event.preventDefault();
+
+        dragCounterRef.current = 0;
         setIsDragging(false);
 
+        if (selectedFile || isAnalyzing) return;
+
         const file = event.dataTransfer.files?.[0];
+
         if (!file) return;
+
         handleFile(file);
     };
 
@@ -478,7 +509,13 @@ export default function Home() {
     };
 
     return (
-        <div className='h-screen w-full overflow-hidden select-none bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 antialiased'>
+        <div
+            className='h-screen w-full overflow-hidden select-none bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 antialiased'
+            onDragEnter={!selectedFile && !isAnalyzing ? handleDragEnter : undefined}
+            onDragOver={!selectedFile && !isAnalyzing ? handleDragOver : undefined}
+            onDragLeave={!selectedFile && !isAnalyzing ? handleDragLeave : undefined}
+            onDrop={!selectedFile && !isAnalyzing ? handleDrop : undefined}
+        >
             <AnimatePresence mode='wait'>
                 {isAnalyzing && (
                     <motion.div
@@ -694,9 +731,6 @@ export default function Home() {
                                     fileInputRef.current?.click();
                                 }
                             }}
-                            onDragOver={!selectedFile ? handleDragOver : undefined}
-                            onDragLeave={!selectedFile ? handleDragLeave : undefined}
-                            onDrop={!selectedFile ? handleDrop : undefined}
                             className={`group mt-6 flex min-h-55 flex-col items-center justify-center rounded-2xl border-2 border-dashed px-8 py-7 text-center transition-all duration-200 ${
                                 selectedFile
                                     ? 'cursor-default border-zinc-200 bg-white/50 dark:border-zinc-800 dark:bg-zinc-900/40'
