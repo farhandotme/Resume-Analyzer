@@ -146,6 +146,21 @@ export default function Home() {
     ];
 
     useEffect(() => {
+        if (!isAnalyzing) return;
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            event.preventDefault();
+            event.stopPropagation();
+        };
+
+        window.addEventListener('keydown', handleKeyDown, true);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown, true);
+        };
+    }, [isAnalyzing]);
+
+    useEffect(() => {
         const interval = window.setInterval(() => {
             setHeadlineIndex((current) => (current + 1) % headlinePhrases.length);
         }, 3200);
@@ -527,7 +542,7 @@ export default function Home() {
                         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                         role='status'
                         aria-live='polite'
-                        className='fixed inset-0 z-100 flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-white dark:bg-zinc-950 px-6 text-zinc-900 dark:text-zinc-100 font-sans'
+                        className='fixed inset-0 z-100 flex h-screen w-full select-none flex-col items-center justify-center overflow-hidden bg-white dark:bg-zinc-950 px-6 text-zinc-900 dark:text-zinc-100 font-sans'
                     >
                         <div data-gsap='status' className='absolute left-6 top-6 z-20 flex items-center gap-2'>
                             <span className='h-1.5 w-1.5 rounded-full bg-zinc-500 dark:bg-zinc-400' />
