@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { AlertCircle, ArrowLeft, ArrowUp, FileText, Moon, Paperclip, Sparkles, SunMedium, X } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ArrowUp, FileText, Moon, Plus, Sparkles, SunMedium } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme.ts';
@@ -234,11 +234,19 @@ export default function Chat() {
     };
 
     const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setInput(event.target.value);
-        if (textareaRef.current) {
-            textareaRef.current.style.height = 'auto';
-            textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
-        }
+        const value = event.target.value;
+
+        setInput(value);
+
+        if (!textareaRef.current) return;
+
+        textareaRef.current.style.height = 'auto';
+
+        const minHeight = 44;
+        const maxHeight = 160;
+        const nextHeight = Math.min(Math.max(textareaRef.current.scrollHeight, minHeight), maxHeight);
+
+        textareaRef.current.style.height = `${nextHeight}px`;
     };
 
     const sendMessage = async () => {
@@ -248,7 +256,7 @@ export default function Chat() {
         setIsSending(true);
         setInput('');
         if (textareaRef.current) {
-            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = '44px';
         }
 
         const userMessage: Message = {
@@ -343,21 +351,49 @@ export default function Chat() {
             <header className='absolute inset-x-0 top-0 z-20'>
                 <div aria-hidden='true' className='pointer-events-none absolute inset-x-0 top-0 h-28 bg-linear-to-b from-white/85 via-white/35 to-transparent dark:from-black dark:via-black/70 dark:to-transparent' />
 
-                <div className='relative z-10 mx-auto flex h-16 w-full max-w-3xl items-center justify-between px-6'>
-                    <button type='button' onClick={() => navigate('/')} className='group inline-flex cursor-pointer items-center gap-1.5 text-sm font-medium text-zinc-500 transition-colors duration-200 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100'>
-                        <ArrowLeft className='h-4 w-4 -translate-x-0.5 transition-transform duration-300 group-hover:-translate-x-1' strokeWidth={1.8} />
+                <div className='relative z-10 mx-auto flex h-16 w-full max-w-4xl items-center justify-between px-5 sm:px-6'>
+                    <div className='flex min-w-0 items-center gap-4'>
+                        <button type='button' onClick={() => navigate('/')} className='group inline-flex shrink-0 cursor-pointer items-center gap-1.5 text-sm font-medium text-zinc-500 transition-colors duration-200 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100'>
+                            <ArrowLeft className='h-4 w-4 -translate-x-0.5 transition-transform duration-300 group-hover:-translate-x-1' strokeWidth={1.8} />
 
-                        <span className='select-none'>Home</span>
-                    </button>
+                            <span className='select-none'>Home</span>
+                        </button>
 
-                    <button
-                        type='button'
-                        onClick={toggleTheme}
-                        aria-label='Toggle theme'
-                        className='flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-zinc-200 bg-white/70 text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800 dark:bg-black/70 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-black dark:hover:text-zinc-100'
-                    >
-                        {theme === 'light' ? <Moon className='h-4.25 w-4.25' strokeWidth={1.8} /> : <SunMedium className='h-4.25 w-4.25' strokeWidth={1.8} />}
-                    </button>
+                        {selectedFile && (
+                            <>
+                                <div className='h-4 w-px bg-zinc-200 dark:bg-zinc-800' />
+
+                                <div className='flex min-w-0 items-center gap-2.5'>
+                                    <FileText className='h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500' strokeWidth={1.6} />
+
+                                    <span className='max-w-45 truncate text-[13px] font-medium text-zinc-700 dark:text-zinc-300 sm:max-w-65'>{selectedFile.name}</span>
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    <div className='flex items-center gap-2'>
+                        {selectedFile && (
+                            <button
+                                type='button'
+                                onClick={removeFile}
+                                className='inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg px-3 text-[13px] font-medium text-zinc-500 transition-colors duration-200 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
+                            >
+                                <Plus className='h-4 w-4' strokeWidth={1.8} />
+
+                                <span className='hidden sm:inline'>New chat</span>
+                            </button>
+                        )}
+
+                        <button
+                            type='button'
+                            onClick={toggleTheme}
+                            aria-label='Toggle theme'
+                            className='flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-zinc-200 bg-white/70 text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800 dark:bg-black/70 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-black dark:hover:text-zinc-100'
+                        >
+                            {theme === 'light' ? <Moon className='h-4.25 w-4.25' strokeWidth={1.8} /> : <SunMedium className='h-4.25 w-4.25' strokeWidth={1.8} />}
+                        </button>
+                    </div>
                 </div>
             </header>
 
@@ -532,7 +568,6 @@ export default function Chat() {
                                                                 transition={{ duration: 0.9, repeat: Infinity, ease: 'linear' }}
                                                                 className='h-3.5 w-3.5 rounded-full border-2 border-zinc-300 border-t-zinc-700 dark:border-zinc-700 dark:border-t-zinc-200'
                                                             />
-
                                                             <span>Checking resume</span>
                                                         </div>
                                                     )}
@@ -547,44 +582,16 @@ export default function Chat() {
                         <motion.div key='chat' initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className='flex h-full min-h-0 flex-col pt-16'>
                             <div className='min-h-0 flex-1 overflow-y-auto'>
                                 <div className='mx-auto flex w-full max-w-3xl flex-col gap-7 px-4 pb-8 pt-6 sm:px-6'>
-                                    {/* Active Document Info Card */}
-                                    <div className='group mb-2 flex items-center justify-between rounded-2xl border border-zinc-200/60 bg-zinc-50/50 p-3 pr-4 shadow-sm backdrop-blur-xl transition-all duration-200 hover:bg-zinc-50 dark:border-zinc-800/60 dark:bg-zinc-900/50 dark:hover:bg-zinc-900/80'>
-                                        <div className='flex items-center gap-3.5'>
-                                            <div className='flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-zinc-200/50 bg-white text-zinc-600 shadow-sm dark:border-zinc-700/50 dark:bg-zinc-950 dark:text-zinc-300'>
-                                                <FileText className='h-5 w-5' strokeWidth={1.5} />
-                                            </div>
-                                            <div className='min-w-0'>
-                                                <p className='truncate text-[14px] font-medium tracking-tight text-zinc-900 dark:text-zinc-100'>{selectedFile.name}</p>
-                                                <div className='mt-0.5 flex items-center gap-1.5'>
-                                                    <span className='relative flex h-1.5 w-1.5'>
-                                                        <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60 dark:bg-emerald-500' />
-                                                        <span className='relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400' />
-                                                    </span>
-                                                    <p className='font-mono text-[10px] uppercase tracking-[0.14em] text-emerald-600 dark:text-emerald-500'>Ready to chat</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <button
-                                            type='button'
-                                            onClick={removeFile}
-                                            aria-label='Close document'
-                                            className='flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-400 transition-colors duration-200 hover:bg-zinc-200/60 hover:text-zinc-700 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-200'
-                                        >
-                                            <X className='h-4 w-4' strokeWidth={1.5} />
-                                        </button>
-                                    </div>
-
                                     {messages.map((message) => (
                                         <motion.div key={message.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
                                             {message.role === 'assistant' ? (
-                                                <div className='flex max-w-[88%] items-start gap-4'>
-                                                    <div className='mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-200/60 bg-linear-to-b from-zinc-50 to-zinc-100 text-zinc-600 shadow-sm dark:border-zinc-800/60 dark:from-zinc-900 dark:to-zinc-950 dark:text-zinc-300'>
-                                                        <Sparkles className='h-4 w-4' strokeWidth={1.5} />
-                                                    </div>
-                                                    <div className='space-y-2 pt-1.5 text-[15.5px] leading-relaxed text-zinc-800 dark:text-zinc-200'>{message.content}</div>
+                                                <div className='max-w-[88%]'>
+                                                    <div className='mb-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-600'>Resume Intelligence</div>
+
+                                                    <div className='text-[15.5px] leading-relaxed text-zinc-800 dark:text-zinc-200'>{message.content}</div>
                                                 </div>
                                             ) : (
-                                                <div className='max-w-[85%] rounded-3xl rounded-br-sm bg-zinc-900 px-5 py-3 text-[15px] leading-relaxed text-white shadow-sm dark:bg-zinc-100 dark:text-black'>{message.content}</div>
+                                                <div className='max-w-[85%] rounded-2xl rounded-br-sm border border-zinc-200 bg-zinc-100 px-5 py-3 text-[15px] leading-relaxed text-zinc-800 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100'>{message.content}</div>
                                             )}
                                         </motion.div>
                                     ))}
@@ -626,16 +633,8 @@ export default function Chat() {
                                 </div>
                             </div>
 
-                            <div className='mx-auto w-full max-w-3xl shrink-0 px-4 pb-6 pt-2 sm:px-6'>
-                                <div className='relative flex w-full items-end gap-2 rounded-[28px] border border-zinc-200 bg-white p-1.5 shadow-[0_2px_16px_-4px_rgba(0,0,0,0.05)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_4px_24px_-4px_rgba(0,0,0,0.1)] dark:border-zinc-800 dark:bg-zinc-950 dark:focus-within:border-zinc-700'>
-                                    <button
-                                        type='button'
-                                        aria-label='Attach file'
-                                        className='mb-1 ml-1 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-zinc-400 transition-colors duration-200 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
-                                    >
-                                        <Paperclip className='h-5 w-5' strokeWidth={1.5} />
-                                    </button>
-
+                            <div className='mx-auto w-full max-w-3xl shrink-0 px-4 pb-5 pt-3 sm:px-6'>
+                                <div className='group relative flex w-full items-end gap-2 rounded-[20px] border border-zinc-200 bg-white px-2 py-2 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.12)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.16)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.7)] dark:focus-within:border-zinc-700 dark:focus-within:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.85)]'>
                                     <textarea
                                         ref={textareaRef}
                                         value={input}
@@ -644,7 +643,7 @@ export default function Chat() {
                                         rows={1}
                                         disabled={isSending}
                                         placeholder='Ask anything about your resume...'
-                                        className='min-h-11 w-full resize-none bg-transparent py-2.5 text-[15px] leading-relaxed text-zinc-900 outline-none placeholder:text-zinc-400 disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100 dark:placeholder:text-zinc-600'
+                                        className='chat-composer-scrollbar min-h-11 max-h-40 flex-1 resize-none overflow-y-auto bg-transparent px-3 py-2.5 text-[15px] leading-6 text-zinc-900 outline-none placeholder:text-zinc-400 disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100 dark:placeholder:text-zinc-600'
                                         style={{ height: '44px' }}
                                     />
 
@@ -653,13 +652,13 @@ export default function Chat() {
                                         onClick={() => void sendMessage()}
                                         disabled={!input.trim() || isSending}
                                         aria-label='Send message'
-                                        className='mb-1 mr-1 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-black text-white shadow-sm transition-all duration-200 hover:scale-105 hover:bg-zinc-800 disabled:scale-100 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-900 dark:disabled:text-zinc-600'
+                                        className='mb-0.5 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-zinc-950 text-white transition-all duration-200 hover:bg-zinc-800 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-900 dark:disabled:text-zinc-600'
                                     >
-                                        <ArrowUp className='h-5 w-5' strokeWidth={1.5} />
+                                        <ArrowUp className='h-4.25 w-4.25' strokeWidth={1.8} />
                                     </button>
                                 </div>
 
-                                <p className='mt-3 text-center font-mono text-[10px] uppercase tracking-[0.15em] text-zinc-400 dark:text-zinc-600'>AI can make mistakes · verify important information</p>
+                                <p className='mt-2.5 text-center font-mono text-[9px] uppercase tracking-widest text-zinc-400 dark:text-zinc-600'>AI can make mistakes · verify important information</p>
                             </div>
                         </motion.div>
                     )}
