@@ -525,7 +525,7 @@ export default function Home() {
 
     return (
         <div
-            className='h-screen w-full overflow-hidden select-none bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 antialiased'
+            className='h-screen w-full overflow-hidden bg-white text-zinc-900 selection:bg-[#EAF5FF] selection:text-[#3999FF] dark:bg-black dark:text-zinc-100 dark:selection:bg-[#010B1B] dark:selection:text-[#3999FF] antialiased'
             onDragEnter={!selectedFile && !isAnalyzing ? handleDragEnter : undefined}
             onDragOver={!selectedFile && !isAnalyzing ? handleDragOver : undefined}
             onDragLeave={!selectedFile && !isAnalyzing ? handleDragLeave : undefined}
@@ -684,9 +684,9 @@ export default function Home() {
             </AnimatePresence>
             <motion.header className={`fixed inset-x-0 top-0 z-50 ${isAnalyzing ? 'pointer-events-none' : ''}`} animate={{ opacity: isAnalyzing ? 0 : 1, scale: prefersReducedMotion ? 1 : isAnalyzing ? 0.98 : 1 }} transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }} aria-hidden={isAnalyzing}>
                 <div className='mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8'>
-                    <div className='inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/80 backdrop-blur-md px-3 py-1.5 dark:border-zinc-800 dark:bg-zinc-900/80'>
+                    <div className='inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/80 backdrop-blur-md px-3 py-1.5 dark:border-zinc-800 dark:bg-zinc-900/80 select-none'>
                         <span className='h-1.5 w-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100' />
-                        <span className='font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-600 dark:text-zinc-400'>AI Resume Analysis</span>
+                        <span className='font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-600 dark:text-zinc-400'>Resume Intelligence</span>
                     </div>
                     <div className='flex items-center gap-2'>
                         <button
@@ -770,7 +770,7 @@ export default function Home() {
                                     fileInputRef.current?.click();
                                 }
                             }}
-                            className={`group mt-6 flex min-h-55 flex-col items-center justify-center rounded-2xl border-2 border-dashed px-8 py-7 text-center transition-all duration-200 ${
+                            className={`group mt-6 flex min-h-55 select-none flex-col items-center justify-center rounded-2xl border-2 border-dashed px-8 py-7 text-center transition-all duration-200 ${
                                 selectedFile
                                     ? 'cursor-default border-zinc-200 bg-white/50 dark:border-zinc-800 dark:bg-zinc-900/40'
                                     : isDragging
