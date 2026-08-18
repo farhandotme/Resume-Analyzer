@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ArrowLeft, ArrowUp, FileText, Moon, Paperclip, SunMedium, X } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ArrowUp, FileText, Moon, Paperclip, SunMedium, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme.ts';
@@ -24,6 +24,8 @@ export default function Chat() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isDragging, setIsDragging] = useState(false);
     const [wordIndex, setWordIndex] = useState(0);
+    const [showFileError, setShowFileError] = useState(false);
+    const fileErrorTimeoutRef = useRef<number | null>(null);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({
@@ -31,6 +33,14 @@ export default function Chat() {
             block: 'end',
         });
     }, [messages]);
+
+    useEffect(() => {
+        return () => {
+            if (fileErrorTimeoutRef.current !== null) {
+                window.clearTimeout(fileErrorTimeoutRef.current);
+            }
+        };
+    }, []);
 
     useEffect(() => {
         if (prefersReducedMotion || selectedFile) return;
@@ -65,7 +75,22 @@ export default function Chat() {
     }, []);
 
     const handleFile = (file: File) => {
-        if (file.type !== 'application/pdf') return;
+        if (file.type !== 'application/pdf') {
+            setShowFileError(true);
+            if (fileErrorTimeoutRef.current !== null) {
+                window.clearTimeout(fileErrorTimeoutRef.current);
+            }
+            fileErrorTimeoutRef.current = window.setTimeout(() => {
+                setShowFileError(false);
+                fileErrorTimeoutRef.current = null;
+            }, 3500);
+            return;
+        }
+        setShowFileError(false);
+        if (fileErrorTimeoutRef.current !== null) {
+            window.clearTimeout(fileErrorTimeoutRef.current);
+            fileErrorTimeoutRef.current = null;
+        }
         setSelectedFile(file);
         setMessages([
             {
@@ -300,11 +325,31 @@ export default function Chat() {
                                                         </motion.div>
                                                     </div>
 
-                                                    <h3 className='mt-7 text-xl font-medium tracking-tight text-zinc-900 dark:text-zinc-100'>{isDragging ? 'Drop your resume to begin' : 'Upload your resume'}</h3>
+                                                    <h3 className='mt-6 text-xl font-medium tracking-tight text-zinc-900 dark:text-zinc-100'>{isDragging ? 'Drop your resume to begin' : 'Upload your resume'}</h3>
 
-                                                    <p className='mt-2.5 text-sm font-light text-zinc-500 dark:text-zinc-400'>PDF only · drag and drop or click to browse</p>
+                                                    <p className='mt-2 text-sm font-light text-zinc-500 dark:text-zinc-400'>PDF only · drag and drop or click to browse</p>
 
-                                                    <div className='mt-8 inline-flex items-center gap-2.5 rounded-full border border-zinc-200 bg-white/50 px-5 py-2.5 text-sm font-medium text-zinc-600 shadow-sm backdrop-blur-md transition-all duration-300 group-hover:border-zinc-300 group-hover:bg-white group-hover:text-zinc-950 group-hover:shadow-md dark:border-zinc-800 dark:bg-black/50 dark:text-zinc-400 dark:group-hover:border-zinc-700 dark:group-hover:bg-zinc-900 dark:group-hover:text-zinc-100'>
+                                                    <AnimatePresence>
+                                                        {showFileError && (
+                                                            <motion.div
+                                                                initial={{ opacity: 0, scale: 0.92 }}
+                                                                animate={{ opacity: 1, scale: 1 }}
+                                                                exit={{ opacity: 0, scale: 0.92 }}
+                                                                transition={{ duration: 0.25, ease: 'easeOut' }}
+                                                                className='mt-3 mx-auto flex w-fit items-center justify-center gap-3 rounded-lg border border-rose-200/70 bg-rose-50/70 px-4 py-2 dark:border-rose-900/40 dark:bg-rose-950/30'
+                                                            >
+                                                                <AlertCircle className='h-3.5 w-3.5 shrink-0 text-rose-500 dark:text-rose-400' />
+
+                                                                <div className='text-left'>
+                                                                    <p className='mb-0.5 text-[13px] font-medium leading-tight text-rose-700 dark:text-rose-300'>Invalid file type</p>
+
+                                                                    <p className='text-[12px] leading-tight text-rose-500/90 dark:text-rose-400/80'>Please upload a PDF file only</p>
+                                                                </div>
+                                                            </motion.div>
+                                                        )}
+                                                    </AnimatePresence>
+
+                                                    <div className='mt-5 inline-flex items-center gap-2.5 rounded-full border border-zinc-200 bg-white/50 px-5 py-2.5 text-sm font-medium text-zinc-600 shadow-sm backdrop-blur-md transition-all duration-300 group-hover:border-zinc-300 group-hover:bg-white group-hover:text-zinc-950 group-hover:shadow-md dark:border-zinc-800 dark:bg-black/50 dark:text-zinc-400 dark:group-hover:border-zinc-700 dark:group-hover:bg-zinc-900 dark:group-hover:text-zinc-100'>
                                                         <span>Choose PDF</span>
 
                                                         <ArrowUp className='h-4 w-4 transition-transform duration-300 ease-out' strokeWidth={1.8} />
