@@ -176,3 +176,37 @@ html.dark #root {
         opacity: 0;
     }
 }
+
+.chat-composer-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.chat-composer-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.chat-composer-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(161, 161, 170, 0.35);
+    border-radius: 9999px;
+}
+
+.chat-composer-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(161, 161, 170, 0.55);
+}
+
+.dark .chat-composer-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(113, 113, 122, 0.45);
+}
+
+.dark .chat-composer-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(161, 161, 170, 0.65);
+}
+
+.chat-composer-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(161, 161, 170, 0.35) transparent;
+}
+
+.dark .chat-composer-scrollbar {
+    scrollbar-color: rgba(113, 113, 122, 0.45) transparent;
+}
