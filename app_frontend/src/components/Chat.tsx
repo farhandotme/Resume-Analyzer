@@ -1,4 +1,4 @@
-import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring } from 'framer-motion';
+import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'framer-motion';
 import { AlertCircle, ArrowLeft, ArrowUp, FileText, Moon, Plus, Sparkles, SunMedium } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -55,6 +55,10 @@ export default function Chat() {
     const caretX = useMotionValue(0);
     const caretY = useMotionValue(0);
     const caretOpacity = useMotionValue(0);
+    const caretBlinkOpacity = useMotionValue(1);
+    const combinedCaretOpacity = useTransform(() => {
+        return caretOpacity.get() * caretBlinkOpacity.get();
+    });
 
     const springCaretX = useSpring(caretX, {
         stiffness: 500,
@@ -106,6 +110,35 @@ export default function Chat() {
             block: 'end',
         });
     }, [messages]);
+
+    useEffect(() => {
+        if (!selectedFile) return;
+
+        requestAnimationFrame(() => {
+            textareaRef.current?.focus();
+            caretBlinkOpacity.set(1);
+
+            requestAnimationFrame(() => {
+                updateSmoothCaret();
+            });
+        });
+    }, [selectedFile]);
+
+    useEffect(() => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+        let blinkOn = true;
+
+        const interval = window.setInterval(() => {
+            if (document.activeElement !== textarea) return;
+            blinkOn = !blinkOn;
+            caretBlinkOpacity.set(blinkOn ? 1 : 0);
+        }, 530);
+
+        return () => {
+            window.clearInterval(interval);
+        };
+    }, []);
 
     useEffect(() => {
         return () => {
@@ -418,9 +451,17 @@ export default function Chat() {
 
         setIsSending(true);
         setInput('');
+
         if (textareaRef.current) {
             textareaRef.current.style.height = '24px';
+            textareaRef.current.setSelectionRange(0, 0);
         }
+
+        caretBlinkOpacity.set(1);
+
+        requestAnimationFrame(() => {
+            updateSmoothCaret();
+        });
 
         const userMessage: Message = {
             id: Date.now(),
@@ -469,6 +510,16 @@ export default function Chat() {
             ]);
         } finally {
             setIsSending(false);
+
+            requestAnimationFrame(() => {
+                textareaRef.current?.focus();
+
+                caretBlinkOpacity.set(1);
+
+                requestAnimationFrame(() => {
+                    updateSmoothCaret();
+                });
+            });
         }
     };
 
@@ -798,10 +849,12 @@ export default function Chat() {
                                             onChange={handleInputChange}
                                             onKeyDown={handleKeyDown}
                                             onFocus={() => {
+                                                caretBlinkOpacity.set(1);
                                                 requestAnimationFrame(updateSmoothCaret);
                                             }}
                                             onBlur={() => {
                                                 caretOpacity.set(0);
+                                                caretBlinkOpacity.set(0);
                                             }}
                                             rows={1}
                                             disabled={isSending}
@@ -810,7 +863,7 @@ export default function Chat() {
                                             style={{ height: '24px' }}
                                         />
 
-                                        <motion.div aria-hidden='true' className='pointer-events-none absolute left-0 top-px z-20 h-[1.05em] w-[1.5px] rounded-full bg-zinc-900 dark:bg-zinc-100' style={{ x: springCaretX, y: springCaretY, opacity: caretOpacity }} />
+                                        <motion.div aria-hidden='true' className='pointer-events-none absolute left-0 top-px z-20 h-[1.05em] w-[1.5px] rounded-full bg-zinc-900 dark:bg-zinc-100' style={{ x: springCaretX, y: springCaretY, opacity: combinedCaretOpacity }} />
                                     </div>
                                     <button
                                         type='button'
