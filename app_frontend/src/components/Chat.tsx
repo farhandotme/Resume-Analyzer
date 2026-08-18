@@ -40,6 +40,30 @@ export default function Chat() {
         return () => clearInterval(interval);
     }, [prefersReducedMotion, selectedFile]);
 
+    useEffect(() => {
+        const html = document.documentElement;
+        const body = document.body;
+
+        const previousHtmlOverflow = html.style.overflow;
+        const previousBodyOverflow = body.style.overflow;
+        const previousHtmlOverscroll = html.style.overscrollBehavior;
+        const previousBodyOverscroll = body.style.overscrollBehavior;
+
+        html.style.overflow = 'hidden';
+        body.style.overflow = 'hidden';
+
+        html.style.overscrollBehavior = 'none';
+        body.style.overscrollBehavior = 'none';
+
+        return () => {
+            html.style.overflow = previousHtmlOverflow;
+            body.style.overflow = previousBodyOverflow;
+
+            html.style.overscrollBehavior = previousHtmlOverscroll;
+            body.style.overscrollBehavior = previousBodyOverscroll;
+        };
+    }, []);
+
     const handleFile = (file: File) => {
         if (file.type !== 'application/pdf') return;
         setSelectedFile(file);
@@ -124,7 +148,7 @@ export default function Chat() {
     };
 
     return (
-        <main className='relative flex h-dvh w-full flex-col overflow-hidden bg-white text-zinc-950 dark:bg-black dark:text-zinc-100'>
+        <main className='relative flex h-dvh w-full flex-col overflow-hidden overscroll-none bg-white text-zinc-950 dark:bg-black dark:text-zinc-100'>
             {!selectedFile && (
                 <div className='pointer-events-none fixed inset-0 z-0 overflow-hidden'>
                     <div className='absolute inset-0 bg-[radial-gradient(ellipse_68%_52%_at_50%_32%,rgba(228,228,231,0.9)_0%,rgba(244,244,245,0.65)_34%,rgba(250,250,250,0.25)_56%,rgba(255,255,255,0)_76%)] dark:bg-[radial-gradient(ellipse_65%_55%_at_50%_32%,transparent_0%,black_78%)]' />
