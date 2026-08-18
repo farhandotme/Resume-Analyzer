@@ -525,7 +525,7 @@ export default function Home() {
 
     return (
         <div
-            className='h-screen w-full overflow-hidden select-none bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 antialiased'
+            className='h-screen w-full overflow-hidden bg-white text-zinc-900 selection:bg-[#EAF5FF] selection:text-[#3999FF] dark:bg-black dark:text-zinc-100 dark:selection:bg-[#010B1B] dark:selection:text-[#3999FF] antialiased'
             onDragEnter={!selectedFile && !isAnalyzing ? handleDragEnter : undefined}
             onDragOver={!selectedFile && !isAnalyzing ? handleDragOver : undefined}
             onDragLeave={!selectedFile && !isAnalyzing ? handleDragLeave : undefined}
@@ -684,11 +684,34 @@ export default function Home() {
             </AnimatePresence>
             <motion.header className={`fixed inset-x-0 top-0 z-50 ${isAnalyzing ? 'pointer-events-none' : ''}`} animate={{ opacity: isAnalyzing ? 0 : 1, scale: prefersReducedMotion ? 1 : isAnalyzing ? 0.98 : 1 }} transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }} aria-hidden={isAnalyzing}>
                 <div className='mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8'>
-                    <div className='inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/80 backdrop-blur-md px-3 py-1.5 dark:border-zinc-800 dark:bg-zinc-900/80'>
+                    <div className='inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/80 backdrop-blur-md px-3 py-1.5 dark:border-zinc-800 dark:bg-zinc-900/80 select-none'>
                         <span className='h-1.5 w-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100' />
-                        <span className='font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-600 dark:text-zinc-400'>AI Resume Analysis</span>
+                        <span className='font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-600 dark:text-zinc-400'>Resume Intelligence</span>
                     </div>
                     <div className='flex items-center gap-2'>
+                        <button
+                            type='button'
+                            aria-label="Let's chat with AI"
+                            onClick={() => navigate('/chat')}
+                            className='group relative flex h-10 cursor-pointer items-center gap-2 overflow-hidden rounded-lg border border-zinc-200 bg-white px-3.5 text-sm font-medium text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-zinc-100'
+                        >
+                            <span className='relative z-10'>Let's chat</span>
+
+                            <span className='relative z-10 flex items-center'>
+                                <span className='flex w-0 items-center overflow-hidden opacity-0 transition-all duration-300 ease-out group-hover:w-1.5 group-hover:opacity-100'>
+                                    <span className='h-px w-1.5 bg-current' />
+                                </span>
+
+                                <ChevronRight className='h-4 w-4 shrink-0 -translate-x-0.5 transition-transform duration-300 ease-out group-hover:translate-x-0' strokeWidth={1.8} />
+                            </span>
+
+                            <span
+                                aria-hidden='true'
+                                className='pointer-events-none absolute inset-y-0 -left-1/2 z-0 w-1/3 -skew-x-12 bg-linear-to-r from-transparent via-zinc-500/20 to-transparent opacity-0 dark:via-white/10'
+                                style={{ animation: 'chat-shine 3.5s ease-in-out infinite', animationDelay: '1.5s' }}
+                            />
+                        </button>
+
                         <a
                             href='https://github.com/faridhussain/Resume-Analyzer'
                             target='_blank'
@@ -701,6 +724,7 @@ export default function Home() {
                                 <path d='M9 18c-4.51 2-5-2-7-2' />
                             </svg>
                         </a>
+
                         <button
                             type='button'
                             aria-label='Toggle Theme'
@@ -746,7 +770,7 @@ export default function Home() {
                                     fileInputRef.current?.click();
                                 }
                             }}
-                            className={`group mt-6 flex min-h-55 flex-col items-center justify-center rounded-2xl border-2 border-dashed px-8 py-7 text-center transition-all duration-200 ${
+                            className={`group mt-6 flex min-h-55 select-none flex-col items-center justify-center rounded-2xl border-2 border-dashed px-8 py-7 text-center transition-all duration-200 ${
                                 selectedFile
                                     ? 'cursor-default border-zinc-200 bg-white/50 dark:border-zinc-800 dark:bg-zinc-900/40'
                                     : isDragging

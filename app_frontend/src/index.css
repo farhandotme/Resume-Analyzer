@@ -150,3 +150,29 @@ html.dark #root {
     mix-blend-mode: normal;
     z-index: 1;
 }
+
+@keyframes chat-shine {
+    0% {
+        left: -50%;
+        opacity: 0;
+    }
+
+    8% {
+        opacity: 0.8;
+    }
+
+    25% {
+        left: 120%;
+        opacity: 0.8;
+    }
+
+    30% {
+        left: 140%;
+        opacity: 0;
+    }
+
+    100% {
+        left: 140%;
+        opacity: 0;
+    }
+}
