@@ -1,4 +1,4 @@
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring } from 'framer-motion';
 import { AlertCircle, ArrowLeft, ArrowUp, FileText, Moon, Plus, Sparkles, SunMedium } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -22,6 +22,23 @@ export default function Chat() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const caretMeasureRef = useRef<HTMLDivElement>(null);
+
+    const caretX = useMotionValue(0);
+    const caretY = useMotionValue(0);
+    const caretOpacity = useMotionValue(0);
+
+    const springCaretX = useSpring(caretX, {
+        stiffness: 500,
+        damping: 30,
+        mass: 0.5,
+    });
+
+    const springCaretY = useSpring(caretY, {
+        stiffness: 500,
+        damping: 30,
+        mass: 0.5,
+    });
     const fileErrorTimeoutRef = useRef<number | null>(null);
 
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -81,6 +98,37 @@ export default function Chat() {
 
             html.style.overscrollBehavior = previousHtmlOverscroll;
             body.style.overscrollBehavior = previousBodyOverscroll;
+        };
+    }, []);
+
+    useEffect(() => {
+        const textarea = textareaRef.current;
+
+        if (!textarea) return;
+
+        const update = () => {
+            if (document.activeElement === textarea) {
+                requestAnimationFrame(updateSmoothCaret);
+            }
+        };
+
+        const handleSelectionChange = () => {
+            if (document.activeElement !== textarea) return;
+
+            requestAnimationFrame(updateSmoothCaret);
+        };
+
+        textarea.addEventListener('click', update);
+        textarea.addEventListener('keyup', update);
+        textarea.addEventListener('scroll', update);
+
+        document.addEventListener('selectionchange', handleSelectionChange);
+
+        return () => {
+            textarea.removeEventListener('click', update);
+            textarea.removeEventListener('keyup', update);
+            textarea.removeEventListener('scroll', update);
+            document.removeEventListener('selectionchange', handleSelectionChange);
         };
     }, []);
 
@@ -229,8 +277,45 @@ export default function Chat() {
         setIsSending(false);
         setAnalysisError('');
         if (textareaRef.current) {
-            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = '24px';
         }
+    };
+
+    const updateSmoothCaret = () => {
+        const textarea = textareaRef.current;
+        const mirror = caretMeasureRef.current;
+
+        if (!textarea || !mirror) return;
+
+        const selectionStart = textarea.selectionStart ?? 0;
+        const selectionEnd = textarea.selectionEnd ?? 0;
+
+        if (selectionStart !== selectionEnd) {
+            caretOpacity.set(0);
+            return;
+        }
+
+        const textBeforeCaret = textarea.value.slice(0, selectionStart);
+
+        mirror.textContent = '';
+
+        const textNode = document.createTextNode(textBeforeCaret || '\u200b');
+        const marker = document.createElement('span');
+
+        marker.textContent = '\u200b';
+
+        mirror.appendChild(textNode);
+        mirror.appendChild(marker);
+
+        const mirrorRect = mirror.getBoundingClientRect();
+        const markerRect = marker.getBoundingClientRect();
+
+        const x = markerRect.left - mirrorRect.left;
+        const y = markerRect.top - mirrorRect.top - textarea.scrollTop;
+
+        caretX.set(x);
+        caretY.set(y);
+        caretOpacity.set(1);
     };
 
     const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -238,15 +323,22 @@ export default function Chat() {
 
         setInput(value);
 
-        if (!textareaRef.current) return;
+        const textarea = textareaRef.current;
 
-        textareaRef.current.style.height = 'auto';
+        if (!textarea) return;
 
-        const minHeight = 44;
+        textarea.style.height = 'auto';
+
+        const minHeight = 24;
         const maxHeight = 160;
-        const nextHeight = Math.min(Math.max(textareaRef.current.scrollHeight, minHeight), maxHeight);
 
-        textareaRef.current.style.height = `${nextHeight}px`;
+        const nextHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
+
+        textarea.style.height = `${nextHeight}px`;
+
+        requestAnimationFrame(() => {
+            updateSmoothCaret();
+        });
     };
 
     const sendMessage = async () => {
@@ -256,7 +348,7 @@ export default function Chat() {
         setIsSending(true);
         setInput('');
         if (textareaRef.current) {
-            textareaRef.current.style.height = '44px';
+            textareaRef.current.style.height = '24px';
         }
 
         const userMessage: Message = {
@@ -355,7 +447,6 @@ export default function Chat() {
                     <div className='flex min-w-0 items-center gap-4'>
                         <button type='button' onClick={() => navigate('/')} className='group inline-flex shrink-0 cursor-pointer items-center gap-1.5 text-sm font-medium text-zinc-500 transition-colors duration-200 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100'>
                             <ArrowLeft className='h-4 w-4 -translate-x-0.5 transition-transform duration-300 group-hover:-translate-x-1' strokeWidth={1.8} />
-
                             <span className='select-none'>Home</span>
                         </button>
 
@@ -365,7 +456,6 @@ export default function Chat() {
 
                                 <div className='flex min-w-0 items-center gap-2.5'>
                                     <FileText className='h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500' strokeWidth={1.6} />
-
                                     <span className='max-w-45 truncate text-[13px] font-medium text-zinc-700 dark:text-zinc-300 sm:max-w-65'>{selectedFile.name}</span>
                                 </div>
                             </>
@@ -380,7 +470,6 @@ export default function Chat() {
                                 className='inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg px-3 text-[13px] font-medium text-zinc-500 transition-colors duration-200 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
                             >
                                 <Plus className='h-4 w-4' strokeWidth={1.8} />
-
                                 <span className='hidden sm:inline'>New chat</span>
                             </button>
                         )}
@@ -526,7 +615,6 @@ export default function Chat() {
 
                                                                 <div className='text-left'>
                                                                     <p className='mb-0.5 text-[13px] font-medium leading-tight text-rose-700 dark:text-rose-300'>Invalid file type</p>
-
                                                                     <p className='text-[12px] leading-tight text-rose-500/90 dark:text-rose-400/80'>Please upload a PDF file only</p>
                                                                 </div>
                                                             </motion.div>
@@ -543,10 +631,8 @@ export default function Chat() {
                                                                 className='mx-auto mt-3 flex w-fit max-w-md items-center justify-center gap-3 rounded-lg border border-rose-200/70 bg-rose-50/70 px-4 py-2.5 text-left dark:border-rose-900/40 dark:bg-rose-950/30'
                                                             >
                                                                 <AlertCircle className='h-3.5 w-3.5 shrink-0 text-rose-500 dark:text-rose-400' strokeWidth={1.8} />
-
                                                                 <div>
                                                                     <p className='mb-0.5 text-[13px] font-medium leading-tight text-rose-700 dark:text-rose-300'>Invalid resume</p>
-
                                                                     <p className='text-[12px] leading-5 text-rose-500/90 dark:text-rose-400/80'>{analysisError}</p>
                                                                 </div>
                                                             </motion.div>
@@ -556,7 +642,6 @@ export default function Chat() {
                                                     {!isAnalyzingResume && (
                                                         <div className='mt-5 inline-flex items-center gap-2.5 rounded-full border border-zinc-200 bg-white/50 px-5 py-2.5 text-sm font-medium text-zinc-600 shadow-sm backdrop-blur-md transition-all duration-300 group-hover:border-zinc-300 group-hover:bg-white group-hover:text-zinc-950 group-hover:shadow-md dark:border-zinc-800 dark:bg-black/50 dark:text-zinc-400 dark:group-hover:border-zinc-700 dark:group-hover:bg-zinc-900 dark:group-hover:text-zinc-100'>
                                                             <span>Choose PDF</span>
-
                                                             <ArrowUp className='h-4 w-4 transition-transform duration-300 ease-out' strokeWidth={1.8} />
                                                         </div>
                                                     )}
@@ -587,7 +672,6 @@ export default function Chat() {
                                             {message.role === 'assistant' ? (
                                                 <div className='max-w-[88%]'>
                                                     <div className='mb-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-600'>Resume Intelligence</div>
-
                                                     <div className='text-[15.5px] leading-relaxed text-zinc-800 dark:text-zinc-200'>{message.content}</div>
                                                 </div>
                                             ) : (
@@ -633,28 +717,38 @@ export default function Chat() {
                                 </div>
                             </div>
 
-                            <div className='mx-auto w-full max-w-3xl shrink-0 px-4 pb-5 pt-3 sm:px-6'>
-                                <div className='group relative flex w-full items-end gap-2 rounded-[20px] border border-zinc-200 bg-white px-2 py-2 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.12)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.16)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.7)] dark:focus-within:border-zinc-700 dark:focus-within:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.85)]'>
-                                    <textarea
-                                        ref={textareaRef}
-                                        value={input}
-                                        onChange={handleInputChange}
-                                        onKeyDown={handleKeyDown}
-                                        rows={1}
-                                        disabled={isSending}
-                                        placeholder='Ask anything about your resume...'
-                                        className='chat-composer-scrollbar min-h-11 max-h-40 flex-1 resize-none overflow-y-auto bg-transparent px-3 py-2.5 text-[15px] leading-6 text-zinc-900 outline-none placeholder:text-zinc-400 disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100 dark:placeholder:text-zinc-600'
-                                        style={{ height: '44px' }}
-                                    />
+                            <div className='mx-auto w-full max-w-3xl shrink-0 px-4 pb-3 pt-1.5 sm:px-6'>
+                                <div className='group relative flex w-full items-center gap-2 rounded-[22px] border border-zinc-200 bg-white px-3.5 py-2.5 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.12)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.16)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.7)] dark:focus-within:border-zinc-700 dark:focus-within:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.85)]'>
+                                    <div className='relative flex min-h-6 min-w-0 flex-1 items-center'>
+                                        <div ref={caretMeasureRef} aria-hidden='true' className='pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap wrap-break-words text-[15px] leading-6 text-transparent' />
+                                        <textarea
+                                            ref={textareaRef}
+                                            value={input}
+                                            onChange={handleInputChange}
+                                            onKeyDown={handleKeyDown}
+                                            onFocus={() => {
+                                                requestAnimationFrame(updateSmoothCaret);
+                                            }}
+                                            onBlur={() => {
+                                                caretOpacity.set(0);
+                                            }}
+                                            rows={1}
+                                            disabled={isSending}
+                                            placeholder='Ask anything about your resume...'
+                                            className='chat-composer-scrollbar relative z-10 my-auto max-h-40 min-h-6 w-full resize-none overflow-y-auto caret-transparent bg-transparent p-0 text-[15px] leading-6 text-zinc-900 outline-none placeholder:text-zinc-400 disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100 dark:placeholder:text-zinc-600'
+                                            style={{ height: '24px' }}
+                                        />
 
+                                        <motion.div aria-hidden='true' className='pointer-events-none absolute left-0 top-px z-20 h-[1.05em] w-[1.5px] rounded-full bg-zinc-900 dark:bg-zinc-100' style={{ x: springCaretX, y: springCaretY, opacity: caretOpacity }} />
+                                    </div>
                                     <button
                                         type='button'
                                         onClick={() => void sendMessage()}
                                         disabled={!input.trim() || isSending}
                                         aria-label='Send message'
-                                        className='mb-0.5 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-zinc-950 text-white transition-all duration-200 hover:bg-zinc-800 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-900 dark:disabled:text-zinc-600'
+                                        className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-zinc-950 text-white transition-all duration-200 hover:bg-zinc-800 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-900 dark:disabled:text-zinc-600'
                                     >
-                                        <ArrowUp className='h-4.25 w-4.25' strokeWidth={1.8} />
+                                        <ArrowUp className='h-4 w-4' strokeWidth={1.8} />
                                     </button>
                                 </div>
 
