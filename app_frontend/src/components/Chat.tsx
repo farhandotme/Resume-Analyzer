@@ -148,7 +148,7 @@ export default function Chat() {
     };
 
     return (
-        <main className='relative flex h-dvh w-full flex-col overflow-hidden overscroll-none bg-white text-zinc-950 dark:bg-black dark:text-zinc-100'>
+        <main className='relative flex h-dvh w-full flex-col overflow-hidden overscroll-none bg-white text-zinc-950 selection:bg-[#EAF5FF] selection:text-[#3999FF] dark:bg-black dark:text-zinc-100 dark:selection:bg-[#010B1B] dark:selection:text-[#3999FF]'>
             {!selectedFile && (
                 <div className='pointer-events-none fixed inset-0 z-0 overflow-hidden'>
                     <div className='absolute inset-0 bg-[radial-gradient(ellipse_68%_52%_at_50%_32%,rgba(228,228,231,0.9)_0%,rgba(244,244,245,0.65)_34%,rgba(250,250,250,0.25)_56%,rgba(255,255,255,0)_76%)] dark:bg-[radial-gradient(ellipse_65%_55%_at_50%_32%,transparent_0%,black_78%)]' />
@@ -167,7 +167,7 @@ export default function Chat() {
                 <div className='relative z-10 mx-auto flex h-16 w-full max-w-3xl items-center justify-between px-6'>
                     <button type='button' onClick={() => navigate('/')} className='group inline-flex cursor-pointer items-center gap-1.5 text-sm font-medium text-zinc-500 transition-colors duration-200 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100'>
                         <ArrowLeft className='h-4 w-4 -translate-x-0.5 transition-transform duration-300 group-hover:-translate-x-1' strokeWidth={1.8} />
-                        <span>Home</span>
+                        <span className='select-none'>Home</span>
                     </button>
                     <button
                         type='button'
@@ -196,7 +196,7 @@ export default function Chat() {
                                     initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                                    className='mx-auto mb-7 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/70 px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-500 backdrop-blur-sm dark:border-zinc-800 dark:bg-black/50 dark:text-zinc-500'
+                                    className='mx-auto mb-7 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/70 px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-500 backdrop-blur-sm dark:border-zinc-800 dark:bg-black/50 dark:text-zinc-500 select-none'
                                 >
                                     <span className='relative flex h-1.5 w-1.5'>
                                         <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-zinc-400 opacity-60 dark:bg-zinc-500' />
@@ -233,7 +233,7 @@ export default function Chat() {
                                     transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: 0.22 }}
                                     className='mx-auto mt-7 max-w-2xl text-[15px] font-light leading-7 tracking-wide text-zinc-500 sm:text-[16px] sm:leading-7 dark:text-zinc-500'
                                 >
-                                    Upload your resume and start a conversation with AI about your experience, strengths, skills, and where your career could go next
+                                    Upload your resume and start a conversation with AI about your experience, strengths, skills, and where your career could go next.
                                 </motion.p>
 
                                 <motion.div initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.36 }} className='mx-auto mt-6 w-full max-w-2xl'>
@@ -241,7 +241,9 @@ export default function Chat() {
                                         <input ref={fileInputRef} type='file' accept='application/pdf,.pdf' onChange={handleFileChange} className='hidden' />
 
                                         <div
-                                            className={`group relative z-10 w-[85%] max-w-xl overflow-hidden rounded-3xl border border-dashed border-zinc-800/80 cursor-pointer transition-all duration-300 dark:border-zinc-800 ${isDragging ? 'scale-[1.01] border-zinc-600 dark:border-zinc-600' : ''}`}
+                                            className={`group relative z-10 w-[85%] max-w-xl select-none overflow-hidden rounded-3xl border border-dashed border-zinc-800/80 cursor-pointer transition-all duration-300 dark:border-zinc-800 ${
+                                                isDragging ? 'scale-[1.01] border-zinc-600 dark:border-zinc-600' : ''
+                                            }`}
                                         >
                                             <motion.div
                                                 animate={prefersReducedMotion ? {} : { rotate: 360 }}
