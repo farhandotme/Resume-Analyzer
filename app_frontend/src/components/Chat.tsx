@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { AlertCircle, ArrowLeft, ArrowUp, FileText, Moon, Paperclip, SunMedium, X } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ArrowUp, FileText, Moon, Paperclip, Sparkles, SunMedium, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme.ts';
@@ -21,7 +21,9 @@ export default function Chat() {
     const prefersReducedMotion = Boolean(useReducedMotion());
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileErrorTimeoutRef = useRef<number | null>(null);
+
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [pdfUrl, setPdfUrl] = useState('');
     const [input, setInput] = useState('');
@@ -49,14 +51,14 @@ export default function Chat() {
     }, []);
 
     useEffect(() => {
-        if (prefersReducedMotion || selectedFile || isAnalyzingResume) return;
+        if (prefersReducedMotion || selectedFile) return;
 
         const interval = window.setInterval(() => {
             setWordIndex((current) => (current + 1) % heroWords.length);
         }, 2600);
 
         return () => window.clearInterval(interval);
-    }, [prefersReducedMotion, selectedFile, isAnalyzingResume]);
+    }, [prefersReducedMotion, selectedFile]);
 
     useEffect(() => {
         const html = document.documentElement;
@@ -226,13 +228,28 @@ export default function Chat() {
         setInput('');
         setIsSending(false);
         setAnalysisError('');
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+        }
+    };
+
+    const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setInput(event.target.value);
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
+        }
     };
 
     const sendMessage = async () => {
         const trimmed = input.trim();
         if (!trimmed || !selectedFile || !pdfUrl || isSending) return;
+
         setIsSending(true);
         setInput('');
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+        }
 
         const userMessage: Message = {
             id: Date.now(),
@@ -286,6 +303,9 @@ export default function Chat() {
 
     const handleSuggestion = (suggestion: string) => {
         setInput(suggestion);
+        if (textareaRef.current) {
+            textareaRef.current.focus();
+        }
     };
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -524,100 +544,122 @@ export default function Chat() {
                             </div>
                         </motion.section>
                     ) : (
-                        <motion.div key='chat' initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className='flex h-full min-h-0 flex-col'>
-                            <div className='mx-auto flex w-full max-w-4xl shrink-0 items-center justify-between border-b border-zinc-200 px-4 py-4 sm:px-6 dark:border-zinc-900'>
-                                <div className='flex min-w-0 items-center gap-3'>
-                                    <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 dark:border-zinc-800 dark:bg-black dark:text-zinc-400'>
-                                        <FileText className='h-4 w-4' strokeWidth={1.7} />
+                        <motion.div key='chat' initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className='flex h-full min-h-0 flex-col pt-16'>
+                            <div className='min-h-0 flex-1 overflow-y-auto'>
+                                <div className='mx-auto flex w-full max-w-3xl flex-col gap-7 px-4 pb-8 pt-6 sm:px-6'>
+                                    {/* Active Document Info Card */}
+                                    <div className='group mb-2 flex items-center justify-between rounded-2xl border border-zinc-200/60 bg-zinc-50/50 p-3 pr-4 shadow-sm backdrop-blur-xl transition-all duration-200 hover:bg-zinc-50 dark:border-zinc-800/60 dark:bg-zinc-900/50 dark:hover:bg-zinc-900/80'>
+                                        <div className='flex items-center gap-3.5'>
+                                            <div className='flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-zinc-200/50 bg-white text-zinc-600 shadow-sm dark:border-zinc-700/50 dark:bg-zinc-950 dark:text-zinc-300'>
+                                                <FileText className='h-5 w-5' strokeWidth={1.5} />
+                                            </div>
+                                            <div className='min-w-0'>
+                                                <p className='truncate text-[14px] font-medium tracking-tight text-zinc-900 dark:text-zinc-100'>{selectedFile.name}</p>
+                                                <div className='mt-0.5 flex items-center gap-1.5'>
+                                                    <span className='relative flex h-1.5 w-1.5'>
+                                                        <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60 dark:bg-emerald-500' />
+                                                        <span className='relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400' />
+                                                    </span>
+                                                    <p className='font-mono text-[10px] uppercase tracking-[0.14em] text-emerald-600 dark:text-emerald-500'>Ready to chat</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type='button'
+                                            onClick={removeFile}
+                                            aria-label='Close document'
+                                            className='flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-400 transition-colors duration-200 hover:bg-zinc-200/60 hover:text-zinc-700 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-200'
+                                        >
+                                            <X className='h-4 w-4' strokeWidth={1.5} />
+                                        </button>
                                     </div>
 
-                                    <div className='min-w-0'>
-                                        <p className='truncate text-sm font-medium text-zinc-900 dark:text-zinc-100'>{selectedFile.name}</p>
-                                        <p className='mt-0.5 text-[11px] text-zinc-400 dark:text-zinc-600'>PDF · ready to chat</p>
-                                    </div>
-                                </div>
-
-                                <button
-                                    type='button'
-                                    onClick={removeFile}
-                                    aria-label='Remove resume'
-                                    className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-zinc-400 transition-colors duration-200 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
-                                >
-                                    <X className='h-4 w-4' strokeWidth={1.8} />
-                                </button>
-                            </div>
-
-                            <div className='min-h-0 flex-1 overflow-y-auto py-8'>
-                                <div className='mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 sm:px-6'>
                                     {messages.map((message) => (
                                         <motion.div key={message.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
                                             {message.role === 'assistant' ? (
-                                                <div className='max-w-[78%] text-[15px] leading-7 text-zinc-700 dark:text-zinc-300'>{message.content}</div>
+                                                <div className='flex max-w-[88%] items-start gap-4'>
+                                                    <div className='mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-200/60 bg-linear-to-b from-zinc-50 to-zinc-100 text-zinc-600 shadow-sm dark:border-zinc-800/60 dark:from-zinc-900 dark:to-zinc-950 dark:text-zinc-300'>
+                                                        <Sparkles className='h-4 w-4' strokeWidth={1.5} />
+                                                    </div>
+                                                    <div className='space-y-2 pt-1.5 text-[15.5px] leading-relaxed text-zinc-800 dark:text-zinc-200'>{message.content}</div>
+                                                </div>
                                             ) : (
-                                                <div className='max-w-[78%] rounded-2xl rounded-br-md bg-zinc-900 px-4 py-3 text-sm leading-6 text-white dark:bg-zinc-100 dark:text-black'>{message.content}</div>
+                                                <div className='max-w-[85%] rounded-3xl rounded-br-sm bg-zinc-900 px-5 py-3 text-[15px] leading-relaxed text-white shadow-sm dark:bg-zinc-100 dark:text-black'>{message.content}</div>
                                             )}
                                         </motion.div>
                                     ))}
 
                                     {isSending && (
                                         <div className='flex justify-start'>
-                                            <div className='flex items-center gap-1.5 text-zinc-400 dark:text-zinc-600'>
-                                                <span className='h-1.5 w-1.5 animate-pulse rounded-full bg-current' />
-                                                <span className='h-1.5 w-1.5 animate-pulse rounded-full bg-current [animation-delay:120ms]' />
-                                                <span className='h-1.5 w-1.5 animate-pulse rounded-full bg-current [animation-delay:240ms]' />
+                                            <div className='flex items-start gap-4'>
+                                                <div className='mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-200/60 bg-linear-to-b from-zinc-50 to-zinc-100 text-zinc-600 shadow-sm dark:border-zinc-800/60 dark:from-zinc-900 dark:to-zinc-950 dark:text-zinc-300'>
+                                                    <Sparkles className='h-4 w-4' strokeWidth={1.5} />
+                                                </div>
+                                                <div className='flex h-9.5 items-center gap-1.5 px-2 text-zinc-400 dark:text-zinc-600'>
+                                                    <span className='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 dark:bg-zinc-500' style={{ animationDelay: '0ms' }} />
+                                                    <span className='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 dark:bg-zinc-500' style={{ animationDelay: '150ms' }} />
+                                                    <span className='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 dark:bg-zinc-500' style={{ animationDelay: '300ms' }} />
+                                                </div>
                                             </div>
                                         </div>
                                     )}
 
                                     {messages.length === 1 && (
-                                        <div className='flex flex-wrap gap-2'>
-                                            {suggestions.map((suggestion) => (
-                                                <button
-                                                    key={suggestion}
-                                                    type='button'
-                                                    onClick={() => handleSuggestion(suggestion)}
-                                                    className='rounded-full border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-500 transition-colors duration-200 hover:border-zinc-400 hover:text-zinc-900 dark:border-zinc-800 dark:bg-black dark:text-zinc-500 dark:hover:border-zinc-700 dark:hover:text-zinc-200'
-                                                >
-                                                    {suggestion}
-                                                </button>
-                                            ))}
+                                        <div className='ml-12 mt-1'>
+                                            <p className='mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500'>Suggested questions</p>
+                                            <div className='flex flex-wrap gap-2.5'>
+                                                {suggestions.map((suggestion) => (
+                                                    <button
+                                                        key={suggestion}
+                                                        type='button'
+                                                        onClick={() => handleSuggestion(suggestion)}
+                                                        className='rounded-xl border border-zinc-200/80 bg-white/50 px-4 py-2 text-[13px] text-zinc-600 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-white hover:text-zinc-900 hover:shadow-md dark:border-zinc-800/80 dark:bg-zinc-950/50 dark:text-zinc-400 dark:hover:bg-zinc-950 dark:hover:text-zinc-200'
+                                                    >
+                                                        {suggestion}
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
 
-                                    <div ref={messagesEndRef} />
+                                    <div ref={messagesEndRef} className='h-4' />
                                 </div>
                             </div>
 
-                            <div className='mx-auto w-full max-w-3xl shrink-0 px-4 pb-4 pt-2 sm:px-6'>
-                                <div className='rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-black'>
+                            <div className='mx-auto w-full max-w-3xl shrink-0 px-4 pb-6 pt-2 sm:px-6'>
+                                <div className='relative flex w-full items-end gap-2 rounded-[28px] border border-zinc-200 bg-white p-1.5 shadow-[0_2px_16px_-4px_rgba(0,0,0,0.05)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_4px_24px_-4px_rgba(0,0,0,0.1)] dark:border-zinc-800 dark:bg-zinc-950 dark:focus-within:border-zinc-700'>
+                                    <button
+                                        type='button'
+                                        aria-label='Attach file'
+                                        className='mb-1 ml-1 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-zinc-400 transition-colors duration-200 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
+                                    >
+                                        <Paperclip className='h-5 w-5' strokeWidth={1.5} />
+                                    </button>
+
                                     <textarea
+                                        ref={textareaRef}
                                         value={input}
-                                        onChange={(event) => setInput(event.target.value)}
+                                        onChange={handleInputChange}
                                         onKeyDown={handleKeyDown}
                                         rows={1}
                                         disabled={isSending}
                                         placeholder='Ask anything about your resume...'
-                                        className='min-h-14 w-full resize-none bg-transparent px-4 pb-12 pt-4 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100 dark:placeholder:text-zinc-600'
+                                        className='min-h-11 w-full resize-none bg-transparent py-2.5 text-[15px] leading-relaxed text-zinc-900 outline-none placeholder:text-zinc-400 disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100 dark:placeholder:text-zinc-600'
+                                        style={{ height: '44px' }}
                                     />
 
-                                    <div className='flex items-center justify-between px-3 pb-2.5'>
-                                        <button type='button' aria-label='Attach file' className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-zinc-400 transition-colors duration-200 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'>
-                                            <Paperclip className='h-4 w-4' strokeWidth={1.8} />
-                                        </button>
-
-                                        <button
-                                            type='button'
-                                            onClick={() => void sendMessage()}
-                                            disabled={!input.trim() || isSending}
-                                            aria-label='Send message'
-                                            className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg bg-zinc-900 text-white transition-all duration-200 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-30 dark:bg-white dark:text-black dark:hover:bg-zinc-200'
-                                        >
-                                            <ArrowUp className='h-4 w-4' strokeWidth={1.9} />
-                                        </button>
-                                    </div>
+                                    <button
+                                        type='button'
+                                        onClick={() => void sendMessage()}
+                                        disabled={!input.trim() || isSending}
+                                        aria-label='Send message'
+                                        className='mb-1 mr-1 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-black text-white shadow-sm transition-all duration-200 hover:scale-105 hover:bg-zinc-800 disabled:scale-100 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-900 dark:disabled:text-zinc-600'
+                                    >
+                                        <ArrowUp className='h-5 w-5' strokeWidth={1.5} />
+                                    </button>
                                 </div>
 
-                                <p className='mt-2 text-center font-mono text-[9px] uppercase tracking-[0.18em] text-zinc-400 dark:text-zinc-700'>AI can make mistakes · verify important information</p>
+                                <p className='mt-3 text-center font-mono text-[10px] uppercase tracking-[0.15em] text-zinc-400 dark:text-zinc-600'>AI can make mistakes · verify important information</p>
                             </div>
                         </motion.div>
                     )}
