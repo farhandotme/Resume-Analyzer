@@ -18,8 +18,32 @@ export default function NotFound() {
         };
     }, []);
 
+    useEffect(() => {
+        const html = document.documentElement;
+        const body = document.body;
+
+        const previousHtmlOverflow = html.style.overflow;
+        const previousBodyOverflow = body.style.overflow;
+        const previousHtmlOverscroll = html.style.overscrollBehavior;
+        const previousBodyOverscroll = body.style.overscrollBehavior;
+
+        html.style.overflow = 'hidden';
+        body.style.overflow = 'hidden';
+
+        html.style.overscrollBehavior = 'none';
+        body.style.overscrollBehavior = 'none';
+
+        return () => {
+            html.style.overflow = previousHtmlOverflow;
+            body.style.overflow = previousBodyOverflow;
+
+            html.style.overscrollBehavior = previousHtmlOverscroll;
+            body.style.overscrollBehavior = previousBodyOverscroll;
+        };
+    }, []);
+
     return (
-        <div className='relative flex min-h-dvh w-full items-center justify-center overflow-hidden bg-white px-6 text-zinc-900 selection:bg-[#EAF5FF] selection:text-[#3999FF] dark:bg-black dark:text-zinc-100 dark:selection:bg-[#010B1B] dark:selection:text-[#3999FF]'>
+        <div className='relative flex min-h-dvh w-full items-center justify-center overflow-hidden overscroll-none bg-white px-6 text-zinc-900 selection:bg-[#EAF5FF] selection:text-[#3999FF] dark:bg-black dark:text-zinc-100 dark:selection:bg-[#010B1B] dark:selection:text-[#3999FF]'>
             <div
                 aria-hidden='true'
                 className='pointer-events-none absolute inset-0 dark:hidden'
