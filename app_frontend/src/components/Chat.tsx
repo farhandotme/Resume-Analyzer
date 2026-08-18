@@ -391,7 +391,7 @@ export default function Chat() {
                                         Let's talk about
                                     </h1>
 
-                                    <div className='relative flex h-22 items-center justify-center overflow-hidden sm:h-28 lg:h-30'>
+                                    <div className='relative flex h-22 items-center justify-center overflow-hidden sm:h-28'>
                                         <AnimatePresence mode='wait' initial={false}>
                                             <motion.h2
                                                 key={heroWords[wordIndex]}
@@ -399,7 +399,7 @@ export default function Chat() {
                                                 animate={{ opacity: 1, y: 0 }}
                                                 exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -36 }}
                                                 transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-                                                className='whitespace-nowrap bg-linear-to-b from-zinc-500 to-zinc-400 bg-clip-text px-2 py-2 text-center text-[3.4rem] font-light italic leading-none tracking-tighter text-transparent sm:text-[4.5rem] lg:text-[5.8rem] dark:from-zinc-300 dark:to-zinc-500'
+                                                className='whitespace-nowrap bg-linear-to-b from-zinc-500 to-zinc-400 bg-clip-text px-3.5 py-2.5 text-center text-[3.4rem] font-light italic leading-none tracking-tighter text-transparent sm:text-[4.5rem] lg:text-[5.8rem] dark:from-zinc-300 dark:to-zinc-500'
                                                 style={{ fontFamily: 'Fraunces, serif' }}
                                             >
                                                 your {heroWords[wordIndex]}
