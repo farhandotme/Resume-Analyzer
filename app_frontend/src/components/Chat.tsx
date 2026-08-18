@@ -14,6 +14,34 @@ type Message = {
 const suggestions = ['What are my strongest skills?', 'What should I improve in my resume?', 'Is my experience relevant for this role?'];
 const heroWords = ['resume', 'experience', 'skills', 'story'];
 const CHAT_ANALYSIS_ROLE = 'General Resume Review';
+const CHAT_STORAGE_KEY = 'resume-analyzer-chat';
+
+type StoredChat = {
+    fileName: string;
+    fileType: string;
+    pdfUrl: string;
+    messages: Message[];
+};
+
+const getStoredChat = (): StoredChat | null => {
+    try {
+        const stored = sessionStorage.getItem(CHAT_STORAGE_KEY);
+
+        if (!stored) return null;
+
+        const parsed = JSON.parse(stored) as StoredChat;
+
+        if (!parsed.fileName || !parsed.pdfUrl || !Array.isArray(parsed.messages)) {
+            sessionStorage.removeItem(CHAT_STORAGE_KEY);
+            return null;
+        }
+
+        return parsed;
+    } catch {
+        sessionStorage.removeItem(CHAT_STORAGE_KEY);
+        return null;
+    }
+};
 
 export default function Chat() {
     const navigate = useNavigate();
@@ -41,10 +69,30 @@ export default function Chat() {
     });
     const fileErrorTimeoutRef = useRef<number | null>(null);
 
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [pdfUrl, setPdfUrl] = useState('');
+    const [selectedFile, setSelectedFile] = useState<File | null>(() => {
+        const storedChat = getStoredChat();
+
+        if (!storedChat) return null;
+
+        return new File([], storedChat.fileName, {
+            type: storedChat.fileType || 'application/pdf',
+        });
+    });
+
+    const [pdfUrl, setPdfUrl] = useState(() => {
+        const storedChat = getStoredChat();
+
+        return storedChat?.pdfUrl ?? '';
+    });
+
     const [input, setInput] = useState('');
-    const [messages, setMessages] = useState<Message[]>([]);
+
+    const [messages, setMessages] = useState<Message[]>(() => {
+        const storedChat = getStoredChat();
+
+        return storedChat?.messages ?? [];
+    });
+
     const [isDragging, setIsDragging] = useState(false);
     const [wordIndex, setWordIndex] = useState(0);
     const [showFileError, setShowFileError] = useState(false);
@@ -76,6 +124,26 @@ export default function Chat() {
 
         return () => window.clearInterval(interval);
     }, [prefersReducedMotion, selectedFile]);
+
+    useEffect(() => {
+        if (!selectedFile || !pdfUrl) {
+            sessionStorage.removeItem(CHAT_STORAGE_KEY);
+            return;
+        }
+
+        const storedChat: StoredChat = {
+            fileName: selectedFile.name,
+            fileType: selectedFile.type || 'application/pdf',
+            pdfUrl,
+            messages,
+        };
+
+        try {
+            sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(storedChat));
+        } catch (error) {
+            console.error('Failed to save chat session:', error);
+        }
+    }, [selectedFile, pdfUrl, messages]);
 
     useEffect(() => {
         const html = document.documentElement;
@@ -270,12 +338,15 @@ export default function Chat() {
     };
 
     const removeFile = () => {
+        sessionStorage.removeItem(CHAT_STORAGE_KEY);
+
         setSelectedFile(null);
         setPdfUrl('');
         setMessages([]);
         setInput('');
         setIsSending(false);
         setAnalysisError('');
+
         if (textareaRef.current) {
             textareaRef.current.style.height = '24px';
         }
