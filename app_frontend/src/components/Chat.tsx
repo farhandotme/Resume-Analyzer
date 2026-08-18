@@ -83,33 +83,40 @@ export default function Chat() {
         event.currentTarget.value = '';
     };
 
-    const handleDragEnter = (event: React.DragEvent<HTMLDivElement>) => {
+    const handleDragEnter = (event: React.DragEvent<HTMLElement>) => {
         event.preventDefault();
-        event.stopPropagation();
+
         if (!event.dataTransfer.types.includes('Files')) return;
+
         setIsDragging(true);
     };
 
-    const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    const handleDragOver = (event: React.DragEvent<HTMLElement>) => {
         event.preventDefault();
-        event.stopPropagation();
+
         if (!event.dataTransfer.types.includes('Files')) return;
+
         event.dataTransfer.dropEffect = 'copy';
         setIsDragging(true);
     };
 
-    const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
+    const handleDragLeave = (event: React.DragEvent<HTMLElement>) => {
         event.preventDefault();
-        event.stopPropagation();
-        setIsDragging(false);
+
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+            setIsDragging(false);
+        }
     };
 
-    const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    const handleDrop = (event: React.DragEvent<HTMLElement>) => {
         event.preventDefault();
-        event.stopPropagation();
+
         setIsDragging(false);
+
         const file = event.dataTransfer.files?.[0];
+
         if (!file) return;
+
         handleFile(file);
     };
 
@@ -148,7 +155,13 @@ export default function Chat() {
     };
 
     return (
-        <main className='relative flex h-dvh w-full flex-col overflow-hidden overscroll-none bg-white text-zinc-950 selection:bg-[#EAF5FF] selection:text-[#3999FF] dark:bg-black dark:text-zinc-100 dark:selection:bg-[#010B1B] dark:selection:text-[#3999FF]'>
+        <main
+            className='relative flex h-dvh w-full flex-col overflow-hidden overscroll-none bg-white text-zinc-950 selection:bg-[#EAF5FF] selection:text-[#3999FF] dark:bg-black dark:text-zinc-100 dark:selection:bg-[#010B1B] dark:selection:text-[#3999FF]'
+            onDragEnter={!selectedFile ? handleDragEnter : undefined}
+            onDragOver={!selectedFile ? handleDragOver : undefined}
+            onDragLeave={!selectedFile ? handleDragLeave : undefined}
+            onDrop={!selectedFile ? handleDrop : undefined}
+        >
             {!selectedFile && (
                 <div className='pointer-events-none fixed inset-0 z-0 overflow-hidden'>
                     <div className='absolute inset-0 bg-[radial-gradient(ellipse_68%_52%_at_50%_32%,rgba(228,228,231,0.9)_0%,rgba(244,244,245,0.65)_34%,rgba(250,250,250,0.25)_56%,rgba(255,255,255,0)_76%)] dark:bg-[radial-gradient(ellipse_65%_55%_at_50%_32%,transparent_0%,black_78%)]' />
@@ -237,11 +250,12 @@ export default function Chat() {
                                 </motion.p>
 
                                 <motion.div initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.36 }} className='mx-auto mt-6 w-full max-w-2xl'>
-                                    <div onClick={() => fileInputRef.current?.click()} onDragEnter={handleDragEnter} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} className='relative flex w-full flex-col items-center'>
+                                    <div className='relative flex w-full flex-col items-center'>
                                         <input ref={fileInputRef} type='file' accept='application/pdf,.pdf' onChange={handleFileChange} className='hidden' />
 
                                         <div
-                                            className={`group relative z-10 w-[85%] max-w-xl select-none overflow-hidden rounded-3xl border border-dashed border-zinc-800/80 cursor-pointer transition-all duration-300 dark:border-zinc-800 ${
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className={`group relative z-10 w-[85%] max-w-xl cursor-pointer select-none overflow-hidden rounded-3xl border border-dashed border-zinc-800/80 transition-all duration-300 dark:border-zinc-800 ${
                                                 isDragging ? 'scale-[1.01] border-zinc-600 dark:border-zinc-600' : ''
                                             }`}
                                         >
