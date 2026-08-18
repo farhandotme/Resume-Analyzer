@@ -87,34 +87,45 @@ export const analyzeResume = async (req: Request, res: Response) => {
 };
 export const chatResume = async (req: Request, res: Response) => {
   try {
-    const { pdfUrl, message } = req.body;
+    const { pdfUrl, message, sessionId } = req.body;
 
-    if (!pdfUrl) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Please Upload the PDF" });
-    }
-    if (!message) {
-      return res.status(404).json({
+    if (!sessionId) {
+      return res.status(400).json({
         success: false,
-        error: "Please Enter the message You want to Ask",
+        error: "Session ID is required to maintain chat history.",
       });
     }
 
+    if (!message) {
+      return res.status(400).json({
+        success: false,
+        error: "Please enter the message you want to ask.",
+      });
+    }
+
+    // Forward to FastAPI with session_id
     const fastApiRes = await axios.post(`${FASTAPI_URL}/chat`, {
-      pdf_url: pdfUrl,
+      pdf_url: pdfUrl || null,
       message,
+      session_id: sessionId,
     });
 
     return res.status(200).json({
       success: true,
       data: fastApiRes.data,
     });
-  } catch (error) {
-    console.log("error");
+  } catch (error: any) {
+    console.error(
+      "Chat Error:",
+      error?.response?.data || error.message || error,
+    );
+
+    const errorMessage =
+      error?.response?.data?.error || "Failed to process chat request.";
+
     return res.status(500).json({
       success: false,
-      error,
+      error: errorMessage,
     });
   }
 };

@@ -12,28 +12,29 @@ from config.ai_models import llm
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-
+# Dictionary to store history per anonymous session
 chat_histories = {}
 
 
 class ChatRequest(BaseModel):
     pdf_url: Optional[str] = None
     message: str
-    user_id: str
+    session_id: str  # The frontend sends a random string here (e.g., a UUID)
 
 
 @router.post("/chat")
 async def chat(req: ChatRequest):
-
     # Step 1 — Store PDF if provided
     if req.pdf_url:
-        store_result = rag_storing_pdf(user_id=req.user_id, pdf_url=req.pdf_url)
+        store_result = rag_storing_pdf(session_id=req.session_id, pdf_url=req.pdf_url)
 
         if not store_result["success"]:
             return store_result
 
     # Step 2 — Retrieve Resume Chunks
-    retrieve_result = retrive_resume_chanks(user_id=req.user_id, user_query=req.message)
+    retrieve_result = retrive_resume_chanks(
+        session_id=req.session_id, user_query=req.message
+    )
 
     if not retrieve_result["success"]:
         return retrieve_result
@@ -45,8 +46,8 @@ async def chat(req: ChatRequest):
         # System Prompt
         system_prompt = resume_prompt(context=context, question=req.message)
 
-        # Get previous history
-        history = chat_histories.get(req.user_id, [])
+        # Get previous history for this specific session
+        history = chat_histories.get(req.session_id, [])
 
         # Build conversation
         messages = [
@@ -58,19 +59,18 @@ async def chat(req: ChatRequest):
         # Call LLM
         response = llm.invoke(messages)
 
-        # Save conversation
+        # Save conversation back to this session's history
         history.append(HumanMessage(content=req.message))
         history.append(AIMessage(content=response.content))
 
-        # Keep only last 10 messages (5 conversations)
-        chat_histories[req.user_id] = history[-10:]
+        # Keep only last 10 messages (5 interactions) to prevent huge memory usage
+        chat_histories[req.session_id] = history[-10:]
 
     except Exception as e:
-        logger.error(f"LLM call failed for user {req.user_id}: {e}")
-
+        logger.error(f"LLM call failed for session {req.session_id}: {e}")
         return {"success": False, "error": "AI response failed. Try again."}
 
-    logger.info(f"Chat success for user {req.user_id}")
+    logger.info(f"Chat success for session {req.session_id}")
 
     return {
         "success": True,
