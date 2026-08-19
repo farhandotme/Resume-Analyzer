@@ -947,7 +947,7 @@ export default function Chat() {
                     ) : (
                         <motion.div key='chat' initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className='flex h-full min-h-0 flex-col pt-16'>
                             <div ref={chatScrollRef} onScroll={handleChatScroll} className='chat-scrollbar min-h-0 flex-1 overflow-y-auto'>
-                                <div className='mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 pb-8 pt-6 sm:px-6'>
+                                <div className='mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 pt-6 sm:px-6'>
                                     {messages.map((message) => (
                                         <motion.div key={message.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
                                             {message.role === 'assistant' ? (
@@ -999,11 +999,11 @@ export default function Chat() {
                                         </div>
                                     )}
 
-                                    <div ref={messagesEndRef} className='h-4' />
+                                    <div ref={messagesEndRef} className='h-0' />
                                 </div>
                             </div>
 
-                            <div className='relative mx-auto w-full max-w-4xl shrink-0 px-4 pb-3 pt-1.5 sm:px-6'>
+                            <div className='relative mx-auto w-full max-w-4xl shrink-0 px-4 pb-3 sm:px-6'>
                                 <AnimatePresence>
                                     {showScrollToBottom && (
                                         <motion.button
