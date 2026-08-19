@@ -1,4 +1,4 @@
-import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { AlertCircle, ArrowDown, ArrowLeft, ArrowUp, FileText, Moon, Sparkles, SquarePen, SunMedium } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useBlocker, useNavigate } from 'react-router-dom';
@@ -54,29 +54,10 @@ export default function Chat() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const caretMeasureRef = useRef<HTMLDivElement>(null);
     const chatScrollRef = useRef<HTMLDivElement>(null);
 
-    const caretX = useMotionValue(0);
-    const caretY = useMotionValue(0);
-    const caretOpacity = useMotionValue(0);
-    const caretBlinkOpacity = useMotionValue(1);
-    const combinedCaretOpacity = useTransform(() => {
-        return caretOpacity.get() * caretBlinkOpacity.get();
-    });
-
-    const springCaretX = useSpring(caretX, {
-        stiffness: 500,
-        damping: 30,
-        mass: 0.5,
-    });
-
-    const springCaretY = useSpring(caretY, {
-        stiffness: 500,
-        damping: 30,
-        mass: 0.5,
-    });
     const fileErrorTimeoutRef = useRef<number | null>(null);
+
     const [sessionId, setSessionId] = useState(() => {
         const storedChat = getStoredChat();
 
@@ -112,6 +93,7 @@ export default function Chat() {
 
         return storedChat?.messages ?? [];
     });
+
     const [isDragging, setIsDragging] = useState(false);
     const [wordIndex, setWordIndex] = useState(0);
     const [showFileError, setShowFileError] = useState(false);
@@ -121,7 +103,10 @@ export default function Chat() {
     const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
     const [showScrollToBottom, setShowScrollToBottom] = useState(false);
 
-    const blocker = useBlocker(({ currentLocation, nextLocation }) => Boolean(selectedFile && messages.length > 0) && currentLocation.pathname !== nextLocation.pathname);
+    const blocker = useBlocker(
+        ({ currentLocation, nextLocation }) =>
+            Boolean(selectedFile && messages.length > 0) && currentLocation.pathname !== nextLocation.pathname,
+    );
 
     useEffect(() => {
         if (blocker.state === 'blocked') {
@@ -160,16 +145,14 @@ export default function Chat() {
 
     useEffect(() => {
         if (!selectedFile) return;
+
         const focusChatInput = () => {
             const textarea = textareaRef.current;
+
             if (!textarea) return;
+
             textarea.focus();
             textarea.setSelectionRange(textarea.value.length, textarea.value.length);
-
-            caretBlinkOpacity.set(1);
-            requestAnimationFrame(() => {
-                updateSmoothCaret();
-            });
         };
 
         const frame = requestAnimationFrame(() => {
@@ -186,6 +169,7 @@ export default function Chat() {
 
         const handleGlobalKeyDown = (event: KeyboardEvent) => {
             const textarea = textareaRef.current;
+
             if (!textarea || isSending) return;
 
             if (event.metaKey || event.ctrlKey || event.altKey || event.key === 'Tab' || event.key === 'Escape') {
@@ -196,46 +180,35 @@ export default function Chat() {
                 if (document.activeElement !== textarea) {
                     textarea.focus();
                 }
+
                 return;
             }
 
             if (event.key.length !== 1) return;
             if (document.activeElement === textarea) return;
+
             event.preventDefault();
+
             const start = textarea.selectionStart ?? textarea.value.length;
             const end = textarea.selectionEnd ?? textarea.value.length;
             const newValue = textarea.value.slice(0, start) + event.key + textarea.value.slice(end);
+
             setInput(newValue);
+
             requestAnimationFrame(() => {
                 textarea.focus();
+
                 const nextCursorPosition = start + event.key.length;
                 textarea.setSelectionRange(nextCursorPosition, nextCursorPosition);
-                updateSmoothCaret();
-                caretBlinkOpacity.set(1);
             });
         };
+
         window.addEventListener('keydown', handleGlobalKeyDown);
+
         return () => {
             window.removeEventListener('keydown', handleGlobalKeyDown);
         };
     }, [selectedFile, isSending]);
-
-    useEffect(() => {
-        if (!selectedFile) return;
-
-        let blinkOn = true;
-
-        caretBlinkOpacity.set(1);
-
-        const interval = window.setInterval(() => {
-            blinkOn = !blinkOn;
-            caretBlinkOpacity.set(blinkOn ? 1 : 0);
-        }, 530);
-
-        return () => {
-            window.clearInterval(interval);
-        };
-    }, [selectedFile, caretBlinkOpacity]);
 
     useEffect(() => {
         return () => {
@@ -276,37 +249,6 @@ export default function Chat() {
 
             html.style.overscrollBehavior = previousHtmlOverscroll;
             body.style.overscrollBehavior = previousBodyOverscroll;
-        };
-    }, []);
-
-    useEffect(() => {
-        const textarea = textareaRef.current;
-
-        if (!textarea) return;
-
-        const update = () => {
-            if (document.activeElement === textarea) {
-                requestAnimationFrame(updateSmoothCaret);
-            }
-        };
-
-        const handleSelectionChange = () => {
-            if (document.activeElement !== textarea) return;
-
-            requestAnimationFrame(updateSmoothCaret);
-        };
-
-        textarea.addEventListener('click', update);
-        textarea.addEventListener('keyup', update);
-        textarea.addEventListener('scroll', update);
-
-        document.addEventListener('selectionchange', handleSelectionChange);
-
-        return () => {
-            textarea.removeEventListener('click', update);
-            textarea.removeEventListener('keyup', update);
-            textarea.removeEventListener('scroll', update);
-            document.removeEventListener('selectionchange', handleSelectionChange);
         };
     }, []);
 
@@ -447,9 +389,11 @@ export default function Chat() {
         setIsDragging(false);
 
         if (selectedFile || isAnalyzingResume) return;
+
         const file = event.dataTransfer.files?.[0];
 
         if (!file) return;
+
         void handleFile(file);
     };
 
@@ -470,43 +414,6 @@ export default function Chat() {
         }
     };
 
-    const updateSmoothCaret = () => {
-        const textarea = textareaRef.current;
-        const mirror = caretMeasureRef.current;
-
-        if (!textarea || !mirror) return;
-
-        const selectionStart = textarea.selectionStart ?? 0;
-        const selectionEnd = textarea.selectionEnd ?? 0;
-
-        if (selectionStart !== selectionEnd) {
-            caretOpacity.set(0);
-            return;
-        }
-
-        const textBeforeCaret = textarea.value.slice(0, selectionStart);
-
-        mirror.textContent = '';
-
-        const textNode = document.createTextNode(textBeforeCaret || '\u200b');
-        const marker = document.createElement('span');
-
-        marker.textContent = '\u200b';
-
-        mirror.appendChild(textNode);
-        mirror.appendChild(marker);
-
-        const mirrorRect = mirror.getBoundingClientRect();
-        const markerRect = marker.getBoundingClientRect();
-
-        const x = markerRect.left - mirrorRect.left;
-        const y = markerRect.top - mirrorRect.top - textarea.scrollTop;
-
-        caretX.set(x);
-        caretY.set(y);
-        caretOpacity.set(1);
-    };
-
     const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         const value = event.target.value;
 
@@ -524,14 +431,11 @@ export default function Chat() {
         const nextHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
 
         textarea.style.height = `${nextHeight}px`;
-
-        requestAnimationFrame(() => {
-            updateSmoothCaret();
-        });
     };
 
     const sendMessage = async () => {
         const trimmed = input.trim();
+
         if (!trimmed || !selectedFile || !pdfUrl || isSending) return;
 
         setIsSending(true);
@@ -541,12 +445,6 @@ export default function Chat() {
             textareaRef.current.style.height = '24px';
             textareaRef.current.setSelectionRange(0, 0);
         }
-
-        caretBlinkOpacity.set(1);
-
-        requestAnimationFrame(() => {
-            updateSmoothCaret();
-        });
 
         const userMessage: Message = {
             id: Date.now(),
@@ -593,18 +491,13 @@ export default function Chat() {
 
             requestAnimationFrame(() => {
                 textareaRef.current?.focus();
-
-                caretBlinkOpacity.set(1);
-
-                requestAnimationFrame(() => {
-                    updateSmoothCaret();
-                });
             });
         }
     };
 
     const handleSuggestion = (suggestion: string) => {
         setInput(suggestion);
+
         if (textareaRef.current) {
             textareaRef.current.focus();
         }
@@ -651,18 +544,24 @@ export default function Chat() {
 
     const handleChatScroll = () => {
         const container = chatScrollRef.current;
+
         if (!container) return;
+
         const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+
         setShowScrollToBottom(distanceFromBottom > 120);
     };
 
     const scrollToBottom = () => {
         const container = chatScrollRef.current;
+
         if (!container) return;
+
         container.scrollTo({
             top: container.scrollHeight,
             behavior: 'smooth',
         });
+
         setShowScrollToBottom(false);
     };
 
@@ -683,18 +582,33 @@ export default function Chat() {
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, x: [0, 40, -20, 0], y: [0, -24, 18, 0] }}
-                        transition={prefersReducedMotion ? { duration: 1.2 } : { opacity: { duration: 1.2 }, x: { duration: 26, repeat: Infinity, ease: 'easeInOut' }, y: { duration: 26, repeat: Infinity, ease: 'easeInOut' } }}
+                        transition={
+                            prefersReducedMotion
+                                ? { duration: 1.2 }
+                                : {
+                                      opacity: { duration: 1.2 },
+                                      x: { duration: 26, repeat: Infinity, ease: 'easeInOut' },
+                                      y: { duration: 26, repeat: Infinity, ease: 'easeInOut' },
+                                  }
+                        }
                         className='absolute left-1/2 top-[26%] h-155 w-225 -translate-x-1/2 -translate-y-1/2 rounded-full bg-zinc-300/10 blur-[130px] dark:bg-zinc-700/25'
                     />
                 </div>
             )}
 
             <header className='absolute inset-x-0 top-0 z-20'>
-                <div aria-hidden='true' className='pointer-events-none absolute inset-x-0 top-0 h-28 bg-linear-to-b from-white/85 via-white/35 to-transparent dark:from-black dark:via-black/70 dark:to-transparent' />
+                <div
+                    aria-hidden='true'
+                    className='pointer-events-none absolute inset-x-0 top-0 h-28 bg-linear-to-b from-white/85 via-white/35 to-transparent dark:from-black dark:via-black/70 dark:to-transparent'
+                />
 
                 <div className='relative z-10 mx-auto grid h-16 w-full max-w-4xl -translate-x-1 sm:-translate-x-2 grid-cols-2 items-center px-4 sm:px-6'>
                     <div className='flex min-w-0 items-center gap-4'>
-                        <button type='button' onClick={handleHomeClick} className='group inline-flex shrink-0 cursor-pointer items-center gap-1.5 text-sm font-medium text-zinc-500 transition-colors duration-200 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100'>
+                        <button
+                            type='button'
+                            onClick={handleHomeClick}
+                            className='group inline-flex shrink-0 cursor-pointer items-center gap-1.5 text-sm font-medium text-zinc-500 transition-colors duration-200 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100'
+                        >
                             <ArrowLeft className='h-4 w-4 -translate-x-0.5 transition-transform duration-300 group-hover:-translate-x-1' strokeWidth={1.8} />
                             <span className='select-none'>Home</span>
                         </button>
@@ -761,8 +675,15 @@ export default function Chat() {
                                     Resume Intelligence
                                 </motion.div>
 
-                                <motion.div initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}>
-                                    <h1 className='text-[3.4rem] font-light leading-[0.94] tracking-tight text-zinc-950 sm:text-[4.5rem] lg:text-[5.8rem] dark:text-white' style={{ fontFamily: 'Fraunces, serif', fontWeight: 300 }}>
+                                <motion.div
+                                    initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 18 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}
+                                >
+                                    <h1
+                                        className='text-[3.4rem] font-light leading-[0.94] tracking-tight text-zinc-950 sm:text-[4.5rem] lg:text-[5.8rem] dark:text-white'
+                                        style={{ fontFamily: 'Fraunces, serif', fontWeight: 300 }}
+                                    >
                                         Let's talk about
                                     </h1>
 
@@ -792,7 +713,12 @@ export default function Chat() {
                                     Upload your resume and let AI understand your experience, strengths, skills, and career direction before you start the conversation.
                                 </motion.p>
 
-                                <motion.div initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.36 }} className='mx-auto mt-6 w-full max-w-2xl'>
+                                <motion.div
+                                    initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.36 }}
+                                    className='mx-auto mt-6 w-full max-w-2xl'
+                                >
                                     <div className='relative flex w-full flex-col items-center'>
                                         <input ref={fileInputRef} type='file' accept='application/pdf,.pdf' onChange={handleFileChange} className='hidden' />
 
@@ -820,7 +746,11 @@ export default function Chat() {
                                                 style={{ background: 'conic-gradient(from 0deg, transparent 40%, rgba(228,228,231,0.6) 50%, transparent 60%)' }}
                                             />
 
-                                            <div className={`relative flex min-h-55 flex-col items-center justify-center overflow-hidden rounded-[calc(1.5rem-1px)] px-5 py-6 transition-colors duration-300 sm:px-8 ${isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'}`}>
+                                            <div
+                                                className={`relative flex min-h-55 flex-col items-center justify-center overflow-hidden rounded-[calc(1.5rem-1px)] px-5 py-6 transition-colors duration-300 sm:px-8 ${
+                                                    isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'
+                                                }`}
+                                            >
                                                 <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(0,0,0,0.04)_1px,transparent_1px)] bg-size-[16px_16px] opacity-0 transition-opacity duration-500 group-hover:opacity-100 dark:bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)]' />
 
                                                 <div className='relative z-20 flex flex-col items-center'>
@@ -848,9 +778,13 @@ export default function Chat() {
                                                         </motion.div>
                                                     </div>
 
-                                                    <h3 className='mt-6 text-xl font-medium tracking-tight text-zinc-900 dark:text-zinc-100'>{isAnalyzingResume ? 'Understanding your resume...' : isDragging ? 'Drop your resume to begin' : 'Upload your resume'}</h3>
+                                                    <h3 className='mt-6 text-xl font-medium tracking-tight text-zinc-900 dark:text-zinc-100'>
+                                                        {isAnalyzingResume ? 'Understanding your resume...' : isDragging ? 'Drop your resume to begin' : 'Upload your resume'}
+                                                    </h3>
 
-                                                    <p className='mt-2 text-sm font-light text-zinc-500 dark:text-zinc-400'>{isAnalyzingResume ? 'AI is checking your document before opening chat' : 'PDF only · drag and drop or click to browse'}</p>
+                                                    <p className='mt-2 text-sm font-light text-zinc-500 dark:text-zinc-400'>
+                                                        {isAnalyzingResume ? 'AI is checking your document before opening chat' : 'PDF only · drag and drop or click to browse'}
+                                                    </p>
 
                                                     <AnimatePresence>
                                                         {showFileError && (
@@ -881,6 +815,7 @@ export default function Chat() {
                                                                 className='mx-auto mt-3 flex w-fit max-w-md items-center justify-center gap-3 rounded-lg border border-rose-200/70 bg-rose-50/70 px-4 py-2.5 text-left dark:border-rose-900/40 dark:bg-rose-950/30'
                                                             >
                                                                 <AlertCircle className='h-3.5 w-3.5 shrink-0 text-rose-500 dark:text-rose-400' strokeWidth={1.8} />
+
                                                                 <div>
                                                                     <p className='mb-0.5 text-[13px] font-medium leading-tight text-rose-700 dark:text-rose-300'>Invalid resume</p>
                                                                     <p className='text-[12px] leading-5 text-rose-500/90 dark:text-rose-400/80'>{analysisError}</p>
@@ -918,11 +853,19 @@ export default function Chat() {
                             <div ref={chatScrollRef} onScroll={handleChatScroll} className='chat-scrollbar min-h-0 flex-1 overflow-y-auto'>
                                 <div className='mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 pb-8 pt-6 sm:px-6'>
                                     {messages.map((message) => (
-                                        <motion.div key={message.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
+                                        <motion.div
+                                            key={message.id}
+                                            initial={{ opacity: 0, y: 8 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                                            className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}
+                                        >
                                             {message.role === 'assistant' ? (
                                                 <div className='max-w-[88%]'>
                                                     <div className='mb-2 font-mono text-[9px] uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-600'>Resume Intelligence</div>
-                                                    <div className='whitespace-pre-wrap wrap-break-word text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 dark:text-zinc-200'>{message.content}</div>
+                                                    <div className='whitespace-pre-wrap wrap-break-word text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 dark:text-zinc-200'>
+                                                        {message.content}
+                                                    </div>
                                                 </div>
                                             ) : (
                                                 <div className='max-w-[78%] rounded-[18px] rounded-br-md border border-zinc-200/80 bg-zinc-100 px-4.5 py-3 text-[14.5px] leading-6 tracking-[-0.005em] text-zinc-800 shadow-[0_2px_10px_-5px_rgba(0,0,0,0.18)] dark:border-zinc-800/80 dark:bg-zinc-900 dark:text-zinc-100 dark:shadow-[0_2px_12px_-5px_rgba(0,0,0,0.5)]'>
@@ -938,6 +881,7 @@ export default function Chat() {
                                                 <div className='mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-200/60 bg-linear-to-b from-zinc-50 to-zinc-100 text-zinc-600 shadow-sm dark:border-zinc-800/60 dark:from-zinc-900 dark:to-zinc-950 dark:text-zinc-300'>
                                                     <Sparkles className='h-4 w-4' strokeWidth={1.5} />
                                                 </div>
+
                                                 <div className='flex h-9.5 items-center gap-1.5 px-2 text-zinc-400 dark:text-zinc-600'>
                                                     <span className='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 dark:bg-zinc-500' style={{ animationDelay: '0ms' }} />
                                                     <span className='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 dark:bg-zinc-500' style={{ animationDelay: '150ms' }} />
@@ -950,6 +894,7 @@ export default function Chat() {
                                     {messages.length === 1 && (
                                         <div className='ml-0 mt-2 sm:ml-11'>
                                             <p className='mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500'>Suggested questions</p>
+
                                             <div className='flex flex-wrap gap-2.5'>
                                                 {suggestions.map((suggestion) => (
                                                     <button
@@ -990,29 +935,20 @@ export default function Chat() {
                             <div className='mx-auto w-full max-w-4xl shrink-0 px-4 pb-3 pt-1.5 sm:px-6'>
                                 <div className='group relative flex w-full items-center gap-2 rounded-[22px] border border-zinc-200 bg-white px-3.5 py-2.5 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.12)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.16)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.7)] dark:focus-within:border-zinc-700 dark:focus-within:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.85)]'>
                                     <div className='relative flex min-h-6 min-w-0 flex-1 items-center'>
-                                        <div ref={caretMeasureRef} aria-hidden='true' className='pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap wrap-break-words text-[15px] leading-6 text-transparent' />
                                         <textarea
                                             ref={textareaRef}
                                             autoFocus
                                             value={input}
                                             onChange={handleInputChange}
                                             onKeyDown={handleKeyDown}
-                                            onFocus={() => {
-                                                caretBlinkOpacity.set(1);
-                                                requestAnimationFrame(updateSmoothCaret);
-                                            }}
-                                            onBlur={() => {
-                                                caretBlinkOpacity.set(1);
-                                            }}
                                             rows={1}
                                             disabled={isSending}
                                             placeholder='Ask anything about your resume...'
-                                            className='chat-composer-scrollbar relative z-10 my-auto max-h-40 min-h-6 w-full resize-none overflow-y-auto caret-transparent select-none bg-transparent p-0 text-[15px] leading-6 text-zinc-900 outline-none placeholder:text-zinc-400 disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100 dark:placeholder:text-zinc-600'
+                                            className='chat-composer-scrollbar relative z-10 my-auto max-h-40 min-h-6 w-full resize-none overflow-y-auto bg-transparent p-0 text-[15px] leading-6 text-zinc-900 outline-none placeholder:text-zinc-400 disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100 dark:placeholder:text-zinc-600'
                                             style={{ height: '24px' }}
                                         />
-
-                                        <motion.div aria-hidden='true' className='pointer-events-none absolute left-0 top-px z-20 h-[1.05em] w-px rounded-full bg-zinc-900 dark:bg-zinc-100' style={{ x: springCaretX, y: springCaretY, opacity: combinedCaretOpacity }} />
                                     </div>
+
                                     <button
                                         type='button'
                                         onClick={() => void sendMessage()}
@@ -1024,7 +960,9 @@ export default function Chat() {
                                     </button>
                                 </div>
 
-                                <p className='mt-2.5 text-center font-mono text-[9px] uppercase tracking-widest text-zinc-400 dark:text-zinc-600'>AI can make mistakes · verify important information</p>
+                                <p className='mt-2.5 text-center font-mono text-[9px] uppercase tracking-widest text-zinc-400 dark:text-zinc-600'>
+                                    AI can make mistakes · verify important information
+                                </p>
                             </div>
                         </motion.div>
                     )}
@@ -1033,7 +971,13 @@ export default function Chat() {
 
             <AnimatePresence>
                 {showLeaveConfirmation && (
-                    <motion.div className='fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 backdrop-blur-sm dark:bg-black/60' initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowLeaveConfirmation(false)}>
+                    <motion.div
+                        className='fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 backdrop-blur-sm dark:bg-black/60'
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setShowLeaveConfirmation(false)}
+                    >
                         <motion.div
                             role='dialog'
                             aria-modal='true'
@@ -1059,16 +1003,21 @@ export default function Chat() {
                                     type='button'
                                     onClick={() => {
                                         setShowLeaveConfirmation(false);
+
                                         if (blocker.state === 'blocked') {
                                             blocker.reset();
                                         }
                                     }}
-                                    className='rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100 cursor-pointer select-none'
+                                    className='cursor-pointer select-none rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
                                 >
                                     Stay
                                 </button>
 
-                                <button type='button' onClick={handleLeaveChat} className='rounded-xl bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200 cursor-pointer select-none'>
+                                <button
+                                    type='button'
+                                    onClick={handleLeaveChat}
+                                    className='cursor-pointer select-none rounded-xl bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200'
+                                >
                                     Leave
                                 </button>
                             </div>
