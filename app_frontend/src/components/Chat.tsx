@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme.ts';
 import { uploadResume } from '../services/uploadResume.ts';
+import { sendChatMessage } from '../services/chatResume.ts';
 
 type Message = {
     id: number;
@@ -17,6 +18,7 @@ const CHAT_ANALYSIS_ROLE = 'General Resume Review';
 const CHAT_STORAGE_KEY = 'resume-analyzer-chat';
 
 type StoredChat = {
+    sessionId: string;
     fileName: string;
     fileType: string;
     pdfUrl: string;
@@ -26,16 +28,13 @@ type StoredChat = {
 const getStoredChat = (): StoredChat | null => {
     try {
         const stored = sessionStorage.getItem(CHAT_STORAGE_KEY);
-
         if (!stored) return null;
 
         const parsed = JSON.parse(stored) as StoredChat;
-
-        if (!parsed.fileName || !parsed.pdfUrl || !Array.isArray(parsed.messages)) {
+        if (!parsed.sessionId || !parsed.fileName || !parsed.pdfUrl || !Array.isArray(parsed.messages)) {
             sessionStorage.removeItem(CHAT_STORAGE_KEY);
             return null;
         }
-
         return parsed;
     } catch {
         sessionStorage.removeItem(CHAT_STORAGE_KEY);
@@ -72,6 +71,16 @@ export default function Chat() {
         mass: 0.5,
     });
     const fileErrorTimeoutRef = useRef<number | null>(null);
+
+    const [sessionId, setSessionId] = useState(() => {
+        const storedChat = getStoredChat();
+        return storedChat?.sessionId ?? crypto.randomUUID();
+    });
+
+    const [hasIndexedResume, setHasIndexedResume] = useState(() => {
+        const storedChat = getStoredChat();
+        return Boolean(storedChat?.sessionId && storedChat?.pdfUrl);
+    });
 
     const [selectedFile, setSelectedFile] = useState<File | null>(() => {
         const storedChat = getStoredChat();
@@ -165,6 +174,7 @@ export default function Chat() {
         }
 
         const storedChat: StoredChat = {
+            sessionId,
             fileName: selectedFile.name,
             fileType: selectedFile.type || 'application/pdf',
             pdfUrl,
@@ -176,7 +186,7 @@ export default function Chat() {
         } catch (error) {
             console.error('Failed to save chat session:', error);
         }
-    }, [selectedFile, pdfUrl, messages]);
+    }, [sessionId, selectedFile, pdfUrl, messages]);
 
     useEffect(() => {
         const html = document.documentElement;
@@ -290,6 +300,10 @@ export default function Chat() {
 
             console.log('Resume validated successfully');
 
+            const nextSessionId = crypto.randomUUID();
+
+            setSessionId(nextSessionId);
+            setHasIndexedResume(false);
             setPdfUrl(uploadedPdfUrl);
             setSelectedFile(file);
 
@@ -307,6 +321,8 @@ export default function Chat() {
 
             setSelectedFile(null);
             setPdfUrl('');
+            setHasIndexedResume(false);
+            setSessionId(crypto.randomUUID());
             setMessages([]);
             setAnalysisError(message);
 
@@ -375,6 +391,8 @@ export default function Chat() {
 
         setSelectedFile(null);
         setPdfUrl('');
+        setHasIndexedResume(false);
+        setSessionId(crypto.randomUUID());
         setMessages([]);
         setInput('');
         setIsSending(false);
@@ -472,29 +490,24 @@ export default function Chat() {
         setMessages((current) => [...current, userMessage]);
 
         try {
-            const response = await fetch('http://localhost:3000/resume/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    pdfUrl,
-                    message: trimmed,
-                }),
+            if (!sessionId) {
+                throw new Error('Chat session is missing. Please start a new chat.');
+            }
+
+            const data = await sendChatMessage({
+                pdfUrl: hasIndexedResume ? undefined : pdfUrl,
+                message: trimmed,
+                sessionId,
             });
 
-            const data = await response.json();
-
-            if (!response.ok || !data.success) {
-                throw new Error(typeof data.error === 'string' ? data.error : 'Unable to process your message.');
-            }
+            setHasIndexedResume(true);
 
             setMessages((current) => [
                 ...current,
                 {
                     id: Date.now() + 1,
                     role: 'assistant',
-                    content: data.data?.response ?? data.data?.answer ?? data.data?.message ?? 'I received your message.',
+                    content: data.data?.answer ?? 'I received your message.',
                 },
             ]);
         } catch (error) {
@@ -575,7 +588,6 @@ export default function Chat() {
                         {selectedFile && (
                             <>
                                 <div className='h-4 w-px bg-zinc-200 dark:bg-zinc-800' />
-
                                 <div className='flex min-w-0 items-center gap-2.5'>
                                     <FileText className='h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500' strokeWidth={1.6} />
                                     <span className='max-w-45 truncate text-[13px] font-medium text-zinc-700 dark:text-zinc-300 sm:max-w-65'>{selectedFile.name}</span>
