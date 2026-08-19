@@ -16,6 +16,37 @@ const suggestions = ['What are my strongest skills?', 'What should I improve in 
 const heroWords = ['resume', 'experience', 'skills', 'story'];
 const CHAT_ANALYSIS_ROLE = 'General Resume Review';
 
+const CHAT_STORAGE_KEY = 'resume-analyzer-chat';
+
+type StoredChat = {
+    sessionId: string;
+    fileName: string;
+    fileType: string;
+    pdfUrl: string;
+    hasIndexedResume: boolean;
+    messages: Message[];
+};
+
+const getStoredChat = (): StoredChat | null => {
+    try {
+        const stored = sessionStorage.getItem(CHAT_STORAGE_KEY);
+
+        if (!stored) return null;
+
+        const parsed = JSON.parse(stored) as StoredChat;
+
+        if (!parsed.sessionId || !parsed.fileName || !parsed.pdfUrl || !Array.isArray(parsed.messages)) {
+            sessionStorage.removeItem(CHAT_STORAGE_KEY);
+            return null;
+        }
+
+        return parsed;
+    } catch {
+        sessionStorage.removeItem(CHAT_STORAGE_KEY);
+        return null;
+    }
+};
+
 export default function Chat() {
     const navigate = useNavigate();
     const { theme, toggleTheme } = useTheme();
@@ -45,12 +76,41 @@ export default function Chat() {
         mass: 0.5,
     });
     const fileErrorTimeoutRef = useRef<number | null>(null);
-    const [sessionId, setSessionId] = useState(() => crypto.randomUUID());
-    const [hasIndexedResume, setHasIndexedResume] = useState(false);
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [pdfUrl, setPdfUrl] = useState('');
+    const [sessionId, setSessionId] = useState(() => {
+        const storedChat = getStoredChat();
+
+        return storedChat?.sessionId ?? crypto.randomUUID();
+    });
+
+    const [hasIndexedResume, setHasIndexedResume] = useState(() => {
+        const storedChat = getStoredChat();
+
+        return storedChat?.hasIndexedResume ?? false;
+    });
+
+    const [selectedFile, setSelectedFile] = useState<File | null>(() => {
+        const storedChat = getStoredChat();
+
+        if (!storedChat) return null;
+
+        return new File([], storedChat.fileName, {
+            type: storedChat.fileType || 'application/pdf',
+        });
+    });
+
+    const [pdfUrl, setPdfUrl] = useState(() => {
+        const storedChat = getStoredChat();
+
+        return storedChat?.pdfUrl ?? '';
+    });
+
     const [input, setInput] = useState('');
-    const [messages, setMessages] = useState<Message[]>([]);
+
+    const [messages, setMessages] = useState<Message[]>(() => {
+        const storedChat = getStoredChat();
+
+        return storedChat?.messages ?? [];
+    });
     const [isDragging, setIsDragging] = useState(false);
     const [wordIndex, setWordIndex] = useState(0);
     const [showFileError, setShowFileError] = useState(false);
@@ -66,6 +126,28 @@ export default function Chat() {
             setShowLeaveConfirmation(true);
         }
     }, [blocker.state]);
+
+    useEffect(() => {
+        if (!selectedFile || !pdfUrl) {
+            sessionStorage.removeItem(CHAT_STORAGE_KEY);
+            return;
+        }
+
+        const storedChat: StoredChat = {
+            sessionId,
+            fileName: selectedFile.name,
+            fileType: selectedFile.type || 'application/pdf',
+            pdfUrl,
+            hasIndexedResume,
+            messages,
+        };
+
+        try {
+            sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(storedChat));
+        } catch (error) {
+            console.error('Failed to save chat session:', error);
+        }
+    }, [sessionId, selectedFile, pdfUrl, hasIndexedResume, messages]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({
@@ -320,6 +402,8 @@ export default function Chat() {
     };
 
     const removeFile = () => {
+        sessionStorage.removeItem(CHAT_STORAGE_KEY);
+
         setSelectedFile(null);
         setPdfUrl('');
         setHasIndexedResume(false);
@@ -494,6 +578,8 @@ export default function Chat() {
 
     const handleLeaveChat = () => {
         setShowLeaveConfirmation(false);
+
+        sessionStorage.removeItem(CHAT_STORAGE_KEY);
 
         setSelectedFile(null);
         setPdfUrl('');
