@@ -1003,25 +1003,24 @@ export default function Chat() {
                                 </div>
                             </div>
 
-                            <AnimatePresence>
-                                {showScrollToBottom && (
-                                    <motion.button
-                                        type='button'
-                                        onClick={scrollToBottom}
-                                        aria-label='Scroll to latest message'
-                                        title='Scroll to latest message'
-                                        initial={{ opacity: 0, scale: 0.85, y: 8 }}
-                                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                                        exit={{ opacity: 0, scale: 0.85, y: 8 }}
-                                        transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                                        className='absolute bottom-25 left-1/2 z-20 flex h-9 w-9 -translate-x-1/2 cursor-pointer items-center justify-center rounded-full border border-zinc-200/80 bg-white/90 text-zinc-500 shadow-[0_6px_20px_-8px_rgba(0,0,0,0.25)] backdrop-blur-md transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-zinc-950/90 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
-                                    >
-                                        <ArrowDown className='h-4 w-4' strokeWidth={1.8} />
-                                    </motion.button>
-                                )}
-                            </AnimatePresence>
-
-                            <div className='mx-auto w-full max-w-4xl shrink-0 px-4 pb-3 pt-1.5 sm:px-6'>
+                            <div className='relative mx-auto w-full max-w-4xl shrink-0 px-4 pb-3 pt-1.5 sm:px-6'>
+                                <AnimatePresence>
+                                    {showScrollToBottom && (
+                                        <motion.button
+                                            type='button'
+                                            onClick={scrollToBottom}
+                                            aria-label='Scroll to latest message'
+                                            title='Scroll to latest message'
+                                            initial={{ opacity: 0, scale: 0.85, y: 8 }}
+                                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                                            exit={{ opacity: 0, scale: 0.85, y: 8 }}
+                                            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                                            className='absolute bottom-full left-1/2 z-20 mb-2 flex h-9 w-9 -translate-x-1/2 cursor-pointer items-center justify-center rounded-full border border-zinc-200/80 bg-white/90 text-zinc-500 shadow-[0_6px_20px_-8px_rgba(0,0,0,0.25)] backdrop-blur-md transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-zinc-950/90 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
+                                        >
+                                            <ArrowDown className='h-4 w-4' strokeWidth={1.8} />
+                                        </motion.button>
+                                    )}
+                                </AnimatePresence>
                                 <div className='group relative flex w-full items-end gap-2 rounded-2xl border border-zinc-200 bg-white pl-5 pb-3 px-2 py-2 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.12)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.16)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.7)] dark:focus-within:border-zinc-700 dark:focus-within:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.85)]'>
                                     <div className='relative flex min-h-6 min-w-0 flex-1 items-center'>
                                         <textarea
@@ -1055,7 +1054,7 @@ export default function Chat() {
                                                 listening ? 'bg-rose-100 text-rose-600 hover:bg-rose-200 dark:bg-rose-950/70 dark:text-rose-400 dark:hover:bg-rose-950' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
                                             }`}
                                         >
-                                            {listening ? <MicOff className='h-4.5 w-4.5' strokeWidth={1.8} /> : <Mic className='h-4.5 w-4.5' strokeWidth={1.8} />}
+                                            {listening ? <MicOff className='h-5 w-5' strokeWidth={1.8} /> : <Mic className='h-5 w-5' strokeWidth={1.8} />}
                                         </button>
 
                                         <div className='group/send relative'>
