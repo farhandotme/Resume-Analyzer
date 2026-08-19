@@ -182,6 +182,45 @@ export default function Chat() {
     useEffect(() => {
         if (!selectedFile) return;
 
+        const handleGlobalKeyDown = (event: KeyboardEvent) => {
+            const textarea = textareaRef.current;
+            if (!textarea || isSending) return;
+
+            if (event.metaKey || event.ctrlKey || event.altKey || event.key === 'Tab' || event.key === 'Escape') {
+                return;
+            }
+
+            if (event.key === 'Enter') {
+                if (document.activeElement !== textarea) {
+                    textarea.focus();
+                }
+                return;
+            }
+
+            if (event.key.length !== 1) return;
+            if (document.activeElement === textarea) return;
+            event.preventDefault();
+            const start = textarea.selectionStart ?? textarea.value.length;
+            const end = textarea.selectionEnd ?? textarea.value.length;
+            const newValue = textarea.value.slice(0, start) + event.key + textarea.value.slice(end);
+            setInput(newValue);
+            requestAnimationFrame(() => {
+                textarea.focus();
+                const nextCursorPosition = start + event.key.length;
+                textarea.setSelectionRange(nextCursorPosition, nextCursorPosition);
+                updateSmoothCaret();
+                caretBlinkOpacity.set(1);
+            });
+        };
+        window.addEventListener('keydown', handleGlobalKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleGlobalKeyDown);
+        };
+    }, [selectedFile, isSending]);
+
+    useEffect(() => {
+        if (!selectedFile) return;
+
         let blinkOn = true;
 
         caretBlinkOpacity.set(1);
@@ -856,16 +895,18 @@ export default function Chat() {
                     ) : (
                         <motion.div key='chat' initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className='flex h-full min-h-0 flex-col pt-16'>
                             <div className='min-h-0 flex-1 overflow-y-auto'>
-                                <div className='mx-auto flex w-full max-w-3xl flex-col gap-7 px-4 pb-8 pt-6 sm:px-6'>
+                                <div className='mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 pb-8 pt-6 sm:px-6'>
                                     {messages.map((message) => (
                                         <motion.div key={message.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
                                             {message.role === 'assistant' ? (
                                                 <div className='max-w-[88%]'>
-                                                    <div className='mb-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-600'>Resume Intelligence</div>
-                                                    <div className='text-[15.5px] leading-relaxed text-zinc-800 dark:text-zinc-200'>{message.content}</div>
+                                                    <div className='mb-2 font-mono text-[9px] uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-600'>Resume Intelligence</div>
+                                                    <div className='whitespace-pre-wrap wrap-break-word text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 dark:text-zinc-200'>{message.content}</div>
                                                 </div>
                                             ) : (
-                                                <div className='max-w-[85%] rounded-2xl rounded-br-sm border border-zinc-200 bg-zinc-100 px-5 py-3 text-[15px] leading-relaxed text-zinc-800 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100'>{message.content}</div>
+                                                <div className='max-w-[78%] rounded-[18px] rounded-br-md border border-zinc-200/80 bg-zinc-100 px-4.5 py-3 text-[14.5px] leading-6 tracking-[-0.005em] text-zinc-800 shadow-[0_2px_10px_-5px_rgba(0,0,0,0.18)] dark:border-zinc-800/80 dark:bg-zinc-900 dark:text-zinc-100 dark:shadow-[0_2px_12px_-5px_rgba(0,0,0,0.5)]'>
+                                                    {message.content}
+                                                </div>
                                             )}
                                         </motion.div>
                                     ))}
@@ -886,7 +927,7 @@ export default function Chat() {
                                     )}
 
                                     {messages.length === 1 && (
-                                        <div className='ml-12 mt-1'>
+                                        <div className='ml-0 mt-2 sm:ml-11'>
                                             <p className='mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500'>Suggested questions</p>
                                             <div className='flex flex-wrap gap-2.5'>
                                                 {suggestions.map((suggestion) => (
@@ -894,7 +935,7 @@ export default function Chat() {
                                                         key={suggestion}
                                                         type='button'
                                                         onClick={() => handleSuggestion(suggestion)}
-                                                        className='rounded-xl border border-zinc-200/80 bg-white/50 px-4 py-2 text-[13px] text-zinc-600 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-white hover:text-zinc-900 hover:shadow-md dark:border-zinc-800/80 dark:bg-zinc-950/50 dark:text-zinc-400 dark:hover:bg-zinc-950 dark:hover:text-zinc-200'
+                                                        className='rounded-xl border border-zinc-200/80 bg-white/60 px-3.5 py-2 text-[12.5px] font-medium text-zinc-600 shadow-[0_2px_8px_-5px_rgba(0,0,0,0.2)] transition-all duration-200 hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-white hover:text-zinc-900 hover:shadow-md dark:border-zinc-800/80 dark:bg-zinc-950/60 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-950 dark:hover:text-zinc-200'
                                                     >
                                                         {suggestion}
                                                     </button>
@@ -907,7 +948,7 @@ export default function Chat() {
                                 </div>
                             </div>
 
-                            <div className='mx-auto w-full max-w-3xl shrink-0 px-4 pb-3 pt-1.5 sm:px-6'>
+                            <div className='mx-auto w-full max-w-4xl shrink-0 px-4 pb-3 pt-1.5 sm:px-6'>
                                 <div className='group relative flex w-full items-center gap-2 rounded-[22px] border border-zinc-200 bg-white px-3.5 py-2.5 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.12)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.16)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.7)] dark:focus-within:border-zinc-700 dark:focus-within:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.85)]'>
                                     <div className='relative flex min-h-6 min-w-0 flex-1 items-center'>
                                         <div ref={caretMeasureRef} aria-hidden='true' className='pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap wrap-break-words text-[15px] leading-6 text-transparent' />
@@ -927,7 +968,7 @@ export default function Chat() {
                                             rows={1}
                                             disabled={isSending}
                                             placeholder='Ask anything about your resume...'
-                                            className='chat-composer-scrollbar relative z-10 my-auto max-h-40 min-h-6 w-full resize-none overflow-y-auto caret-transparent bg-transparent p-0 text-[15px] leading-6 text-zinc-900 outline-none placeholder:text-zinc-400 disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100 dark:placeholder:text-zinc-600'
+                                            className='chat-composer-scrollbar relative z-10 my-auto max-h-40 min-h-6 w-full resize-none overflow-y-auto caret-transparent select-none bg-transparent p-0 text-[15px] leading-6 text-zinc-900 outline-none placeholder:text-zinc-400 disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100 dark:placeholder:text-zinc-600'
                                             style={{ height: '24px' }}
                                         />
 
