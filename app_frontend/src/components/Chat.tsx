@@ -158,24 +158,35 @@ export default function Chat() {
 
     useEffect(() => {
         if (!selectedFile) return;
+        const focusChatInput = () => {
+            const textarea = textareaRef.current;
+            if (!textarea) return;
+            textarea.focus();
+            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
 
-        requestAnimationFrame(() => {
-            textareaRef.current?.focus();
             caretBlinkOpacity.set(1);
-
             requestAnimationFrame(() => {
                 updateSmoothCaret();
             });
+        };
+
+        const frame = requestAnimationFrame(() => {
+            requestAnimationFrame(focusChatInput);
         });
+
+        return () => {
+            cancelAnimationFrame(frame);
+        };
     }, [selectedFile]);
 
     useEffect(() => {
-        const textarea = textareaRef.current;
-        if (!textarea) return;
+        if (!selectedFile) return;
+
         let blinkOn = true;
 
+        caretBlinkOpacity.set(1);
+
         const interval = window.setInterval(() => {
-            if (document.activeElement !== textarea) return;
             blinkOn = !blinkOn;
             caretBlinkOpacity.set(blinkOn ? 1 : 0);
         }, 530);
@@ -183,7 +194,7 @@ export default function Chat() {
         return () => {
             window.clearInterval(interval);
         };
-    }, []);
+    }, [selectedFile, caretBlinkOpacity]);
 
     useEffect(() => {
         return () => {
@@ -902,6 +913,7 @@ export default function Chat() {
                                         <div ref={caretMeasureRef} aria-hidden='true' className='pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap wrap-break-words text-[15px] leading-6 text-transparent' />
                                         <textarea
                                             ref={textareaRef}
+                                            autoFocus
                                             value={input}
                                             onChange={handleInputChange}
                                             onKeyDown={handleKeyDown}
@@ -910,8 +922,7 @@ export default function Chat() {
                                                 requestAnimationFrame(updateSmoothCaret);
                                             }}
                                             onBlur={() => {
-                                                caretOpacity.set(0);
-                                                caretBlinkOpacity.set(0);
+                                                caretBlinkOpacity.set(1);
                                             }}
                                             rows={1}
                                             disabled={isSending}
@@ -920,7 +931,7 @@ export default function Chat() {
                                             style={{ height: '24px' }}
                                         />
 
-                                        <motion.div aria-hidden='true' className='pointer-events-none absolute left-0 top-px z-20 h-[1.05em] w-[1.5px] rounded-full bg-zinc-900 dark:bg-zinc-100' style={{ x: springCaretX, y: springCaretY, opacity: combinedCaretOpacity }} />
+                                        <motion.div aria-hidden='true' className='pointer-events-none absolute left-0 top-px z-20 h-[1.05em] w-px rounded-full bg-zinc-900 dark:bg-zinc-100' style={{ x: springCaretX, y: springCaretY, opacity: combinedCaretOpacity }} />
                                     </div>
                                     <button
                                         type='button'
