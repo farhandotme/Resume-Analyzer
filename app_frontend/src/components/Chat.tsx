@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'framer-motion';
-import { AlertCircle, ArrowLeft, ArrowUp, FileText, Moon, Plus, Sparkles, SunMedium } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ArrowUp, FileText, Moon, Sparkles, SquarePen, SunMedium } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useBlocker, useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme.ts';
@@ -673,7 +673,7 @@ export default function Chat() {
             <header className='absolute inset-x-0 top-0 z-20'>
                 <div aria-hidden='true' className='pointer-events-none absolute inset-x-0 top-0 h-28 bg-linear-to-b from-white/85 via-white/35 to-transparent dark:from-black dark:via-black/70 dark:to-transparent' />
 
-                <div className='relative z-10 mx-auto flex h-16 w-full max-w-4xl items-center justify-between px-5 sm:px-6'>
+                <div className='relative z-10 mx-auto grid h-16 w-full max-w-4xl -translate-x-1 sm:-translate-x-2 grid-cols-2 items-center px-4 sm:px-6'>
                     <div className='flex min-w-0 items-center gap-4'>
                         <button type='button' onClick={handleHomeClick} className='group inline-flex shrink-0 cursor-pointer items-center gap-1.5 text-sm font-medium text-zinc-500 transition-colors duration-200 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100'>
                             <ArrowLeft className='h-4 w-4 -translate-x-0.5 transition-transform duration-300 group-hover:-translate-x-1' strokeWidth={1.8} />
@@ -691,15 +691,16 @@ export default function Chat() {
                         )}
                     </div>
 
-                    <div className='flex items-center gap-2'>
+                    <div className='ml-auto flex items-center gap-2'>
                         {selectedFile && (
                             <button
                                 type='button'
                                 onClick={removeFile}
-                                className='inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg px-3 text-[13px] font-medium text-zinc-500 transition-colors duration-200 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
+                                aria-label='New chat'
+                                title='New chat'
+                                className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-zinc-500 transition-all duration-200 hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
                             >
-                                <Plus className='h-4 w-4' strokeWidth={1.8} />
-                                <span className='hidden sm:inline'>New chat</span>
+                                <SquarePen className='h-5 w-5' strokeWidth={2} />
                             </button>
                         )}
 
