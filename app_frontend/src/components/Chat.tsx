@@ -1058,15 +1058,28 @@ export default function Chat() {
                                             {listening ? <MicOff className='h-4 w-4' strokeWidth={1.8} /> : <Mic className='h-4 w-4' strokeWidth={1.8} />}
                                         </button>
 
-                                        <button
-                                            type='button'
-                                            onClick={() => void sendMessage()}
-                                            disabled={!input.trim() || isSending}
-                                            aria-label='Send message'
-                                            className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-zinc-950 text-white transition-all duration-200 hover:bg-zinc-800 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-900 dark:disabled:text-zinc-600'
-                                        >
-                                            <ArrowUp className='h-4 w-4' strokeWidth={1.8} />
-                                        </button>
+                                        <div className='group/send relative'>
+                                            <button
+                                                type='button'
+                                                onClick={() => void sendMessage()}
+                                                disabled={!input.trim() || isSending}
+                                                aria-label='Send message'
+                                                className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-zinc-950 text-white transition-all duration-200 hover:bg-zinc-800 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-900 dark:disabled:text-zinc-600'
+                                            >
+                                                <ArrowUp className='h-4 w-4' strokeWidth={1.8} />
+                                            </button>
+
+                                            {!input.trim() && !isSending && (
+                                                <div
+                                                    role='tooltip'
+                                                    className='pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 translate-y-1 scale-95 whitespace-nowrap rounded-md border border-zinc-300 bg-zinc-100 px-3 py-1.5 text-xs font-normal text-zinc-700 opacity-0 shadow-sm transition-all duration-150 ease-out group-hover/send:translate-y-0 group-hover/send:scale-100 group-hover/send:opacity-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100'
+                                                >
+                                                    type something
+                                                    <span aria-hidden='true' className='absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-zinc-300 dark:border-t-zinc-700' />
+                                                    <span aria-hidden='true' className='absolute left-1/2 top-full -mt-px z-10 h-0 w-0 -translate-x-1/2 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-zinc-100 dark:border-t-zinc-800' />
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
