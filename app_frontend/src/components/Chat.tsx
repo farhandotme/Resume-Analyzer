@@ -13,7 +13,16 @@ type Message = {
     content: string;
 };
 
-const suggestions = ['What are my strongest skills?', 'What should I improve in my resume?', 'Is my experience relevant for this role?'];
+const suggestions = [
+    'What are my strongest skills?',
+    'What should I improve in my resume?',
+    'What jobs am I a good fit for?',
+    'How can I make my resume stronger?',
+    'What are the weaknesses in my resume?',
+    'Is my resume ATS-friendly?',
+    'How can I improve my experience section?',
+    'What skills should I highlight?',
+];
 const heroWords = ['resume', 'experience', 'skills', 'story'];
 const CHAT_ANALYSIS_ROLE = 'General Resume Review';
 const CHAT_STORAGE_KEY = 'resume-analyzer-chat';
@@ -335,18 +344,6 @@ export default function Chat() {
         }, 4000);
     };
 
-    const resizeTextarea = () => {
-        requestAnimationFrame(() => {
-            const textarea = textareaRef.current;
-            if (!textarea) return;
-            textarea.style.height = 'auto';
-            const minHeight = 28;
-            const maxHeight = 160;
-            const nextHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
-            textarea.style.height = `${nextHeight}px`;
-        });
-    };
-
     const handleFile = async (file: File) => {
         if (isAnalyzingResume) return;
 
@@ -624,10 +621,10 @@ export default function Chat() {
 
     const handleSuggestion = (suggestion: string) => {
         setInput(suggestion);
-        if (textareaRef.current) {
-            textareaRef.current.focus();
-        }
-        resizeTextarea();
+
+        requestAnimationFrame(() => {
+            void sendMessage();
+        });
     };
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -981,16 +978,17 @@ export default function Chat() {
                                     )}
 
                                     {messages.length === 1 && (
-                                        <div className='ml-0 mt-2 sm:ml-11'>
+                                        <div className='mt-2 text-center'>
                                             <p className='mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500'>Suggested questions</p>
 
-                                            <div className='flex flex-wrap gap-2.5'>
+                                            <div className='mx-auto flex max-w-3xl flex-wrap justify-center gap-2'>
                                                 {suggestions.map((suggestion) => (
                                                     <button
                                                         key={suggestion}
                                                         type='button'
                                                         onClick={() => handleSuggestion(suggestion)}
-                                                        className='rounded-xl border border-zinc-200/80 bg-white/60 px-3.5 py-2 text-[12.5px] font-medium text-zinc-600 shadow-[0_2px_8px_-5px_rgba(0,0,0,0.2)] transition-all duration-200 hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-white hover:text-zinc-900 hover:shadow-md dark:border-zinc-800/80 dark:bg-zinc-950/60 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-950 dark:hover:text-zinc-200'
+                                                        disabled={isSending}
+                                                        className='cursor-pointer select-none rounded-lg border border-zinc-200/80 bg-transparent px-3 py-1.5 text-left text-[12.5px] font-medium text-zinc-500 transition-colors duration-150 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800/80 dark:text-zinc-500 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/70 dark:hover:text-zinc-200'
                                                     >
                                                         {suggestion}
                                                     </button>
