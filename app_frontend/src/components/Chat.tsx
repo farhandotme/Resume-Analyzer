@@ -1,5 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { AlertCircle, ArrowDown, ArrowLeft, ArrowUp, FileText, Moon, Sparkles, SquarePen, SunMedium } from 'lucide-react';
+import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
+import { AlertCircle, ArrowDown, ArrowLeft, ArrowUp, FileText, Mic, MicOff, Moon, Sparkles, SquarePen, SunMedium } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useBlocker, useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme.ts';
@@ -51,12 +52,14 @@ export default function Chat() {
     const navigate = useNavigate();
     const { theme, toggleTheme } = useTheme();
     const prefersReducedMotion = Boolean(useReducedMotion());
+
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const chatScrollRef = useRef<HTMLDivElement>(null);
 
     const fileErrorTimeoutRef = useRef<number | null>(null);
+    const micErrorTimeoutRef = useRef<number | null>(null);
 
     const [sessionId, setSessionId] = useState(() => {
         const storedChat = getStoredChat();
@@ -98,15 +101,19 @@ export default function Chat() {
     const [wordIndex, setWordIndex] = useState(0);
     const [showFileError, setShowFileError] = useState(false);
     const [analysisError, setAnalysisError] = useState('');
+    const [micError, setMicError] = useState('');
     const [isAnalyzingResume, setIsAnalyzingResume] = useState(false);
     const [isSending, setIsSending] = useState(false);
     const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
     const [showScrollToBottom, setShowScrollToBottom] = useState(false);
 
-    const blocker = useBlocker(
-        ({ currentLocation, nextLocation }) =>
-            Boolean(selectedFile && messages.length > 0) && currentLocation.pathname !== nextLocation.pathname,
-    );
+    const { transcript, listening, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
+
+    const transcriptRef = useRef('');
+    const shouldCommitTranscriptRef = useRef(false);
+    const commitTranscriptTimeoutRef = useRef<number | null>(null);
+
+    const blocker = useBlocker(({ currentLocation, nextLocation }) => Boolean(selectedFile && messages.length > 0) && currentLocation.pathname !== nextLocation.pathname);
 
     useEffect(() => {
         if (blocker.state === 'blocked') {
@@ -170,7 +177,7 @@ export default function Chat() {
         const handleGlobalKeyDown = (event: KeyboardEvent) => {
             const textarea = textareaRef.current;
 
-            if (!textarea || isSending) return;
+            if (!textarea || isSending || listening) return;
 
             if (event.metaKey || event.ctrlKey || event.altKey || event.key === 'Tab' || event.key === 'Escape') {
                 return;
@@ -208,12 +215,76 @@ export default function Chat() {
         return () => {
             window.removeEventListener('keydown', handleGlobalKeyDown);
         };
-    }, [selectedFile, isSending]);
+    }, [selectedFile, isSending, listening]);
+
+    useEffect(() => {
+        transcriptRef.current = transcript;
+    }, [transcript]);
+
+    useEffect(() => {
+        if (!listening && shouldCommitTranscriptRef.current) {
+            if (commitTranscriptTimeoutRef.current !== null) {
+                window.clearTimeout(commitTranscriptTimeoutRef.current);
+            }
+
+            commitTranscriptTimeoutRef.current = window.setTimeout(() => {
+                const spokenText = transcriptRef.current.trim();
+
+                if (spokenText) {
+                    setInput((current) => {
+                        const separator = current.trim() ? ' ' : '';
+                        return `${current}${separator}${spokenText}`;
+                    });
+
+                    requestAnimationFrame(() => {
+                        const textarea = textareaRef.current;
+
+                        if (!textarea) return;
+
+                        textarea.style.height = 'auto';
+
+                        const minHeight = 24;
+                        const maxHeight = 160;
+                        const nextHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
+
+                        textarea.style.height = `${nextHeight}px`;
+                        textarea.focus();
+
+                        requestAnimationFrame(() => {
+                            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+                        });
+                    });
+                }
+
+                transcriptRef.current = '';
+                shouldCommitTranscriptRef.current = false;
+                commitTranscriptTimeoutRef.current = null;
+                resetTranscript();
+            }, 700);
+        }
+
+        return () => {
+            if (commitTranscriptTimeoutRef.current !== null) {
+                window.clearTimeout(commitTranscriptTimeoutRef.current);
+                commitTranscriptTimeoutRef.current = null;
+            }
+        };
+    }, [listening, resetTranscript]);
 
     useEffect(() => {
         return () => {
+            void SpeechRecognition.abortListening();
+
             if (fileErrorTimeoutRef.current !== null) {
                 window.clearTimeout(fileErrorTimeoutRef.current);
+            }
+
+            if (micErrorTimeoutRef.current !== null) {
+                window.clearTimeout(micErrorTimeoutRef.current);
+            }
+
+            if (commitTranscriptTimeoutRef.current !== null) {
+                window.clearTimeout(commitTranscriptTimeoutRef.current);
             }
         };
     }, []);
@@ -263,6 +334,31 @@ export default function Chat() {
             setShowFileError(false);
             fileErrorTimeoutRef.current = null;
         }, 3500);
+    };
+
+    const showMicErrorMessage = (message: string) => {
+        setMicError(message);
+
+        if (micErrorTimeoutRef.current !== null) {
+            window.clearTimeout(micErrorTimeoutRef.current);
+        }
+
+        micErrorTimeoutRef.current = window.setTimeout(() => {
+            setMicError('');
+            micErrorTimeoutRef.current = null;
+        }, 4000);
+    };
+
+    const resizeTextarea = () => {
+        requestAnimationFrame(() => {
+            const textarea = textareaRef.current;
+            if (!textarea) return;
+            textarea.style.height = 'auto';
+            const minHeight = 24;
+            const maxHeight = 160;
+            const nextHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
+            textarea.style.height = `${nextHeight}px`;
+        });
     };
 
     const handleFile = async (file: File) => {
@@ -350,19 +446,15 @@ export default function Chat() {
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-
         if (!file) return;
-
         void handleFile(file);
         event.currentTarget.value = '';
     };
 
     const handleDragEnter = (event: React.DragEvent<HTMLElement>) => {
         event.preventDefault();
-
         if (selectedFile || isAnalyzingResume) return;
         if (!event.dataTransfer.types.includes('Files')) return;
-
         setIsDragging(true);
     };
 
@@ -378,7 +470,6 @@ export default function Chat() {
 
     const handleDragLeave = (event: React.DragEvent<HTMLElement>) => {
         event.preventDefault();
-
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
             setIsDragging(false);
         }
@@ -387,17 +478,24 @@ export default function Chat() {
     const handleDrop = (event: React.DragEvent<HTMLElement>) => {
         event.preventDefault();
         setIsDragging(false);
-
         if (selectedFile || isAnalyzingResume) return;
-
         const file = event.dataTransfer.files?.[0];
-
         if (!file) return;
-
         void handleFile(file);
     };
 
     const removeFile = () => {
+        shouldCommitTranscriptRef.current = false;
+        transcriptRef.current = '';
+
+        if (commitTranscriptTimeoutRef.current !== null) {
+            window.clearTimeout(commitTranscriptTimeoutRef.current);
+            commitTranscriptTimeoutRef.current = null;
+        }
+
+        void SpeechRecognition.abortListening();
+        resetTranscript();
+
         sessionStorage.removeItem(CHAT_STORAGE_KEY);
 
         setSelectedFile(null);
@@ -408,6 +506,7 @@ export default function Chat() {
         setInput('');
         setIsSending(false);
         setAnalysisError('');
+        setMicError('');
 
         if (textareaRef.current) {
             textareaRef.current.style.height = '24px';
@@ -416,27 +515,75 @@ export default function Chat() {
 
     const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         const value = event.target.value;
-
         setInput(value);
-
         const textarea = textareaRef.current;
-
         if (!textarea) return;
-
         textarea.style.height = 'auto';
-
         const minHeight = 24;
         const maxHeight = 160;
-
         const nextHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
-
         textarea.style.height = `${nextHeight}px`;
+    };
+
+    const handleMicToggle = async () => {
+        if (isSending) return;
+
+        if (!browserSupportsSpeechRecognition) {
+            showMicErrorMessage('Voice input is not supported in this browser.');
+            return;
+        }
+
+        if (listening) {
+            shouldCommitTranscriptRef.current = true;
+
+            try {
+                await SpeechRecognition.stopListening();
+            } catch (error) {
+                console.error('Unable to stop speech recognition:', error);
+                shouldCommitTranscriptRef.current = false;
+                showMicErrorMessage('Unable to stop voice input. Please try again.');
+            }
+
+            return;
+        }
+
+        if (commitTranscriptTimeoutRef.current !== null) {
+            window.clearTimeout(commitTranscriptTimeoutRef.current);
+            commitTranscriptTimeoutRef.current = null;
+        }
+
+        setMicError('');
+        shouldCommitTranscriptRef.current = false;
+        transcriptRef.current = '';
+        resetTranscript();
+
+        try {
+            await SpeechRecognition.startListening({
+                continuous: true,
+                language: navigator.language || 'en-US',
+            });
+        } catch (error) {
+            console.error('Unable to start speech recognition:', error);
+            shouldCommitTranscriptRef.current = false;
+            showMicErrorMessage('Unable to start voice input. Please allow microphone access and try again.');
+        }
     };
 
     const sendMessage = async () => {
         const trimmed = input.trim();
 
         if (!trimmed || !selectedFile || !pdfUrl || isSending) return;
+
+        if (listening) {
+            shouldCommitTranscriptRef.current = false;
+            transcriptRef.current = '';
+            if (commitTranscriptTimeoutRef.current !== null) {
+                window.clearTimeout(commitTranscriptTimeoutRef.current);
+                commitTranscriptTimeoutRef.current = null;
+            }
+            await SpeechRecognition.stopListening();
+            resetTranscript();
+        }
 
         setIsSending(true);
         setInput('');
@@ -458,15 +605,12 @@ export default function Chat() {
             if (!sessionId) {
                 throw new Error('Chat session is missing. Please start a new chat.');
             }
-
             const data = await sendChatMessage({
                 pdfUrl: hasIndexedResume ? undefined : pdfUrl,
                 message: trimmed,
                 sessionId,
             });
-
             setHasIndexedResume(true);
-
             setMessages((current) => [
                 ...current,
                 {
@@ -477,7 +621,6 @@ export default function Chat() {
             ]);
         } catch (error) {
             console.error('Chat request failed:', error);
-
             setMessages((current) => [
                 ...current,
                 {
@@ -488,7 +631,6 @@ export default function Chat() {
             ]);
         } finally {
             setIsSending(false);
-
             requestAnimationFrame(() => {
                 textareaRef.current?.focus();
             });
@@ -497,10 +639,10 @@ export default function Chat() {
 
     const handleSuggestion = (suggestion: string) => {
         setInput(suggestion);
-
         if (textareaRef.current) {
             textareaRef.current.focus();
         }
+        resizeTextarea();
     };
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -517,12 +659,22 @@ export default function Chat() {
             navigate('/');
             return;
         }
-
         setShowLeaveConfirmation(true);
     };
 
     const handleLeaveChat = () => {
         setShowLeaveConfirmation(false);
+
+        shouldCommitTranscriptRef.current = false;
+        transcriptRef.current = '';
+
+        if (commitTranscriptTimeoutRef.current !== null) {
+            window.clearTimeout(commitTranscriptTimeoutRef.current);
+            commitTranscriptTimeoutRef.current = null;
+        }
+
+        void SpeechRecognition.abortListening();
+        resetTranscript();
 
         sessionStorage.removeItem(CHAT_STORAGE_KEY);
 
@@ -534,6 +686,7 @@ export default function Chat() {
         setInput('');
         setIsSending(false);
         setAnalysisError('');
+        setMicError('');
 
         if (blocker.state === 'blocked') {
             blocker.proceed();
@@ -544,24 +697,18 @@ export default function Chat() {
 
     const handleChatScroll = () => {
         const container = chatScrollRef.current;
-
         if (!container) return;
-
         const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
-
         setShowScrollToBottom(distanceFromBottom > 120);
     };
 
     const scrollToBottom = () => {
         const container = chatScrollRef.current;
-
         if (!container) return;
-
         container.scrollTo({
             top: container.scrollHeight,
             behavior: 'smooth',
         });
-
         setShowScrollToBottom(false);
     };
 
@@ -582,33 +729,18 @@ export default function Chat() {
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, x: [0, 40, -20, 0], y: [0, -24, 18, 0] }}
-                        transition={
-                            prefersReducedMotion
-                                ? { duration: 1.2 }
-                                : {
-                                      opacity: { duration: 1.2 },
-                                      x: { duration: 26, repeat: Infinity, ease: 'easeInOut' },
-                                      y: { duration: 26, repeat: Infinity, ease: 'easeInOut' },
-                                  }
-                        }
+                        transition={prefersReducedMotion ? { duration: 1.2 } : { opacity: { duration: 1.2 }, x: { duration: 26, repeat: Infinity, ease: 'easeInOut' }, y: { duration: 26, repeat: Infinity, ease: 'easeInOut' } }}
                         className='absolute left-1/2 top-[26%] h-155 w-225 -translate-x-1/2 -translate-y-1/2 rounded-full bg-zinc-300/10 blur-[130px] dark:bg-zinc-700/25'
                     />
                 </div>
             )}
 
             <header className='absolute inset-x-0 top-0 z-20'>
-                <div
-                    aria-hidden='true'
-                    className='pointer-events-none absolute inset-x-0 top-0 h-28 bg-linear-to-b from-white/85 via-white/35 to-transparent dark:from-black dark:via-black/70 dark:to-transparent'
-                />
+                <div aria-hidden='true' className='pointer-events-none absolute inset-x-0 top-0 h-28 bg-linear-to-b from-white/85 via-white/35 to-transparent dark:from-black dark:via-black/70 dark:to-transparent' />
 
                 <div className='relative z-10 mx-auto grid h-16 w-full max-w-4xl -translate-x-1 sm:-translate-x-2 grid-cols-2 items-center px-4 sm:px-6'>
                     <div className='flex min-w-0 items-center gap-4'>
-                        <button
-                            type='button'
-                            onClick={handleHomeClick}
-                            className='group inline-flex shrink-0 cursor-pointer items-center gap-1.5 text-sm font-medium text-zinc-500 transition-colors duration-200 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100'
-                        >
+                        <button type='button' onClick={handleHomeClick} className='group inline-flex shrink-0 cursor-pointer items-center gap-1.5 text-sm font-medium text-zinc-500 transition-colors duration-200 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100'>
                             <ArrowLeft className='h-4 w-4 -translate-x-0.5 transition-transform duration-300 group-hover:-translate-x-1' strokeWidth={1.8} />
                             <span className='select-none'>Home</span>
                         </button>
@@ -616,6 +748,7 @@ export default function Chat() {
                         {selectedFile && (
                             <>
                                 <div className='h-4 w-px bg-zinc-200 dark:bg-zinc-800' />
+
                                 <div className='flex min-w-0 items-center gap-2.5'>
                                     <FileText className='h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500' strokeWidth={1.6} />
                                     <span className='max-w-45 truncate text-[13px] font-medium text-zinc-700 dark:text-zinc-300 sm:max-w-65'>{selectedFile.name}</span>
@@ -675,15 +808,8 @@ export default function Chat() {
                                     Resume Intelligence
                                 </motion.div>
 
-                                <motion.div
-                                    initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 18 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}
-                                >
-                                    <h1
-                                        className='text-[3.4rem] font-light leading-[0.94] tracking-tight text-zinc-950 sm:text-[4.5rem] lg:text-[5.8rem] dark:text-white'
-                                        style={{ fontFamily: 'Fraunces, serif', fontWeight: 300 }}
-                                    >
+                                <motion.div initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}>
+                                    <h1 className='text-[3.4rem] font-light leading-[0.94] tracking-tight text-zinc-950 sm:text-[4.5rem] lg:text-[5.8rem] dark:text-white' style={{ fontFamily: 'Fraunces, serif', fontWeight: 300 }}>
                                         Let's talk about
                                     </h1>
 
@@ -713,12 +839,7 @@ export default function Chat() {
                                     Upload your resume and let AI understand your experience, strengths, skills, and career direction before you start the conversation.
                                 </motion.p>
 
-                                <motion.div
-                                    initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.36 }}
-                                    className='mx-auto mt-6 w-full max-w-2xl'
-                                >
+                                <motion.div initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.36 }} className='mx-auto mt-6 w-full max-w-2xl'>
                                     <div className='relative flex w-full flex-col items-center'>
                                         <input ref={fileInputRef} type='file' accept='application/pdf,.pdf' onChange={handleFileChange} className='hidden' />
 
@@ -746,11 +867,7 @@ export default function Chat() {
                                                 style={{ background: 'conic-gradient(from 0deg, transparent 40%, rgba(228,228,231,0.6) 50%, transparent 60%)' }}
                                             />
 
-                                            <div
-                                                className={`relative flex min-h-55 flex-col items-center justify-center overflow-hidden rounded-[calc(1.5rem-1px)] px-5 py-6 transition-colors duration-300 sm:px-8 ${
-                                                    isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'
-                                                }`}
-                                            >
+                                            <div className={`relative flex min-h-55 flex-col items-center justify-center overflow-hidden rounded-[calc(1.5rem-1px)] px-5 py-6 transition-colors duration-300 sm:px-8 ${isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'}`}>
                                                 <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(0,0,0,0.04)_1px,transparent_1px)] bg-size-[16px_16px] opacity-0 transition-opacity duration-500 group-hover:opacity-100 dark:bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)]' />
 
                                                 <div className='relative z-20 flex flex-col items-center'>
@@ -778,13 +895,9 @@ export default function Chat() {
                                                         </motion.div>
                                                     </div>
 
-                                                    <h3 className='mt-6 text-xl font-medium tracking-tight text-zinc-900 dark:text-zinc-100'>
-                                                        {isAnalyzingResume ? 'Understanding your resume...' : isDragging ? 'Drop your resume to begin' : 'Upload your resume'}
-                                                    </h3>
+                                                    <h3 className='mt-6 text-xl font-medium tracking-tight text-zinc-900 dark:text-zinc-100'>{isAnalyzingResume ? 'Understanding your resume...' : isDragging ? 'Drop your resume to begin' : 'Upload your resume'}</h3>
 
-                                                    <p className='mt-2 text-sm font-light text-zinc-500 dark:text-zinc-400'>
-                                                        {isAnalyzingResume ? 'AI is checking your document before opening chat' : 'PDF only · drag and drop or click to browse'}
-                                                    </p>
+                                                    <p className='mt-2 text-sm font-light text-zinc-500 dark:text-zinc-400'>{isAnalyzingResume ? 'AI is checking your document before opening chat' : 'PDF only · drag and drop or click to browse'}</p>
 
                                                     <AnimatePresence>
                                                         {showFileError && (
@@ -838,6 +951,7 @@ export default function Chat() {
                                                                 transition={{ duration: 0.9, repeat: Infinity, ease: 'linear' }}
                                                                 className='h-3.5 w-3.5 rounded-full border-2 border-zinc-300 border-t-zinc-700 dark:border-zinc-700 dark:border-t-zinc-200'
                                                             />
+
                                                             <span>Checking resume</span>
                                                         </div>
                                                     )}
@@ -853,19 +967,12 @@ export default function Chat() {
                             <div ref={chatScrollRef} onScroll={handleChatScroll} className='chat-scrollbar min-h-0 flex-1 overflow-y-auto'>
                                 <div className='mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 pb-8 pt-6 sm:px-6'>
                                     {messages.map((message) => (
-                                        <motion.div
-                                            key={message.id}
-                                            initial={{ opacity: 0, y: 8 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                                            className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}
-                                        >
+                                        <motion.div key={message.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
                                             {message.role === 'assistant' ? (
                                                 <div className='max-w-[88%]'>
                                                     <div className='mb-2 font-mono text-[9px] uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-600'>Resume Intelligence</div>
-                                                    <div className='whitespace-pre-wrap wrap-break-word text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 dark:text-zinc-200'>
-                                                        {message.content}
-                                                    </div>
+
+                                                    <div className='whitespace-pre-wrap wrap-break-word text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 dark:text-zinc-200'>{message.content}</div>
                                                 </div>
                                             ) : (
                                                 <div className='max-w-[78%] rounded-[18px] rounded-br-md border border-zinc-200/80 bg-zinc-100 px-4.5 py-3 text-[14.5px] leading-6 tracking-[-0.005em] text-zinc-800 shadow-[0_2px_10px_-5px_rgba(0,0,0,0.18)] dark:border-zinc-800/80 dark:bg-zinc-900 dark:text-zinc-100 dark:shadow-[0_2px_12px_-5px_rgba(0,0,0,0.5)]'>
@@ -933,7 +1040,7 @@ export default function Chat() {
                             </AnimatePresence>
 
                             <div className='mx-auto w-full max-w-4xl shrink-0 px-4 pb-3 pt-1.5 sm:px-6'>
-                                <div className='group relative flex w-full items-center gap-2 rounded-[22px] border border-zinc-200 bg-white px-3.5 py-2.5 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.12)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.16)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.7)] dark:focus-within:border-zinc-700 dark:focus-within:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.85)]'>
+                                <div className='group relative flex w-full items-end gap-2 rounded-[22px] border border-zinc-200 bg-white px-3.5 py-2.5 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.12)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.16)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.7)] dark:focus-within:border-zinc-700 dark:focus-within:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.85)]'>
                                     <div className='relative flex min-h-6 min-w-0 flex-1 items-center'>
                                         <textarea
                                             ref={textareaRef}
@@ -949,20 +1056,39 @@ export default function Chat() {
                                         />
                                     </div>
 
-                                    <button
-                                        type='button'
-                                        onClick={() => void sendMessage()}
-                                        disabled={!input.trim() || isSending}
-                                        aria-label='Send message'
-                                        className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-zinc-950 text-white transition-all duration-200 hover:bg-zinc-800 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-900 dark:disabled:text-zinc-600'
-                                    >
-                                        <ArrowUp className='h-4 w-4' strokeWidth={1.8} />
-                                    </button>
+                                    <div className='relative flex shrink-0 items-center gap-1.5'>
+                                        {micError && (
+                                            <div className='absolute bottom-full left-1/2 mb-2 w-max max-w-70 -translate-x-1/2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-center text-[11px] font-medium text-rose-600 shadow-sm dark:border-rose-900/60 dark:bg-rose-950/70 dark:text-rose-300'>
+                                                {micError}
+                                            </div>
+                                        )}
+
+                                        <button
+                                            type='button'
+                                            onClick={handleMicToggle}
+                                            disabled={isSending}
+                                            aria-label={listening ? 'Stop voice input' : 'Start voice input'}
+                                            title={listening ? 'Stop voice input' : 'Voice input'}
+                                            className={`flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-xl transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 ${
+                                                listening ? 'bg-rose-100 text-rose-600 hover:bg-rose-200 dark:bg-rose-950/70 dark:text-rose-400 dark:hover:bg-rose-950' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
+                                            }`}
+                                        >
+                                            {listening ? <MicOff className='h-4 w-4' strokeWidth={1.8} /> : <Mic className='h-4 w-4' strokeWidth={1.8} />}
+                                        </button>
+
+                                        <button
+                                            type='button'
+                                            onClick={() => void sendMessage()}
+                                            disabled={!input.trim() || isSending}
+                                            aria-label='Send message'
+                                            className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-zinc-950 text-white transition-all duration-200 hover:bg-zinc-800 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-900 dark:disabled:text-zinc-600'
+                                        >
+                                            <ArrowUp className='h-4 w-4' strokeWidth={1.8} />
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <p className='mt-2.5 text-center font-mono text-[9px] uppercase tracking-widest text-zinc-400 dark:text-zinc-600'>
-                                    AI can make mistakes · verify important information
-                                </p>
+                                <p className='mt-2.5 text-center font-mono text-[9px] uppercase tracking-widest text-zinc-400 dark:text-zinc-600'>AI can make mistakes · verify important information</p>
                             </div>
                         </motion.div>
                     )}
@@ -971,13 +1097,7 @@ export default function Chat() {
 
             <AnimatePresence>
                 {showLeaveConfirmation && (
-                    <motion.div
-                        className='fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 backdrop-blur-sm dark:bg-black/60'
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={() => setShowLeaveConfirmation(false)}
-                    >
+                    <motion.div className='fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 backdrop-blur-sm dark:bg-black/60' initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowLeaveConfirmation(false)}>
                         <motion.div
                             role='dialog'
                             aria-modal='true'
@@ -1013,11 +1133,7 @@ export default function Chat() {
                                     Stay
                                 </button>
 
-                                <button
-                                    type='button'
-                                    onClick={handleLeaveChat}
-                                    className='cursor-pointer select-none rounded-xl bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200'
-                                >
+                                <button type='button' onClick={handleLeaveChat} className='cursor-pointer select-none rounded-xl bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200'>
                                     Leave
                                 </button>
                             </div>
