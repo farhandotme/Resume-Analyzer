@@ -113,7 +113,13 @@ export default function Chat() {
     const shouldCommitTranscriptRef = useRef(false);
     const commitTranscriptTimeoutRef = useRef<number | null>(null);
 
-    const blocker = useBlocker(({ currentLocation, nextLocation }) => Boolean(selectedFile && messages.length > 0) && currentLocation.pathname !== nextLocation.pathname);
+    const isLeavingChatRef = useRef(false);
+
+    const blocker = useBlocker(({ currentLocation, nextLocation }) => {
+        if (isLeavingChatRef.current) return false;
+
+        return Boolean(selectedFile && messages.length > 0) && currentLocation.pathname !== nextLocation.pathname;
+    });
 
     useEffect(() => {
         if (blocker.state === 'blocked') {
@@ -665,6 +671,8 @@ export default function Chat() {
     const handleLeaveChat = () => {
         setShowLeaveConfirmation(false);
 
+        isLeavingChatRef.current = true;
+
         shouldCommitTranscriptRef.current = false;
         transcriptRef.current = '';
 
@@ -1123,6 +1131,7 @@ export default function Chat() {
                                     type='button'
                                     onClick={() => {
                                         setShowLeaveConfirmation(false);
+                                        isLeavingChatRef.current = false;
 
                                         if (blocker.state === 'blocked') {
                                             blocker.reset();
