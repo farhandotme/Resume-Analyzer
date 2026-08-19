@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'framer-motion';
-import { AlertCircle, ArrowLeft, ArrowUp, FileText, Moon, Sparkles, SquarePen, SunMedium } from 'lucide-react';
+import { AlertCircle, ArrowDown, ArrowLeft, ArrowUp, FileText, Moon, Sparkles, SquarePen, SunMedium } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useBlocker, useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme.ts';
@@ -55,6 +55,7 @@ export default function Chat() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const caretMeasureRef = useRef<HTMLDivElement>(null);
+    const chatScrollRef = useRef<HTMLDivElement>(null);
 
     const caretX = useMotionValue(0);
     const caretY = useMotionValue(0);
@@ -118,6 +119,7 @@ export default function Chat() {
     const [isAnalyzingResume, setIsAnalyzingResume] = useState(false);
     const [isSending, setIsSending] = useState(false);
     const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
+    const [showScrollToBottom, setShowScrollToBottom] = useState(false);
 
     const blocker = useBlocker(({ currentLocation, nextLocation }) => Boolean(selectedFile && messages.length > 0) && currentLocation.pathname !== nextLocation.pathname);
 
@@ -647,6 +649,23 @@ export default function Chat() {
         }
     };
 
+    const handleChatScroll = () => {
+        const container = chatScrollRef.current;
+        if (!container) return;
+        const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+        setShowScrollToBottom(distanceFromBottom > 120);
+    };
+
+    const scrollToBottom = () => {
+        const container = chatScrollRef.current;
+        if (!container) return;
+        container.scrollTo({
+            top: container.scrollHeight,
+            behavior: 'smooth',
+        });
+        setShowScrollToBottom(false);
+    };
+
     return (
         <main
             className='relative flex h-dvh w-full flex-col overflow-hidden overscroll-none bg-white text-zinc-950 selection:bg-[#EAF5FF] selection:text-[#3999FF] dark:bg-black dark:text-zinc-100 dark:selection:bg-[#010B1B] dark:selection:text-[#3999FF]'
@@ -896,7 +915,7 @@ export default function Chat() {
                         </motion.section>
                     ) : (
                         <motion.div key='chat' initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className='flex h-full min-h-0 flex-col pt-16'>
-                            <div className='chat-scrollbar min-h-0 flex-1 overflow-y-auto'>
+                            <div ref={chatScrollRef} onScroll={handleChatScroll} className='chat-scrollbar min-h-0 flex-1 overflow-y-auto'>
                                 <div className='mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 pb-8 pt-6 sm:px-6'>
                                     {messages.map((message) => (
                                         <motion.div key={message.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
@@ -949,6 +968,24 @@ export default function Chat() {
                                     <div ref={messagesEndRef} className='h-4' />
                                 </div>
                             </div>
+
+                            <AnimatePresence>
+                                {showScrollToBottom && (
+                                    <motion.button
+                                        type='button'
+                                        onClick={scrollToBottom}
+                                        aria-label='Scroll to latest message'
+                                        title='Scroll to latest message'
+                                        initial={{ opacity: 0, scale: 0.85, y: 8 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.85, y: 8 }}
+                                        transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                                        className='absolute bottom-25 left-1/2 z-20 flex h-9 w-9 -translate-x-1/2 cursor-pointer items-center justify-center rounded-full border border-zinc-200/80 bg-white/90 text-zinc-500 shadow-[0_6px_20px_-8px_rgba(0,0,0,0.25)] backdrop-blur-md transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-zinc-950/90 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
+                                    >
+                                        <ArrowDown className='h-4 w-4' strokeWidth={1.8} />
+                                    </motion.button>
+                                )}
+                            </AnimatePresence>
 
                             <div className='mx-auto w-full max-w-4xl shrink-0 px-4 pb-3 pt-1.5 sm:px-6'>
                                 <div className='group relative flex w-full items-center gap-2 rounded-[22px] border border-zinc-200 bg-white px-3.5 py-2.5 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.12)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.16)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.7)] dark:focus-within:border-zinc-700 dark:focus-within:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.85)]'>
