@@ -16,7 +16,6 @@ type Message = {
 const suggestions = ['What are my strongest skills?', 'What should I improve in my resume?', 'Is my experience relevant for this role?'];
 const heroWords = ['resume', 'experience', 'skills', 'story'];
 const CHAT_ANALYSIS_ROLE = 'General Resume Review';
-
 const CHAT_STORAGE_KEY = 'resume-analyzer-chat';
 
 type StoredChat = {
@@ -31,7 +30,6 @@ type StoredChat = {
 const getStoredChat = (): StoredChat | null => {
     try {
         const stored = sessionStorage.getItem(CHAT_STORAGE_KEY);
-
         if (!stored) return null;
 
         const parsed = JSON.parse(stored) as StoredChat;
@@ -40,7 +38,6 @@ const getStoredChat = (): StoredChat | null => {
             sessionStorage.removeItem(CHAT_STORAGE_KEY);
             return null;
         }
-
         return parsed;
     } catch {
         sessionStorage.removeItem(CHAT_STORAGE_KEY);
@@ -52,24 +49,20 @@ export default function Chat() {
     const navigate = useNavigate();
     const { theme, toggleTheme } = useTheme();
     const prefersReducedMotion = Boolean(useReducedMotion());
-
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const chatScrollRef = useRef<HTMLDivElement>(null);
-
     const fileErrorTimeoutRef = useRef<number | null>(null);
     const micErrorTimeoutRef = useRef<number | null>(null);
 
     const [sessionId, setSessionId] = useState(() => {
         const storedChat = getStoredChat();
-
         return storedChat?.sessionId ?? crypto.randomUUID();
     });
 
     const [hasIndexedResume, setHasIndexedResume] = useState(() => {
         const storedChat = getStoredChat();
-
         return storedChat?.hasIndexedResume ?? false;
     });
 
@@ -85,7 +78,6 @@ export default function Chat() {
 
     const [pdfUrl, setPdfUrl] = useState(() => {
         const storedChat = getStoredChat();
-
         return storedChat?.pdfUrl ?? '';
     });
 
@@ -93,7 +85,6 @@ export default function Chat() {
 
     const [messages, setMessages] = useState<Message[]>(() => {
         const storedChat = getStoredChat();
-
         return storedChat?.messages ?? [];
     });
 
@@ -106,18 +97,14 @@ export default function Chat() {
     const [isSending, setIsSending] = useState(false);
     const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
     const [showScrollToBottom, setShowScrollToBottom] = useState(false);
-
     const { transcript, listening, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
-
     const transcriptRef = useRef('');
     const shouldCommitTranscriptRef = useRef(false);
     const commitTranscriptTimeoutRef = useRef<number | null>(null);
-
     const isLeavingChatRef = useRef(false);
 
     const blocker = useBlocker(({ currentLocation, nextLocation }) => {
         if (isLeavingChatRef.current) return false;
-
         return Boolean(selectedFile && messages.length > 0) && currentLocation.pathname !== nextLocation.pathname;
     });
 
@@ -161,9 +148,7 @@ export default function Chat() {
 
         const focusChatInput = () => {
             const textarea = textareaRef.current;
-
             if (!textarea) return;
-
             textarea.focus();
             textarea.setSelectionRange(textarea.value.length, textarea.value.length);
         };
@@ -182,9 +167,7 @@ export default function Chat() {
 
         const handleGlobalKeyDown = (event: KeyboardEvent) => {
             const textarea = textareaRef.current;
-
             if (!textarea || isSending || listening) return;
-
             if (event.metaKey || event.ctrlKey || event.altKey || event.key === 'Tab' || event.key === 'Escape') {
                 return;
             }
@@ -193,7 +176,6 @@ export default function Chat() {
                 if (document.activeElement !== textarea) {
                     textarea.focus();
                 }
-
                 return;
             }
 
@@ -244,9 +226,7 @@ export default function Chat() {
 
                     requestAnimationFrame(() => {
                         const textarea = textareaRef.current;
-
                         if (!textarea) return;
-
                         textarea.style.height = 'auto';
 
                         const minHeight = 24;
@@ -549,7 +529,6 @@ export default function Chat() {
                 shouldCommitTranscriptRef.current = false;
                 showMicErrorMessage('Unable to stop voice input. Please try again.');
             }
-
             return;
         }
 
@@ -670,12 +649,9 @@ export default function Chat() {
 
     const handleLeaveChat = () => {
         setShowLeaveConfirmation(false);
-
         isLeavingChatRef.current = true;
-
         shouldCommitTranscriptRef.current = false;
         transcriptRef.current = '';
-
         if (commitTranscriptTimeoutRef.current !== null) {
             window.clearTimeout(commitTranscriptTimeoutRef.current);
             commitTranscriptTimeoutRef.current = null;
@@ -756,7 +732,6 @@ export default function Chat() {
                         {selectedFile && (
                             <>
                                 <div className='h-4 w-px bg-zinc-200 dark:bg-zinc-800' />
-
                                 <div className='flex min-w-0 items-center gap-2.5'>
                                     <FileText className='h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500' strokeWidth={1.6} />
                                     <span className='max-w-45 truncate text-[13px] font-medium text-zinc-700 dark:text-zinc-300 sm:max-w-65'>{selectedFile.name}</span>
@@ -864,14 +839,14 @@ export default function Chat() {
                                             <motion.div
                                                 animate={prefersReducedMotion ? {} : { rotate: 360 }}
                                                 transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-                                                className='absolute -inset-full opacity-0 transition-opacity duration-500 group-hover:opacity-100'
+                                                className={`absolute -inset-full transition-opacity duration-500 ${isAnalyzingResume ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                                                 style={{ background: 'conic-gradient(from 0deg, transparent 70%, rgba(161,161,170,0.9) 85%, transparent 100%)' }}
                                             />
 
                                             <motion.div
                                                 animate={prefersReducedMotion ? {} : { rotate: -360 }}
                                                 transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
-                                                className='absolute -inset-full opacity-0 transition-opacity duration-500 group-hover:opacity-100'
+                                                className={`absolute -inset-full transition-opacity duration-500 ${isAnalyzingResume ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                                                 style={{ background: 'conic-gradient(from 0deg, transparent 40%, rgba(228,228,231,0.6) 50%, transparent 60%)' }}
                                             />
 
@@ -959,7 +934,6 @@ export default function Chat() {
                                                                 transition={{ duration: 0.9, repeat: Infinity, ease: 'linear' }}
                                                                 className='h-3.5 w-3.5 rounded-full border-2 border-zinc-300 border-t-zinc-700 dark:border-zinc-700 dark:border-t-zinc-200'
                                                             />
-
                                                             <span>Checking resume</span>
                                                         </div>
                                                     )}
