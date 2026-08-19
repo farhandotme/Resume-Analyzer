@@ -1,7 +1,7 @@
 import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'framer-motion';
 import { AlertCircle, ArrowLeft, ArrowUp, FileText, Moon, Plus, Sparkles, SunMedium } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useBlocker, useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme.ts';
 import { uploadResume } from '../services/uploadResume.ts';
 import { sendChatMessage } from '../services/chatResume.ts';
@@ -15,32 +15,6 @@ type Message = {
 const suggestions = ['What are my strongest skills?', 'What should I improve in my resume?', 'Is my experience relevant for this role?'];
 const heroWords = ['resume', 'experience', 'skills', 'story'];
 const CHAT_ANALYSIS_ROLE = 'General Resume Review';
-const CHAT_STORAGE_KEY = 'resume-analyzer-chat';
-
-type StoredChat = {
-    sessionId: string;
-    fileName: string;
-    fileType: string;
-    pdfUrl: string;
-    messages: Message[];
-};
-
-const getStoredChat = (): StoredChat | null => {
-    try {
-        const stored = sessionStorage.getItem(CHAT_STORAGE_KEY);
-        if (!stored) return null;
-
-        const parsed = JSON.parse(stored) as StoredChat;
-        if (!parsed.sessionId || !parsed.fileName || !parsed.pdfUrl || !Array.isArray(parsed.messages)) {
-            sessionStorage.removeItem(CHAT_STORAGE_KEY);
-            return null;
-        }
-        return parsed;
-    } catch {
-        sessionStorage.removeItem(CHAT_STORAGE_KEY);
-        return null;
-    }
-};
 
 export default function Chat() {
     const navigate = useNavigate();
@@ -71,47 +45,27 @@ export default function Chat() {
         mass: 0.5,
     });
     const fileErrorTimeoutRef = useRef<number | null>(null);
-
-    const [sessionId, setSessionId] = useState(() => {
-        const storedChat = getStoredChat();
-        return storedChat?.sessionId ?? crypto.randomUUID();
-    });
-
-    const [hasIndexedResume, setHasIndexedResume] = useState(() => {
-        const storedChat = getStoredChat();
-        return Boolean(storedChat?.sessionId && storedChat?.pdfUrl);
-    });
-
-    const [selectedFile, setSelectedFile] = useState<File | null>(() => {
-        const storedChat = getStoredChat();
-
-        if (!storedChat) return null;
-
-        return new File([], storedChat.fileName, {
-            type: storedChat.fileType || 'application/pdf',
-        });
-    });
-
-    const [pdfUrl, setPdfUrl] = useState(() => {
-        const storedChat = getStoredChat();
-
-        return storedChat?.pdfUrl ?? '';
-    });
-
+    const [sessionId, setSessionId] = useState(() => crypto.randomUUID());
+    const [hasIndexedResume, setHasIndexedResume] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [pdfUrl, setPdfUrl] = useState('');
     const [input, setInput] = useState('');
-
-    const [messages, setMessages] = useState<Message[]>(() => {
-        const storedChat = getStoredChat();
-
-        return storedChat?.messages ?? [];
-    });
-
+    const [messages, setMessages] = useState<Message[]>([]);
     const [isDragging, setIsDragging] = useState(false);
     const [wordIndex, setWordIndex] = useState(0);
     const [showFileError, setShowFileError] = useState(false);
     const [analysisError, setAnalysisError] = useState('');
     const [isAnalyzingResume, setIsAnalyzingResume] = useState(false);
     const [isSending, setIsSending] = useState(false);
+    const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
+
+    const blocker = useBlocker(({ currentLocation, nextLocation }) => Boolean(selectedFile && messages.length > 0) && currentLocation.pathname !== nextLocation.pathname);
+
+    useEffect(() => {
+        if (blocker.state === 'blocked') {
+            setShowLeaveConfirmation(true);
+        }
+    }, [blocker.state]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({
@@ -166,27 +120,6 @@ export default function Chat() {
 
         return () => window.clearInterval(interval);
     }, [prefersReducedMotion, selectedFile]);
-
-    useEffect(() => {
-        if (!selectedFile || !pdfUrl) {
-            sessionStorage.removeItem(CHAT_STORAGE_KEY);
-            return;
-        }
-
-        const storedChat: StoredChat = {
-            sessionId,
-            fileName: selectedFile.name,
-            fileType: selectedFile.type || 'application/pdf',
-            pdfUrl,
-            messages,
-        };
-
-        try {
-            sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(storedChat));
-        } catch (error) {
-            console.error('Failed to save chat session:', error);
-        }
-    }, [sessionId, selectedFile, pdfUrl, messages]);
 
     useEffect(() => {
         const html = document.documentElement;
@@ -387,8 +320,6 @@ export default function Chat() {
     };
 
     const removeFile = () => {
-        sessionStorage.removeItem(CHAT_STORAGE_KEY);
-
         setSelectedFile(null);
         setPdfUrl('');
         setHasIndexedResume(false);
@@ -552,6 +483,34 @@ export default function Chat() {
 
     const isLanding = !selectedFile;
 
+    const handleHomeClick = () => {
+        if (!selectedFile || messages.length === 0) {
+            navigate('/');
+            return;
+        }
+
+        setShowLeaveConfirmation(true);
+    };
+
+    const handleLeaveChat = () => {
+        setShowLeaveConfirmation(false);
+
+        setSelectedFile(null);
+        setPdfUrl('');
+        setHasIndexedResume(false);
+        setSessionId(crypto.randomUUID());
+        setMessages([]);
+        setInput('');
+        setIsSending(false);
+        setAnalysisError('');
+
+        if (blocker.state === 'blocked') {
+            blocker.proceed();
+        } else {
+            navigate('/');
+        }
+    };
+
     return (
         <main
             className='relative flex h-dvh w-full flex-col overflow-hidden overscroll-none bg-white text-zinc-950 selection:bg-[#EAF5FF] selection:text-[#3999FF] dark:bg-black dark:text-zinc-100 dark:selection:bg-[#010B1B] dark:selection:text-[#3999FF]'
@@ -580,7 +539,7 @@ export default function Chat() {
 
                 <div className='relative z-10 mx-auto flex h-16 w-full max-w-4xl items-center justify-between px-5 sm:px-6'>
                     <div className='flex min-w-0 items-center gap-4'>
-                        <button type='button' onClick={() => navigate('/')} className='group inline-flex shrink-0 cursor-pointer items-center gap-1.5 text-sm font-medium text-zinc-500 transition-colors duration-200 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100'>
+                        <button type='button' onClick={handleHomeClick} className='group inline-flex shrink-0 cursor-pointer items-center gap-1.5 text-sm font-medium text-zinc-500 transition-colors duration-200 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100'>
                             <ArrowLeft className='h-4 w-4 -translate-x-0.5 transition-transform duration-300 group-hover:-translate-x-1' strokeWidth={1.8} />
                             <span className='select-none'>Home</span>
                         </button>
@@ -894,6 +853,52 @@ export default function Chat() {
                     )}
                 </AnimatePresence>
             </div>
+
+            <AnimatePresence>
+                {showLeaveConfirmation && (
+                    <motion.div className='fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 backdrop-blur-sm dark:bg-black/60' initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowLeaveConfirmation(false)}>
+                        <motion.div
+                            role='dialog'
+                            aria-modal='true'
+                            aria-labelledby='leave-chat-title'
+                            aria-describedby='leave-chat-description'
+                            className='w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-950'
+                            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+                            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                            onClick={(event) => event.stopPropagation()}
+                        >
+                            <h2 id='leave-chat-title' className='text-lg font-medium tracking-tight text-zinc-900 dark:text-zinc-100'>
+                                Leave this chat?
+                            </h2>
+
+                            <p id='leave-chat-description' className='mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-400'>
+                                Your current conversation will be cleared when you leave.
+                            </p>
+
+                            <div className='mt-6 flex items-center justify-end gap-2.5'>
+                                <button
+                                    type='button'
+                                    onClick={() => {
+                                        setShowLeaveConfirmation(false);
+                                        if (blocker.state === 'blocked') {
+                                            blocker.reset();
+                                        }
+                                    }}
+                                    className='rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100 cursor-pointer select-none'
+                                >
+                                    Stay
+                                </button>
+
+                                <button type='button' onClick={handleLeaveChat} className='rounded-xl bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200 cursor-pointer select-none'>
+                                    Leave
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </main>
     );
 }
