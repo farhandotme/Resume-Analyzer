@@ -896,7 +896,7 @@ export default function Chat() {
                         </motion.section>
                     ) : (
                         <motion.div key='chat' initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className='flex h-full min-h-0 flex-col pt-16'>
-                            <div className='min-h-0 flex-1 overflow-y-auto'>
+                            <div className='chat-scrollbar min-h-0 flex-1 overflow-y-auto'>
                                 <div className='mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 pb-8 pt-6 sm:px-6'>
                                     {messages.map((message) => (
                                         <motion.div key={message.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
