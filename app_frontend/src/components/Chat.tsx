@@ -229,7 +229,7 @@ export default function Chat() {
                         if (!textarea) return;
                         textarea.style.height = 'auto';
 
-                        const minHeight = 24;
+                        const minHeight = 28;
                         const maxHeight = 160;
                         const nextHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
 
@@ -340,7 +340,7 @@ export default function Chat() {
             const textarea = textareaRef.current;
             if (!textarea) return;
             textarea.style.height = 'auto';
-            const minHeight = 24;
+            const minHeight = 28;
             const maxHeight = 160;
             const nextHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
             textarea.style.height = `${nextHeight}px`;
@@ -495,7 +495,7 @@ export default function Chat() {
         setMicError('');
 
         if (textareaRef.current) {
-            textareaRef.current.style.height = '24px';
+            textareaRef.current.style.height = '28px';
         }
     };
 
@@ -574,7 +574,7 @@ export default function Chat() {
         setInput('');
 
         if (textareaRef.current) {
-            textareaRef.current.style.height = '24px';
+            textareaRef.current.style.height = '28px';
             textareaRef.current.setSelectionRange(0, 0);
         }
 
@@ -1022,7 +1022,7 @@ export default function Chat() {
                             </AnimatePresence>
 
                             <div className='mx-auto w-full max-w-4xl shrink-0 px-4 pb-3 pt-1.5 sm:px-6'>
-                                <div className='group relative flex w-full items-end gap-2 rounded-[22px] border border-zinc-200 bg-white px-3.5 py-2.5 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.12)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.16)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.7)] dark:focus-within:border-zinc-700 dark:focus-within:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.85)]'>
+                                <div className='group relative flex w-full items-end gap-2 rounded-2xl border border-zinc-200 bg-white pl-5 pb-3 px-2 py-2 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.12)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.16)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.7)] dark:focus-within:border-zinc-700 dark:focus-within:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.85)]'>
                                     <div className='relative flex min-h-6 min-w-0 flex-1 items-center'>
                                         <textarea
                                             ref={textareaRef}
@@ -1033,8 +1033,8 @@ export default function Chat() {
                                             rows={1}
                                             disabled={isSending}
                                             placeholder='Ask anything about your resume...'
-                                            className='chat-composer-scrollbar relative z-10 my-auto max-h-40 min-h-6 w-full resize-none overflow-y-auto bg-transparent p-0 text-[15px] leading-6 text-zinc-900 outline-none placeholder:text-zinc-400 disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100 dark:placeholder:text-zinc-600'
-                                            style={{ height: '24px' }}
+                                            className='chat-composer-scrollbar relative z-10 my-auto max-h-40 min-h-7 w-full resize-none overflow-y-auto bg-transparent p-0 text-[16px] leading-6 text-zinc-900 outline-none placeholder:text-zinc-400 disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100 dark:placeholder:text-zinc-600'
+                                            style={{ height: '28px' }}
                                         />
                                     </div>
 
@@ -1051,11 +1051,11 @@ export default function Chat() {
                                             disabled={isSending}
                                             aria-label={listening ? 'Stop voice input' : 'Start voice input'}
                                             title={listening ? 'Stop voice input' : 'Voice input'}
-                                            className={`flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-xl transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 ${
+                                            className={`flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 ${
                                                 listening ? 'bg-rose-100 text-rose-600 hover:bg-rose-200 dark:bg-rose-950/70 dark:text-rose-400 dark:hover:bg-rose-950' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
                                             }`}
                                         >
-                                            {listening ? <MicOff className='h-4 w-4' strokeWidth={1.8} /> : <Mic className='h-4 w-4' strokeWidth={1.8} />}
+                                            {listening ? <MicOff className='h-4.5 w-4.5' strokeWidth={1.8} /> : <Mic className='h-4.5 w-4.5' strokeWidth={1.8} />}
                                         </button>
 
                                         <div className='group/send relative'>
@@ -1064,9 +1064,9 @@ export default function Chat() {
                                                 onClick={() => void sendMessage()}
                                                 disabled={!input.trim() || isSending}
                                                 aria-label='Send message'
-                                                className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-zinc-950 text-white transition-all duration-200 hover:bg-zinc-800 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-900 dark:disabled:text-zinc-600'
+                                                className='flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-zinc-950 text-white transition-all duration-200 hover:bg-zinc-800 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-900 dark:disabled:text-zinc-600'
                                             >
-                                                <ArrowUp className='h-4 w-4' strokeWidth={1.8} />
+                                                <ArrowUp className='h-5 w-5' strokeWidth={1.8} />
                                             </button>
 
                                             {!input.trim() && !isSending && (
