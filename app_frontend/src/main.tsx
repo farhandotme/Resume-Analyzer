@@ -1,5 +1,5 @@
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import App from './App';
 import './index.css';
 import '@fontsource/fraunces/500.css';
@@ -16,10 +16,15 @@ if (savedTheme === 'light' || savedTheme === 'dark') {
     document.documentElement.classList.add('light');
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-    <BrowserRouter>
-        <ThemeProvider>
-            <App />
-        </ThemeProvider>
-    </BrowserRouter>,
-);
+const router = createBrowserRouter([
+    {
+        path: '/*',
+        element: (
+            <ThemeProvider>
+                <App />
+            </ThemeProvider>
+        ),
+    },
+]);
+
+ReactDOM.createRoot(document.getElementById('root')!).render(<RouterProvider router={router} />);

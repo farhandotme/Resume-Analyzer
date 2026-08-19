@@ -1,9 +1,10 @@
 import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'framer-motion';
-import { AlertCircle, ArrowLeft, ArrowUp, FileText, Moon, Plus, Sparkles, SunMedium } from 'lucide-react';
+import { AlertCircle, ArrowDown, ArrowLeft, ArrowUp, FileText, Moon, Sparkles, SquarePen, SunMedium } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useBlocker, useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme.ts';
 import { uploadResume } from '../services/uploadResume.ts';
+import { sendChatMessage } from '../services/chatResume.ts';
 
 type Message = {
     id: number;
@@ -14,12 +15,15 @@ type Message = {
 const suggestions = ['What are my strongest skills?', 'What should I improve in my resume?', 'Is my experience relevant for this role?'];
 const heroWords = ['resume', 'experience', 'skills', 'story'];
 const CHAT_ANALYSIS_ROLE = 'General Resume Review';
+
 const CHAT_STORAGE_KEY = 'resume-analyzer-chat';
 
 type StoredChat = {
+    sessionId: string;
     fileName: string;
     fileType: string;
     pdfUrl: string;
+    hasIndexedResume: boolean;
     messages: Message[];
 };
 
@@ -31,7 +35,7 @@ const getStoredChat = (): StoredChat | null => {
 
         const parsed = JSON.parse(stored) as StoredChat;
 
-        if (!parsed.fileName || !parsed.pdfUrl || !Array.isArray(parsed.messages)) {
+        if (!parsed.sessionId || !parsed.fileName || !parsed.pdfUrl || !Array.isArray(parsed.messages)) {
             sessionStorage.removeItem(CHAT_STORAGE_KEY);
             return null;
         }
@@ -51,6 +55,7 @@ export default function Chat() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const caretMeasureRef = useRef<HTMLDivElement>(null);
+    const chatScrollRef = useRef<HTMLDivElement>(null);
 
     const caretX = useMotionValue(0);
     const caretY = useMotionValue(0);
@@ -72,6 +77,17 @@ export default function Chat() {
         mass: 0.5,
     });
     const fileErrorTimeoutRef = useRef<number | null>(null);
+    const [sessionId, setSessionId] = useState(() => {
+        const storedChat = getStoredChat();
+
+        return storedChat?.sessionId ?? crypto.randomUUID();
+    });
+
+    const [hasIndexedResume, setHasIndexedResume] = useState(() => {
+        const storedChat = getStoredChat();
+
+        return storedChat?.hasIndexedResume ?? false;
+    });
 
     const [selectedFile, setSelectedFile] = useState<File | null>(() => {
         const storedChat = getStoredChat();
@@ -96,13 +112,44 @@ export default function Chat() {
 
         return storedChat?.messages ?? [];
     });
-
     const [isDragging, setIsDragging] = useState(false);
     const [wordIndex, setWordIndex] = useState(0);
     const [showFileError, setShowFileError] = useState(false);
     const [analysisError, setAnalysisError] = useState('');
     const [isAnalyzingResume, setIsAnalyzingResume] = useState(false);
     const [isSending, setIsSending] = useState(false);
+    const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
+    const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+
+    const blocker = useBlocker(({ currentLocation, nextLocation }) => Boolean(selectedFile && messages.length > 0) && currentLocation.pathname !== nextLocation.pathname);
+
+    useEffect(() => {
+        if (blocker.state === 'blocked') {
+            setShowLeaveConfirmation(true);
+        }
+    }, [blocker.state]);
+
+    useEffect(() => {
+        if (!selectedFile || !pdfUrl) {
+            sessionStorage.removeItem(CHAT_STORAGE_KEY);
+            return;
+        }
+
+        const storedChat: StoredChat = {
+            sessionId,
+            fileName: selectedFile.name,
+            fileType: selectedFile.type || 'application/pdf',
+            pdfUrl,
+            hasIndexedResume,
+            messages,
+        };
+
+        try {
+            sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(storedChat));
+        } catch (error) {
+            console.error('Failed to save chat session:', error);
+        }
+    }, [sessionId, selectedFile, pdfUrl, hasIndexedResume, messages]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({
@@ -113,24 +160,74 @@ export default function Chat() {
 
     useEffect(() => {
         if (!selectedFile) return;
+        const focusChatInput = () => {
+            const textarea = textareaRef.current;
+            if (!textarea) return;
+            textarea.focus();
+            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
 
-        requestAnimationFrame(() => {
-            textareaRef.current?.focus();
             caretBlinkOpacity.set(1);
-
             requestAnimationFrame(() => {
                 updateSmoothCaret();
             });
+        };
+
+        const frame = requestAnimationFrame(() => {
+            requestAnimationFrame(focusChatInput);
         });
+
+        return () => {
+            cancelAnimationFrame(frame);
+        };
     }, [selectedFile]);
 
     useEffect(() => {
-        const textarea = textareaRef.current;
-        if (!textarea) return;
+        if (!selectedFile) return;
+
+        const handleGlobalKeyDown = (event: KeyboardEvent) => {
+            const textarea = textareaRef.current;
+            if (!textarea || isSending) return;
+
+            if (event.metaKey || event.ctrlKey || event.altKey || event.key === 'Tab' || event.key === 'Escape') {
+                return;
+            }
+
+            if (event.key === 'Enter') {
+                if (document.activeElement !== textarea) {
+                    textarea.focus();
+                }
+                return;
+            }
+
+            if (event.key.length !== 1) return;
+            if (document.activeElement === textarea) return;
+            event.preventDefault();
+            const start = textarea.selectionStart ?? textarea.value.length;
+            const end = textarea.selectionEnd ?? textarea.value.length;
+            const newValue = textarea.value.slice(0, start) + event.key + textarea.value.slice(end);
+            setInput(newValue);
+            requestAnimationFrame(() => {
+                textarea.focus();
+                const nextCursorPosition = start + event.key.length;
+                textarea.setSelectionRange(nextCursorPosition, nextCursorPosition);
+                updateSmoothCaret();
+                caretBlinkOpacity.set(1);
+            });
+        };
+        window.addEventListener('keydown', handleGlobalKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleGlobalKeyDown);
+        };
+    }, [selectedFile, isSending]);
+
+    useEffect(() => {
+        if (!selectedFile) return;
+
         let blinkOn = true;
 
+        caretBlinkOpacity.set(1);
+
         const interval = window.setInterval(() => {
-            if (document.activeElement !== textarea) return;
             blinkOn = !blinkOn;
             caretBlinkOpacity.set(blinkOn ? 1 : 0);
         }, 530);
@@ -138,7 +235,7 @@ export default function Chat() {
         return () => {
             window.clearInterval(interval);
         };
-    }, []);
+    }, [selectedFile, caretBlinkOpacity]);
 
     useEffect(() => {
         return () => {
@@ -157,26 +254,6 @@ export default function Chat() {
 
         return () => window.clearInterval(interval);
     }, [prefersReducedMotion, selectedFile]);
-
-    useEffect(() => {
-        if (!selectedFile || !pdfUrl) {
-            sessionStorage.removeItem(CHAT_STORAGE_KEY);
-            return;
-        }
-
-        const storedChat: StoredChat = {
-            fileName: selectedFile.name,
-            fileType: selectedFile.type || 'application/pdf',
-            pdfUrl,
-            messages,
-        };
-
-        try {
-            sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(storedChat));
-        } catch (error) {
-            console.error('Failed to save chat session:', error);
-        }
-    }, [selectedFile, pdfUrl, messages]);
 
     useEffect(() => {
         const html = document.documentElement;
@@ -290,6 +367,10 @@ export default function Chat() {
 
             console.log('Resume validated successfully');
 
+            const nextSessionId = crypto.randomUUID();
+
+            setSessionId(nextSessionId);
+            setHasIndexedResume(false);
             setPdfUrl(uploadedPdfUrl);
             setSelectedFile(file);
 
@@ -307,6 +388,8 @@ export default function Chat() {
 
             setSelectedFile(null);
             setPdfUrl('');
+            setHasIndexedResume(false);
+            setSessionId(crypto.randomUUID());
             setMessages([]);
             setAnalysisError(message);
 
@@ -375,6 +458,8 @@ export default function Chat() {
 
         setSelectedFile(null);
         setPdfUrl('');
+        setHasIndexedResume(false);
+        setSessionId(crypto.randomUUID());
         setMessages([]);
         setInput('');
         setIsSending(false);
@@ -472,29 +557,24 @@ export default function Chat() {
         setMessages((current) => [...current, userMessage]);
 
         try {
-            const response = await fetch('http://localhost:3000/resume/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    pdfUrl,
-                    message: trimmed,
-                }),
+            if (!sessionId) {
+                throw new Error('Chat session is missing. Please start a new chat.');
+            }
+
+            const data = await sendChatMessage({
+                pdfUrl: hasIndexedResume ? undefined : pdfUrl,
+                message: trimmed,
+                sessionId,
             });
 
-            const data = await response.json();
-
-            if (!response.ok || !data.success) {
-                throw new Error(typeof data.error === 'string' ? data.error : 'Unable to process your message.');
-            }
+            setHasIndexedResume(true);
 
             setMessages((current) => [
                 ...current,
                 {
                     id: Date.now() + 1,
                     role: 'assistant',
-                    content: data.data?.response ?? data.data?.answer ?? data.data?.message ?? 'I received your message.',
+                    content: data.data?.answer ?? 'I received your message.',
                 },
             ]);
         } catch (error) {
@@ -539,6 +619,53 @@ export default function Chat() {
 
     const isLanding = !selectedFile;
 
+    const handleHomeClick = () => {
+        if (!selectedFile || messages.length === 0) {
+            navigate('/');
+            return;
+        }
+
+        setShowLeaveConfirmation(true);
+    };
+
+    const handleLeaveChat = () => {
+        setShowLeaveConfirmation(false);
+
+        sessionStorage.removeItem(CHAT_STORAGE_KEY);
+
+        setSelectedFile(null);
+        setPdfUrl('');
+        setHasIndexedResume(false);
+        setSessionId(crypto.randomUUID());
+        setMessages([]);
+        setInput('');
+        setIsSending(false);
+        setAnalysisError('');
+
+        if (blocker.state === 'blocked') {
+            blocker.proceed();
+        } else {
+            navigate('/');
+        }
+    };
+
+    const handleChatScroll = () => {
+        const container = chatScrollRef.current;
+        if (!container) return;
+        const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+        setShowScrollToBottom(distanceFromBottom > 120);
+    };
+
+    const scrollToBottom = () => {
+        const container = chatScrollRef.current;
+        if (!container) return;
+        container.scrollTo({
+            top: container.scrollHeight,
+            behavior: 'smooth',
+        });
+        setShowScrollToBottom(false);
+    };
+
     return (
         <main
             className='relative flex h-dvh w-full flex-col overflow-hidden overscroll-none bg-white text-zinc-950 selection:bg-[#EAF5FF] selection:text-[#3999FF] dark:bg-black dark:text-zinc-100 dark:selection:bg-[#010B1B] dark:selection:text-[#3999FF]'
@@ -565,9 +692,9 @@ export default function Chat() {
             <header className='absolute inset-x-0 top-0 z-20'>
                 <div aria-hidden='true' className='pointer-events-none absolute inset-x-0 top-0 h-28 bg-linear-to-b from-white/85 via-white/35 to-transparent dark:from-black dark:via-black/70 dark:to-transparent' />
 
-                <div className='relative z-10 mx-auto flex h-16 w-full max-w-4xl items-center justify-between px-5 sm:px-6'>
+                <div className='relative z-10 mx-auto grid h-16 w-full max-w-4xl -translate-x-1 sm:-translate-x-2 grid-cols-2 items-center px-4 sm:px-6'>
                     <div className='flex min-w-0 items-center gap-4'>
-                        <button type='button' onClick={() => navigate('/')} className='group inline-flex shrink-0 cursor-pointer items-center gap-1.5 text-sm font-medium text-zinc-500 transition-colors duration-200 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100'>
+                        <button type='button' onClick={handleHomeClick} className='group inline-flex shrink-0 cursor-pointer items-center gap-1.5 text-sm font-medium text-zinc-500 transition-colors duration-200 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100'>
                             <ArrowLeft className='h-4 w-4 -translate-x-0.5 transition-transform duration-300 group-hover:-translate-x-1' strokeWidth={1.8} />
                             <span className='select-none'>Home</span>
                         </button>
@@ -575,7 +702,6 @@ export default function Chat() {
                         {selectedFile && (
                             <>
                                 <div className='h-4 w-px bg-zinc-200 dark:bg-zinc-800' />
-
                                 <div className='flex min-w-0 items-center gap-2.5'>
                                     <FileText className='h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500' strokeWidth={1.6} />
                                     <span className='max-w-45 truncate text-[13px] font-medium text-zinc-700 dark:text-zinc-300 sm:max-w-65'>{selectedFile.name}</span>
@@ -584,15 +710,16 @@ export default function Chat() {
                         )}
                     </div>
 
-                    <div className='flex items-center gap-2'>
+                    <div className='ml-auto flex items-center gap-2'>
                         {selectedFile && (
                             <button
                                 type='button'
                                 onClick={removeFile}
-                                className='inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg px-3 text-[13px] font-medium text-zinc-500 transition-colors duration-200 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
+                                aria-label='New chat'
+                                title='New chat'
+                                className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-zinc-200/80 bg-white/60 text-zinc-500 transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-black/60 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
                             >
-                                <Plus className='h-4 w-4' strokeWidth={1.8} />
-                                <span className='hidden sm:inline'>New chat</span>
+                                <SquarePen className='h-4.5 w-4.5' strokeWidth={1.8} />
                             </button>
                         )}
 
@@ -600,9 +727,10 @@ export default function Chat() {
                             type='button'
                             onClick={toggleTheme}
                             aria-label='Toggle theme'
-                            className='flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-zinc-200 bg-white/70 text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800 dark:bg-black/70 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-black dark:hover:text-zinc-100'
+                            title='Toggle theme'
+                            className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-zinc-200/80 bg-white/60 text-zinc-500 transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-black/60 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
                         >
-                            {theme === 'light' ? <Moon className='h-4.25 w-4.25' strokeWidth={1.8} /> : <SunMedium className='h-4.25 w-4.25' strokeWidth={1.8} />}
+                            {theme === 'light' ? <Moon className='h-4.5 w-4.5' strokeWidth={1.8} /> : <SunMedium className='h-4.5 w-4.5' strokeWidth={1.8} />}
                         </button>
                     </div>
                 </div>
@@ -787,17 +915,19 @@ export default function Chat() {
                         </motion.section>
                     ) : (
                         <motion.div key='chat' initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className='flex h-full min-h-0 flex-col pt-16'>
-                            <div className='min-h-0 flex-1 overflow-y-auto'>
-                                <div className='mx-auto flex w-full max-w-3xl flex-col gap-7 px-4 pb-8 pt-6 sm:px-6'>
+                            <div ref={chatScrollRef} onScroll={handleChatScroll} className='chat-scrollbar min-h-0 flex-1 overflow-y-auto'>
+                                <div className='mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 pb-8 pt-6 sm:px-6'>
                                     {messages.map((message) => (
                                         <motion.div key={message.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
                                             {message.role === 'assistant' ? (
                                                 <div className='max-w-[88%]'>
-                                                    <div className='mb-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-600'>Resume Intelligence</div>
-                                                    <div className='text-[15.5px] leading-relaxed text-zinc-800 dark:text-zinc-200'>{message.content}</div>
+                                                    <div className='mb-2 font-mono text-[9px] uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-600'>Resume Intelligence</div>
+                                                    <div className='whitespace-pre-wrap wrap-break-word text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 dark:text-zinc-200'>{message.content}</div>
                                                 </div>
                                             ) : (
-                                                <div className='max-w-[85%] rounded-2xl rounded-br-sm border border-zinc-200 bg-zinc-100 px-5 py-3 text-[15px] leading-relaxed text-zinc-800 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100'>{message.content}</div>
+                                                <div className='max-w-[78%] rounded-[18px] rounded-br-md border border-zinc-200/80 bg-zinc-100 px-4.5 py-3 text-[14.5px] leading-6 tracking-[-0.005em] text-zinc-800 shadow-[0_2px_10px_-5px_rgba(0,0,0,0.18)] dark:border-zinc-800/80 dark:bg-zinc-900 dark:text-zinc-100 dark:shadow-[0_2px_12px_-5px_rgba(0,0,0,0.5)]'>
+                                                    {message.content}
+                                                </div>
                                             )}
                                         </motion.div>
                                     ))}
@@ -818,7 +948,7 @@ export default function Chat() {
                                     )}
 
                                     {messages.length === 1 && (
-                                        <div className='ml-12 mt-1'>
+                                        <div className='ml-0 mt-2 sm:ml-11'>
                                             <p className='mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500'>Suggested questions</p>
                                             <div className='flex flex-wrap gap-2.5'>
                                                 {suggestions.map((suggestion) => (
@@ -826,7 +956,7 @@ export default function Chat() {
                                                         key={suggestion}
                                                         type='button'
                                                         onClick={() => handleSuggestion(suggestion)}
-                                                        className='rounded-xl border border-zinc-200/80 bg-white/50 px-4 py-2 text-[13px] text-zinc-600 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:bg-white hover:text-zinc-900 hover:shadow-md dark:border-zinc-800/80 dark:bg-zinc-950/50 dark:text-zinc-400 dark:hover:bg-zinc-950 dark:hover:text-zinc-200'
+                                                        className='rounded-xl border border-zinc-200/80 bg-white/60 px-3.5 py-2 text-[12.5px] font-medium text-zinc-600 shadow-[0_2px_8px_-5px_rgba(0,0,0,0.2)] transition-all duration-200 hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-white hover:text-zinc-900 hover:shadow-md dark:border-zinc-800/80 dark:bg-zinc-950/60 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-950 dark:hover:text-zinc-200'
                                                     >
                                                         {suggestion}
                                                     </button>
@@ -839,12 +969,31 @@ export default function Chat() {
                                 </div>
                             </div>
 
-                            <div className='mx-auto w-full max-w-3xl shrink-0 px-4 pb-3 pt-1.5 sm:px-6'>
+                            <AnimatePresence>
+                                {showScrollToBottom && (
+                                    <motion.button
+                                        type='button'
+                                        onClick={scrollToBottom}
+                                        aria-label='Scroll to latest message'
+                                        title='Scroll to latest message'
+                                        initial={{ opacity: 0, scale: 0.85, y: 8 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.85, y: 8 }}
+                                        transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                                        className='absolute bottom-25 left-1/2 z-20 flex h-9 w-9 -translate-x-1/2 cursor-pointer items-center justify-center rounded-full border border-zinc-200/80 bg-white/90 text-zinc-500 shadow-[0_6px_20px_-8px_rgba(0,0,0,0.25)] backdrop-blur-md transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-zinc-950/90 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
+                                    >
+                                        <ArrowDown className='h-4 w-4' strokeWidth={1.8} />
+                                    </motion.button>
+                                )}
+                            </AnimatePresence>
+
+                            <div className='mx-auto w-full max-w-4xl shrink-0 px-4 pb-3 pt-1.5 sm:px-6'>
                                 <div className='group relative flex w-full items-center gap-2 rounded-[22px] border border-zinc-200 bg-white px-3.5 py-2.5 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.12)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.16)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.7)] dark:focus-within:border-zinc-700 dark:focus-within:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.85)]'>
                                     <div className='relative flex min-h-6 min-w-0 flex-1 items-center'>
                                         <div ref={caretMeasureRef} aria-hidden='true' className='pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap wrap-break-words text-[15px] leading-6 text-transparent' />
                                         <textarea
                                             ref={textareaRef}
+                                            autoFocus
                                             value={input}
                                             onChange={handleInputChange}
                                             onKeyDown={handleKeyDown}
@@ -853,17 +1002,16 @@ export default function Chat() {
                                                 requestAnimationFrame(updateSmoothCaret);
                                             }}
                                             onBlur={() => {
-                                                caretOpacity.set(0);
-                                                caretBlinkOpacity.set(0);
+                                                caretBlinkOpacity.set(1);
                                             }}
                                             rows={1}
                                             disabled={isSending}
                                             placeholder='Ask anything about your resume...'
-                                            className='chat-composer-scrollbar relative z-10 my-auto max-h-40 min-h-6 w-full resize-none overflow-y-auto caret-transparent bg-transparent p-0 text-[15px] leading-6 text-zinc-900 outline-none placeholder:text-zinc-400 disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100 dark:placeholder:text-zinc-600'
+                                            className='chat-composer-scrollbar relative z-10 my-auto max-h-40 min-h-6 w-full resize-none overflow-y-auto caret-transparent select-none bg-transparent p-0 text-[15px] leading-6 text-zinc-900 outline-none placeholder:text-zinc-400 disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100 dark:placeholder:text-zinc-600'
                                             style={{ height: '24px' }}
                                         />
 
-                                        <motion.div aria-hidden='true' className='pointer-events-none absolute left-0 top-px z-20 h-[1.05em] w-[1.5px] rounded-full bg-zinc-900 dark:bg-zinc-100' style={{ x: springCaretX, y: springCaretY, opacity: combinedCaretOpacity }} />
+                                        <motion.div aria-hidden='true' className='pointer-events-none absolute left-0 top-px z-20 h-[1.05em] w-px rounded-full bg-zinc-900 dark:bg-zinc-100' style={{ x: springCaretX, y: springCaretY, opacity: combinedCaretOpacity }} />
                                     </div>
                                     <button
                                         type='button'
@@ -882,6 +1030,52 @@ export default function Chat() {
                     )}
                 </AnimatePresence>
             </div>
+
+            <AnimatePresence>
+                {showLeaveConfirmation && (
+                    <motion.div className='fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 backdrop-blur-sm dark:bg-black/60' initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowLeaveConfirmation(false)}>
+                        <motion.div
+                            role='dialog'
+                            aria-modal='true'
+                            aria-labelledby='leave-chat-title'
+                            aria-describedby='leave-chat-description'
+                            className='w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-950'
+                            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+                            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                            onClick={(event) => event.stopPropagation()}
+                        >
+                            <h2 id='leave-chat-title' className='text-lg font-medium tracking-tight text-zinc-900 dark:text-zinc-100'>
+                                Leave this chat?
+                            </h2>
+
+                            <p id='leave-chat-description' className='mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-400'>
+                                Your current conversation will be cleared when you leave.
+                            </p>
+
+                            <div className='mt-6 flex items-center justify-end gap-2.5'>
+                                <button
+                                    type='button'
+                                    onClick={() => {
+                                        setShowLeaveConfirmation(false);
+                                        if (blocker.state === 'blocked') {
+                                            blocker.reset();
+                                        }
+                                    }}
+                                    className='rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100 cursor-pointer select-none'
+                                >
+                                    Stay
+                                </button>
+
+                                <button type='button' onClick={handleLeaveChat} className='rounded-xl bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200 cursor-pointer select-none'>
+                                    Leave
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </main>
     );
 }
