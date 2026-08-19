@@ -698,9 +698,9 @@ export default function Chat() {
                                 onClick={removeFile}
                                 aria-label='New chat'
                                 title='New chat'
-                                className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-zinc-500 transition-all duration-200 hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
+                                className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-zinc-200/80 bg-white/60 text-zinc-500 transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-black/60 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
                             >
-                                <SquarePen className='h-5 w-5' strokeWidth={2} />
+                                <SquarePen className='h-4.5 w-4.5' strokeWidth={1.8} />
                             </button>
                         )}
 
@@ -708,9 +708,10 @@ export default function Chat() {
                             type='button'
                             onClick={toggleTheme}
                             aria-label='Toggle theme'
-                            className='flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-zinc-200 bg-white/70 text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800 dark:bg-black/70 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-black dark:hover:text-zinc-100'
+                            title='Toggle theme'
+                            className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-zinc-200/80 bg-white/60 text-zinc-500 transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-black/60 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
                         >
-                            {theme === 'light' ? <Moon className='h-4.25 w-4.25' strokeWidth={1.8} /> : <SunMedium className='h-4.25 w-4.25' strokeWidth={1.8} />}
+                            {theme === 'light' ? <Moon className='h-4.5 w-4.5' strokeWidth={1.8} /> : <SunMedium className='h-4.5 w-4.5' strokeWidth={1.8} />}
                         </button>
                     </div>
                 </div>
