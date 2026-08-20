@@ -551,8 +551,8 @@ export default function Chat() {
         }
     };
 
-    const sendMessage = async () => {
-        const trimmed = input.trim();
+    const sendMessage = async (messageOverride?: string) => {
+        const trimmed = (messageOverride ?? input).trim();
 
         if (!trimmed || !selectedFile || !pdfUrl || isSending) return;
 
@@ -620,11 +620,7 @@ export default function Chat() {
     };
 
     const handleSuggestion = (suggestion: string) => {
-        setInput(suggestion);
-
-        requestAnimationFrame(() => {
-            void sendMessage();
-        });
+        void sendMessage(suggestion);
     };
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
