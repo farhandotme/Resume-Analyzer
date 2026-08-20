@@ -1081,7 +1081,6 @@ export default function Chat() {
                                                 onChange={handleInputChange}
                                                 onKeyDown={handleKeyDown}
                                                 rows={1}
-                                                disabled={isSending}
                                                 placeholder={messages.length > 1 ? 'Ask anything about your resume...' : ''}
                                                 className='chat-composer-scrollbar relative z-10 block max-h-40 min-h-7 w-full resize-none overflow-y-auto bg-transparent p-0 text-[16px] leading-5.75 text-zinc-900 outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100'
                                                 style={{ height: '28px' }}
