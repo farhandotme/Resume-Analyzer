@@ -940,57 +940,51 @@ export default function Chat() {
                     ) : (
                         <motion.div key='chat' initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className='flex h-full min-h-0 flex-col pt-16'>
                             <div ref={chatScrollRef} onScroll={handleChatScroll} className='chat-scrollbar min-h-0 flex-1 overflow-y-auto'>
-                                <div className='mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 pt-6 sm:px-6'>
-                                    {messages.map((message) => (
-                                        <motion.div key={message.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
-                                            {message.role === 'assistant' ? (
-                                                <div className='max-w-[78%]'>
-                                                    <div className='mb-2 font-mono text-[9px] uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-600'>Resume Intelligence</div>
+                                <div className='mx-auto flex h-full w-full max-w-4xl flex-col px-4 pt-6 sm:px-6'>
+                                    {messages.length === 1 ? (
+                                        <div className='flex flex-1 items-start justify-center pt-[18vh] sm:pt-[20vh]'>
+                                            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }} className='w-full max-w-2xl text-center px-4'>
+                                                <div className='mb-3 font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-zinc-400 dark:text-zinc-600'>Resume Intelligence</div>
 
-                                                    <div className='whitespace-pre-wrap wrap-break-word text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 dark:text-zinc-200'>{message.content}</div>
-                                                </div>
-                                            ) : (
-                                                <div className='max-w-[68%] rounded-[18px] rounded-br-md border border-zinc-200/80 bg-zinc-100 px-4.5 py-3 text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 shadow-[0_2px_10px_-5px_rgba(0,0,0,0.18)] dark:border-zinc-800/80 dark:bg-zinc-900 dark:text-zinc-100 dark:shadow-[0_2px_12px_-5px_rgba(0,0,0,0.5)]'>
-                                                    {message.content}
-                                                </div>
-                                            )}
-                                        </motion.div>
-                                    ))}
-
-                                    {isSending && (
-                                        <div className='flex justify-start'>
-                                            <div className='flex items-start gap-4'>
-                                                <div className='mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-200/60 bg-linear-to-b from-zinc-50 to-zinc-100 text-zinc-600 shadow-sm dark:border-zinc-800/60 dark:from-zinc-900 dark:to-zinc-950 dark:text-zinc-300'>
-                                                    <Sparkles className='h-4 w-4' strokeWidth={1.5} />
-                                                </div>
-
-                                                <div className='flex h-9.5 items-center gap-1.5 px-2 text-zinc-400 dark:text-zinc-600'>
-                                                    <span className='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 dark:bg-zinc-500' style={{ animationDelay: '0ms' }} />
-                                                    <span className='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 dark:bg-zinc-500' style={{ animationDelay: '150ms' }} />
-                                                    <span className='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 dark:bg-zinc-500' style={{ animationDelay: '300ms' }} />
-                                                </div>
-                                            </div>
+                                                <div className='mx-auto max-w-xl whitespace-pre-wrap wrap-break-word text-[16px] font-normal leading-7 tracking-[-0.008em] text-zinc-700 dark:text-zinc-300 sm:text-[17px] sm:leading-8'>{messages[0].content}</div>
+                                            </motion.div>
                                         </div>
-                                    )}
+                                    ) : (
+                                        <>
+                                            <div className='flex flex-col gap-8'>
+                                                {messages.map((message) => (
+                                                    <motion.div key={message.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
+                                                        {message.role === 'assistant' ? (
+                                                            <div className='max-w-[78%]'>
+                                                                <div className='mb-2 font-mono text-[9px] uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-600'>Resume Intelligence</div>
 
-                                    {messages.length === 1 && (
-                                        <div className='mt-2 text-center'>
-                                            <p className='mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500'>Suggested questions</p>
-
-                                            <div className='mx-auto flex max-w-3xl flex-wrap justify-center gap-2'>
-                                                {suggestions.map((suggestion) => (
-                                                    <button
-                                                        key={suggestion}
-                                                        type='button'
-                                                        onClick={() => handleSuggestion(suggestion)}
-                                                        disabled={isSending}
-                                                        className='cursor-pointer select-none rounded-lg border border-zinc-200/80 bg-transparent px-3 py-1.5 text-left text-[12.5px] font-medium text-zinc-500 transition-colors duration-150 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800/80 dark:text-zinc-500 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/70 dark:hover:text-zinc-200'
-                                                    >
-                                                        {suggestion}
-                                                    </button>
+                                                                <div className='whitespace-pre-wrap wrap-break-word text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 dark:text-zinc-200'>{message.content}</div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className='max-w-[68%] rounded-[18px] rounded-br-md border border-zinc-200/80 bg-zinc-100 px-4.5 py-3 text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 shadow-[0_2px_10px_-5px_rgba(0,0,0,0.18)] dark:border-zinc-800/80 dark:bg-zinc-900 dark:text-zinc-100 dark:shadow-[0_2px_12px_-5px_rgba(0,0,0,0.5)]'>
+                                                                {message.content}
+                                                            </div>
+                                                        )}
+                                                    </motion.div>
                                                 ))}
                                             </div>
-                                        </div>
+
+                                            {isSending && (
+                                                <div className='mt-8 flex justify-start'>
+                                                    <div className='flex items-start gap-4'>
+                                                        <div className='mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-200/60 bg-linear-to-b from-zinc-50 to-zinc-100 text-zinc-600 shadow-sm dark:border-zinc-800/60 dark:from-zinc-900 dark:to-zinc-950 dark:text-zinc-300'>
+                                                            <Sparkles className='h-4 w-4' strokeWidth={1.5} />
+                                                        </div>
+
+                                                        <div className='flex h-9.5 items-center gap-1.5 px-2 text-zinc-400 dark:text-zinc-600'>
+                                                            <span className='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 dark:bg-zinc-500' style={{ animationDelay: '0ms' }} />
+                                                            <span className='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 dark:bg-zinc-500' style={{ animationDelay: '150ms' }} />
+                                                            <span className='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 dark:bg-zinc-500' style={{ animationDelay: '300ms' }} />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
                                     )}
 
                                     <div ref={messagesEndRef} className='h-0' />
@@ -998,6 +992,26 @@ export default function Chat() {
                             </div>
 
                             <div className='relative mx-auto w-full max-w-4xl shrink-0 px-4 pb-3 sm:px-6'>
+                                {messages.length === 1 && !isSending && (
+                                    <div className='mb-4 text-center'>
+                                        <p className='mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500'>Suggested questions</p>
+
+                                        <div className='mx-auto flex max-w-3xl flex-wrap justify-center gap-2'>
+                                            {suggestions.map((suggestion) => (
+                                                <button
+                                                    key={suggestion}
+                                                    type='button'
+                                                    onClick={() => handleSuggestion(suggestion)}
+                                                    disabled={isSending}
+                                                    className='cursor-pointer select-none rounded-lg border border-zinc-200/80 bg-transparent px-3 py-1.5 text-left text-[12.5px] font-medium text-zinc-500 transition-colors duration-150 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800/80 dark:text-zinc-500 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/70 dark:hover:text-zinc-200'
+                                                >
+                                                    {suggestion}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <AnimatePresence>
                                     {showScrollToBottom && (
                                         <motion.button
