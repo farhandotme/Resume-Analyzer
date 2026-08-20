@@ -23,6 +23,8 @@ const suggestions = [
     'How can I improve my experience section?',
     'What skills should I highlight?',
 ];
+
+const inputPlaceholders = ['Ask anything about your resume...', 'What are my strongest skills?', 'How can I improve my resume?', 'What jobs am I a good fit for?', 'What should I highlight in your resume?'];
 const heroWords = ['resume', 'experience', 'skills', 'story'];
 const CHAT_ANALYSIS_ROLE = 'General Resume Review';
 const CHAT_STORAGE_KEY = 'resume-analyzer-chat';
@@ -99,6 +101,9 @@ export default function Chat() {
 
     const [isDragging, setIsDragging] = useState(false);
     const [wordIndex, setWordIndex] = useState(0);
+    const [placeholderIndex, setPlaceholderIndex] = useState(0);
+    const [placeholderText, setPlaceholderText] = useState('');
+    const [isDeletingPlaceholder, setIsDeletingPlaceholder] = useState(false);
     const [showFileError, setShowFileError] = useState(false);
     const [analysisError, setAnalysisError] = useState('');
     const [micError, setMicError] = useState('');
@@ -283,6 +288,37 @@ export default function Chat() {
             }
         };
     }, []);
+
+    useEffect(() => {
+        if (prefersReducedMotion || !selectedFile || messages.length !== 1 || input) return;
+
+        const currentPlaceholder = inputPlaceholders[placeholderIndex];
+
+        const timeout = window.setTimeout(
+            () => {
+                if (!isDeletingPlaceholder) {
+                    if (placeholderText.length < currentPlaceholder.length) {
+                        setPlaceholderText(currentPlaceholder.slice(0, placeholderText.length + 1));
+                        return;
+                    }
+
+                    setIsDeletingPlaceholder(true);
+                    return;
+                }
+
+                if (placeholderText.length > 0) {
+                    setPlaceholderText(currentPlaceholder.slice(0, placeholderText.length - 1));
+                    return;
+                }
+
+                setIsDeletingPlaceholder(false);
+                setPlaceholderIndex((current) => (current + 1) % inputPlaceholders.length);
+            },
+            !isDeletingPlaceholder ? (placeholderText.length === currentPlaceholder.length ? 1100 : 50) : placeholderText.length === 0 ? 250 : 30,
+        );
+
+        return () => window.clearTimeout(timeout);
+    }, [prefersReducedMotion, selectedFile, messages.length, input, placeholderIndex, placeholderText, isDeletingPlaceholder]);
 
     useEffect(() => {
         if (prefersReducedMotion || selectedFile) return;
@@ -1031,18 +1067,26 @@ export default function Chat() {
                                 </AnimatePresence>
                                 <div className='group relative flex w-full items-end gap-2 rounded-2xl border border-zinc-200 bg-white pl-5 pb-3 px-2 py-2 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.12)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.16)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.7)] dark:focus-within:border-zinc-700 dark:focus-within:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.85)]'>
                                     <div className='relative flex min-h-6 min-w-0 flex-1 items-center'>
-                                        <textarea
-                                            ref={textareaRef}
-                                            autoFocus
-                                            value={input}
-                                            onChange={handleInputChange}
-                                            onKeyDown={handleKeyDown}
-                                            rows={1}
-                                            disabled={isSending}
-                                            placeholder='Ask anything about your resume...'
-                                            className='chat-composer-scrollbar relative z-10 my-auto max-h-40 min-h-7 w-full resize-none overflow-y-auto bg-transparent p-0 text-[16px] leading-6 text-zinc-900 outline-none placeholder:text-zinc-400 disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100 dark:placeholder:text-zinc-600'
-                                            style={{ height: '28px' }}
-                                        />
+                                        <div className='relative w-full'>
+                                            {!input && messages.length === 1 && (
+                                                <div aria-hidden='true' className='pointer-events-none absolute inset-y-0 left-0 z-0 flex items-center -translate-y-0.5 overflow-hidden'>
+                                                    <span className='whitespace-nowrap text-[16px] leading-6.25 text-zinc-400 dark:text-zinc-600'>{placeholderText}</span>
+                                                </div>
+                                            )}
+
+                                            <textarea
+                                                ref={textareaRef}
+                                                autoFocus
+                                                value={input}
+                                                onChange={handleInputChange}
+                                                onKeyDown={handleKeyDown}
+                                                rows={1}
+                                                disabled={isSending}
+                                                placeholder=''
+                                                className='chat-composer-scrollbar relative z-10 block max-h-40 min-h-7 w-full resize-none overflow-y-auto bg-transparent p-0 text-[16px] leading-6.25 text-zinc-900 outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100'
+                                                style={{ height: '28px' }}
+                                            />
+                                        </div>
                                     </div>
 
                                     <div className='relative flex shrink-0 items-center gap-1.5'>
