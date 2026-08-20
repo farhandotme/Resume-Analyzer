@@ -976,7 +976,7 @@ export default function Chat() {
                     ) : (
                         <motion.div key='chat' initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className='flex h-full min-h-0 flex-col pt-16'>
                             <div ref={chatScrollRef} onScroll={handleChatScroll} className='chat-scrollbar min-h-0 flex-1 overflow-y-auto'>
-                                <div className='mx-auto flex h-full w-full max-w-4xl flex-col px-4 pt-6 sm:px-6'>
+                                <div className='mx-auto flex h-full w-full max-w-4xl flex-col px-4 pt-6 pb-6 sm:px-6'>
                                     {messages.length === 1 ? (
                                         <div className='flex flex-1 items-start justify-center pt-[18vh] sm:pt-[20vh]'>
                                             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }} className='w-full max-w-2xl text-center px-4'>
@@ -1023,7 +1023,7 @@ export default function Chat() {
                                         </>
                                     )}
 
-                                    <div ref={messagesEndRef} className='h-0' />
+                                    <div ref={messagesEndRef} className='h-8 shrink-0' />
                                 </div>
                             </div>
 
