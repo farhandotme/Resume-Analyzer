@@ -1,5 +1,6 @@
-import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'framer-motion';
-import { AlertCircle, ArrowDown, ArrowLeft, ArrowUp, FileText, Moon, Sparkles, SquarePen, SunMedium } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
+import { AlertCircle, ArrowDown, ArrowLeft, ArrowUp, FileText, Mic, MicOff, Moon, Sparkles, SquarePen, SunMedium } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useBlocker, useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme.ts';
@@ -12,10 +13,20 @@ type Message = {
     content: string;
 };
 
-const suggestions = ['What are my strongest skills?', 'What should I improve in my resume?', 'Is my experience relevant for this role?'];
+const suggestions = [
+    'What are my strongest skills?',
+    'What should I improve in my resume?',
+    'What jobs am I a good fit for?',
+    'How can I make my resume stronger?',
+    'What are the weaknesses in my resume?',
+    'Is my resume ATS-friendly?',
+    'How can I improve my experience section?',
+    'What skills should I highlight?',
+];
+
+const inputPlaceholders = ['Ask anything about your resume...', 'What are my strongest skills?', 'How can I improve my resume?', 'What jobs am I a good fit for?', 'What should I highlight in your resume?'];
 const heroWords = ['resume', 'experience', 'skills', 'story'];
 const CHAT_ANALYSIS_ROLE = 'General Resume Review';
-
 const CHAT_STORAGE_KEY = 'resume-analyzer-chat';
 
 type StoredChat = {
@@ -30,7 +41,6 @@ type StoredChat = {
 const getStoredChat = (): StoredChat | null => {
     try {
         const stored = sessionStorage.getItem(CHAT_STORAGE_KEY);
-
         if (!stored) return null;
 
         const parsed = JSON.parse(stored) as StoredChat;
@@ -39,7 +49,6 @@ const getStoredChat = (): StoredChat | null => {
             sessionStorage.removeItem(CHAT_STORAGE_KEY);
             return null;
         }
-
         return parsed;
     } catch {
         sessionStorage.removeItem(CHAT_STORAGE_KEY);
@@ -54,38 +63,17 @@ export default function Chat() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const caretMeasureRef = useRef<HTMLDivElement>(null);
     const chatScrollRef = useRef<HTMLDivElement>(null);
-
-    const caretX = useMotionValue(0);
-    const caretY = useMotionValue(0);
-    const caretOpacity = useMotionValue(0);
-    const caretBlinkOpacity = useMotionValue(1);
-    const combinedCaretOpacity = useTransform(() => {
-        return caretOpacity.get() * caretBlinkOpacity.get();
-    });
-
-    const springCaretX = useSpring(caretX, {
-        stiffness: 500,
-        damping: 30,
-        mass: 0.5,
-    });
-
-    const springCaretY = useSpring(caretY, {
-        stiffness: 500,
-        damping: 30,
-        mass: 0.5,
-    });
     const fileErrorTimeoutRef = useRef<number | null>(null);
+    const micErrorTimeoutRef = useRef<number | null>(null);
+
     const [sessionId, setSessionId] = useState(() => {
         const storedChat = getStoredChat();
-
         return storedChat?.sessionId ?? crypto.randomUUID();
     });
 
     const [hasIndexedResume, setHasIndexedResume] = useState(() => {
         const storedChat = getStoredChat();
-
         return storedChat?.hasIndexedResume ?? false;
     });
 
@@ -101,7 +89,6 @@ export default function Chat() {
 
     const [pdfUrl, setPdfUrl] = useState(() => {
         const storedChat = getStoredChat();
-
         return storedChat?.pdfUrl ?? '';
     });
 
@@ -109,19 +96,31 @@ export default function Chat() {
 
     const [messages, setMessages] = useState<Message[]>(() => {
         const storedChat = getStoredChat();
-
         return storedChat?.messages ?? [];
     });
+
     const [isDragging, setIsDragging] = useState(false);
     const [wordIndex, setWordIndex] = useState(0);
+    const [placeholderIndex, setPlaceholderIndex] = useState(0);
+    const [placeholderText, setPlaceholderText] = useState('');
+    const [isDeletingPlaceholder, setIsDeletingPlaceholder] = useState(false);
     const [showFileError, setShowFileError] = useState(false);
     const [analysisError, setAnalysisError] = useState('');
+    const [micError, setMicError] = useState('');
     const [isAnalyzingResume, setIsAnalyzingResume] = useState(false);
     const [isSending, setIsSending] = useState(false);
     const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
     const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+    const { transcript, listening, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
+    const transcriptRef = useRef('');
+    const shouldCommitTranscriptRef = useRef(false);
+    const commitTranscriptTimeoutRef = useRef<number | null>(null);
+    const isLeavingChatRef = useRef(false);
 
-    const blocker = useBlocker(({ currentLocation, nextLocation }) => Boolean(selectedFile && messages.length > 0) && currentLocation.pathname !== nextLocation.pathname);
+    const blocker = useBlocker(({ currentLocation, nextLocation }) => {
+        if (isLeavingChatRef.current) return false;
+        return Boolean(selectedFile && messages.length > 0) && currentLocation.pathname !== nextLocation.pathname;
+    });
 
     useEffect(() => {
         if (blocker.state === 'blocked') {
@@ -160,16 +159,12 @@ export default function Chat() {
 
     useEffect(() => {
         if (!selectedFile) return;
+
         const focusChatInput = () => {
             const textarea = textareaRef.current;
             if (!textarea) return;
             textarea.focus();
             textarea.setSelectionRange(textarea.value.length, textarea.value.length);
-
-            caretBlinkOpacity.set(1);
-            requestAnimationFrame(() => {
-                updateSmoothCaret();
-            });
         };
 
         const frame = requestAnimationFrame(() => {
@@ -186,8 +181,7 @@ export default function Chat() {
 
         const handleGlobalKeyDown = (event: KeyboardEvent) => {
             const textarea = textareaRef.current;
-            if (!textarea || isSending) return;
-
+            if (!textarea || isSending || listening) return;
             if (event.metaKey || event.ctrlKey || event.altKey || event.key === 'Tab' || event.key === 'Escape') {
                 return;
             }
@@ -201,49 +195,130 @@ export default function Chat() {
 
             if (event.key.length !== 1) return;
             if (document.activeElement === textarea) return;
+
             event.preventDefault();
+
             const start = textarea.selectionStart ?? textarea.value.length;
             const end = textarea.selectionEnd ?? textarea.value.length;
             const newValue = textarea.value.slice(0, start) + event.key + textarea.value.slice(end);
+
             setInput(newValue);
+
             requestAnimationFrame(() => {
                 textarea.focus();
+
                 const nextCursorPosition = start + event.key.length;
                 textarea.setSelectionRange(nextCursorPosition, nextCursorPosition);
-                updateSmoothCaret();
-                caretBlinkOpacity.set(1);
             });
         };
+
         window.addEventListener('keydown', handleGlobalKeyDown);
+
         return () => {
             window.removeEventListener('keydown', handleGlobalKeyDown);
         };
-    }, [selectedFile, isSending]);
+    }, [selectedFile, isSending, listening]);
 
     useEffect(() => {
-        if (!selectedFile) return;
+        transcriptRef.current = transcript;
+    }, [transcript]);
 
-        let blinkOn = true;
+    useEffect(() => {
+        if (!listening && shouldCommitTranscriptRef.current) {
+            if (commitTranscriptTimeoutRef.current !== null) {
+                window.clearTimeout(commitTranscriptTimeoutRef.current);
+            }
 
-        caretBlinkOpacity.set(1);
+            commitTranscriptTimeoutRef.current = window.setTimeout(() => {
+                const spokenText = transcriptRef.current.trim();
 
-        const interval = window.setInterval(() => {
-            blinkOn = !blinkOn;
-            caretBlinkOpacity.set(blinkOn ? 1 : 0);
-        }, 530);
+                if (spokenText) {
+                    setInput((current) => {
+                        const separator = current.trim() ? ' ' : '';
+                        return `${current}${separator}${spokenText}`;
+                    });
+
+                    requestAnimationFrame(() => {
+                        const textarea = textareaRef.current;
+                        if (!textarea) return;
+                        textarea.style.height = 'auto';
+
+                        const minHeight = 28;
+                        const maxHeight = 160;
+                        const nextHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
+
+                        textarea.style.height = `${nextHeight}px`;
+                        textarea.focus();
+
+                        requestAnimationFrame(() => {
+                            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+                        });
+                    });
+                }
+
+                transcriptRef.current = '';
+                shouldCommitTranscriptRef.current = false;
+                commitTranscriptTimeoutRef.current = null;
+                resetTranscript();
+            }, 700);
+        }
 
         return () => {
-            window.clearInterval(interval);
+            if (commitTranscriptTimeoutRef.current !== null) {
+                window.clearTimeout(commitTranscriptTimeoutRef.current);
+                commitTranscriptTimeoutRef.current = null;
+            }
         };
-    }, [selectedFile, caretBlinkOpacity]);
+    }, [listening, resetTranscript]);
 
     useEffect(() => {
         return () => {
+            void SpeechRecognition.abortListening();
+
             if (fileErrorTimeoutRef.current !== null) {
                 window.clearTimeout(fileErrorTimeoutRef.current);
             }
+
+            if (micErrorTimeoutRef.current !== null) {
+                window.clearTimeout(micErrorTimeoutRef.current);
+            }
+
+            if (commitTranscriptTimeoutRef.current !== null) {
+                window.clearTimeout(commitTranscriptTimeoutRef.current);
+            }
         };
     }, []);
+
+    useEffect(() => {
+        if (prefersReducedMotion || !selectedFile || messages.length !== 1 || input) return;
+
+        const currentPlaceholder = inputPlaceholders[placeholderIndex];
+
+        const timeout = window.setTimeout(
+            () => {
+                if (!isDeletingPlaceholder) {
+                    if (placeholderText.length < currentPlaceholder.length) {
+                        setPlaceholderText(currentPlaceholder.slice(0, placeholderText.length + 1));
+                        return;
+                    }
+
+                    setIsDeletingPlaceholder(true);
+                    return;
+                }
+
+                if (placeholderText.length > 0) {
+                    setPlaceholderText(currentPlaceholder.slice(0, placeholderText.length - 1));
+                    return;
+                }
+
+                setIsDeletingPlaceholder(false);
+                setPlaceholderIndex((current) => (current + 1) % inputPlaceholders.length);
+            },
+            !isDeletingPlaceholder ? (placeholderText.length === currentPlaceholder.length ? 1100 : 50) : placeholderText.length === 0 ? 250 : 30,
+        );
+
+        return () => window.clearTimeout(timeout);
+    }, [prefersReducedMotion, selectedFile, messages.length, input, placeholderIndex, placeholderText, isDeletingPlaceholder]);
 
     useEffect(() => {
         if (prefersReducedMotion || selectedFile) return;
@@ -279,37 +354,6 @@ export default function Chat() {
         };
     }, []);
 
-    useEffect(() => {
-        const textarea = textareaRef.current;
-
-        if (!textarea) return;
-
-        const update = () => {
-            if (document.activeElement === textarea) {
-                requestAnimationFrame(updateSmoothCaret);
-            }
-        };
-
-        const handleSelectionChange = () => {
-            if (document.activeElement !== textarea) return;
-
-            requestAnimationFrame(updateSmoothCaret);
-        };
-
-        textarea.addEventListener('click', update);
-        textarea.addEventListener('keyup', update);
-        textarea.addEventListener('scroll', update);
-
-        document.addEventListener('selectionchange', handleSelectionChange);
-
-        return () => {
-            textarea.removeEventListener('click', update);
-            textarea.removeEventListener('keyup', update);
-            textarea.removeEventListener('scroll', update);
-            document.removeEventListener('selectionchange', handleSelectionChange);
-        };
-    }, []);
-
     const showFileErrorMessage = () => {
         setShowFileError(true);
 
@@ -321,6 +365,19 @@ export default function Chat() {
             setShowFileError(false);
             fileErrorTimeoutRef.current = null;
         }, 3500);
+    };
+
+    const showMicErrorMessage = (message: string) => {
+        setMicError(message);
+
+        if (micErrorTimeoutRef.current !== null) {
+            window.clearTimeout(micErrorTimeoutRef.current);
+        }
+
+        micErrorTimeoutRef.current = window.setTimeout(() => {
+            setMicError('');
+            micErrorTimeoutRef.current = null;
+        }, 4000);
     };
 
     const handleFile = async (file: File) => {
@@ -408,19 +465,15 @@ export default function Chat() {
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-
         if (!file) return;
-
         void handleFile(file);
         event.currentTarget.value = '';
     };
 
     const handleDragEnter = (event: React.DragEvent<HTMLElement>) => {
         event.preventDefault();
-
         if (selectedFile || isAnalyzingResume) return;
         if (!event.dataTransfer.types.includes('Files')) return;
-
         setIsDragging(true);
     };
 
@@ -436,7 +489,6 @@ export default function Chat() {
 
     const handleDragLeave = (event: React.DragEvent<HTMLElement>) => {
         event.preventDefault();
-
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
             setIsDragging(false);
         }
@@ -445,15 +497,24 @@ export default function Chat() {
     const handleDrop = (event: React.DragEvent<HTMLElement>) => {
         event.preventDefault();
         setIsDragging(false);
-
         if (selectedFile || isAnalyzingResume) return;
         const file = event.dataTransfer.files?.[0];
-
         if (!file) return;
         void handleFile(file);
     };
 
     const removeFile = () => {
+        shouldCommitTranscriptRef.current = false;
+        transcriptRef.current = '';
+
+        if (commitTranscriptTimeoutRef.current !== null) {
+            window.clearTimeout(commitTranscriptTimeoutRef.current);
+            commitTranscriptTimeoutRef.current = null;
+        }
+
+        void SpeechRecognition.abortListening();
+        resetTranscript();
+
         sessionStorage.removeItem(CHAT_STORAGE_KEY);
 
         setSelectedFile(null);
@@ -464,89 +525,91 @@ export default function Chat() {
         setInput('');
         setIsSending(false);
         setAnalysisError('');
+        setMicError('');
 
         if (textareaRef.current) {
-            textareaRef.current.style.height = '24px';
+            textareaRef.current.style.height = '28px';
         }
-    };
-
-    const updateSmoothCaret = () => {
-        const textarea = textareaRef.current;
-        const mirror = caretMeasureRef.current;
-
-        if (!textarea || !mirror) return;
-
-        const selectionStart = textarea.selectionStart ?? 0;
-        const selectionEnd = textarea.selectionEnd ?? 0;
-
-        if (selectionStart !== selectionEnd) {
-            caretOpacity.set(0);
-            return;
-        }
-
-        const textBeforeCaret = textarea.value.slice(0, selectionStart);
-
-        mirror.textContent = '';
-
-        const textNode = document.createTextNode(textBeforeCaret || '\u200b');
-        const marker = document.createElement('span');
-
-        marker.textContent = '\u200b';
-
-        mirror.appendChild(textNode);
-        mirror.appendChild(marker);
-
-        const mirrorRect = mirror.getBoundingClientRect();
-        const markerRect = marker.getBoundingClientRect();
-
-        const x = markerRect.left - mirrorRect.left;
-        const y = markerRect.top - mirrorRect.top - textarea.scrollTop;
-
-        caretX.set(x);
-        caretY.set(y);
-        caretOpacity.set(1);
     };
 
     const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         const value = event.target.value;
-
         setInput(value);
-
         const textarea = textareaRef.current;
-
         if (!textarea) return;
-
         textarea.style.height = 'auto';
-
         const minHeight = 24;
         const maxHeight = 160;
-
         const nextHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
-
         textarea.style.height = `${nextHeight}px`;
-
-        requestAnimationFrame(() => {
-            updateSmoothCaret();
-        });
     };
 
-    const sendMessage = async () => {
-        const trimmed = input.trim();
+    const handleMicToggle = async () => {
+        if (isSending) return;
+
+        if (!browserSupportsSpeechRecognition) {
+            showMicErrorMessage('Voice input is not supported in this browser.');
+            return;
+        }
+
+        if (listening) {
+            shouldCommitTranscriptRef.current = true;
+
+            try {
+                await SpeechRecognition.stopListening();
+            } catch (error) {
+                console.error('Unable to stop speech recognition:', error);
+                shouldCommitTranscriptRef.current = false;
+                showMicErrorMessage('Unable to stop voice input. Please try again.');
+            }
+            return;
+        }
+
+        if (commitTranscriptTimeoutRef.current !== null) {
+            window.clearTimeout(commitTranscriptTimeoutRef.current);
+            commitTranscriptTimeoutRef.current = null;
+        }
+
+        setMicError('');
+        shouldCommitTranscriptRef.current = false;
+        transcriptRef.current = '';
+        resetTranscript();
+
+        try {
+            await SpeechRecognition.startListening({
+                continuous: true,
+                language: navigator.language || 'en-US',
+            });
+        } catch (error) {
+            console.error('Unable to start speech recognition:', error);
+            shouldCommitTranscriptRef.current = false;
+            showMicErrorMessage('Unable to start voice input. Please allow microphone access and try again.');
+        }
+    };
+
+    const sendMessage = async (messageOverride?: string) => {
+        const trimmed = (messageOverride ?? input).trim();
+
         if (!trimmed || !selectedFile || !pdfUrl || isSending) return;
+
+        if (listening) {
+            shouldCommitTranscriptRef.current = false;
+            transcriptRef.current = '';
+            if (commitTranscriptTimeoutRef.current !== null) {
+                window.clearTimeout(commitTranscriptTimeoutRef.current);
+                commitTranscriptTimeoutRef.current = null;
+            }
+            await SpeechRecognition.stopListening();
+            resetTranscript();
+        }
 
         setIsSending(true);
         setInput('');
 
         if (textareaRef.current) {
-            textareaRef.current.style.height = '24px';
+            textareaRef.current.style.height = '28px';
             textareaRef.current.setSelectionRange(0, 0);
         }
-
-        caretBlinkOpacity.set(1);
-
-        requestAnimationFrame(() => {
-            updateSmoothCaret();
-        });
 
         const userMessage: Message = {
             id: Date.now(),
@@ -560,15 +623,12 @@ export default function Chat() {
             if (!sessionId) {
                 throw new Error('Chat session is missing. Please start a new chat.');
             }
-
             const data = await sendChatMessage({
                 pdfUrl: hasIndexedResume ? undefined : pdfUrl,
                 message: trimmed,
                 sessionId,
             });
-
             setHasIndexedResume(true);
-
             setMessages((current) => [
                 ...current,
                 {
@@ -579,7 +639,6 @@ export default function Chat() {
             ]);
         } catch (error) {
             console.error('Chat request failed:', error);
-
             setMessages((current) => [
                 ...current,
                 {
@@ -590,24 +649,14 @@ export default function Chat() {
             ]);
         } finally {
             setIsSending(false);
-
             requestAnimationFrame(() => {
                 textareaRef.current?.focus();
-
-                caretBlinkOpacity.set(1);
-
-                requestAnimationFrame(() => {
-                    updateSmoothCaret();
-                });
             });
         }
     };
 
     const handleSuggestion = (suggestion: string) => {
-        setInput(suggestion);
-        if (textareaRef.current) {
-            textareaRef.current.focus();
-        }
+        void sendMessage(suggestion);
     };
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -624,12 +673,21 @@ export default function Chat() {
             navigate('/');
             return;
         }
-
         setShowLeaveConfirmation(true);
     };
 
     const handleLeaveChat = () => {
         setShowLeaveConfirmation(false);
+        isLeavingChatRef.current = true;
+        shouldCommitTranscriptRef.current = false;
+        transcriptRef.current = '';
+        if (commitTranscriptTimeoutRef.current !== null) {
+            window.clearTimeout(commitTranscriptTimeoutRef.current);
+            commitTranscriptTimeoutRef.current = null;
+        }
+
+        void SpeechRecognition.abortListening();
+        resetTranscript();
 
         sessionStorage.removeItem(CHAT_STORAGE_KEY);
 
@@ -641,6 +699,7 @@ export default function Chat() {
         setInput('');
         setIsSending(false);
         setAnalysisError('');
+        setMicError('');
 
         if (blocker.state === 'blocked') {
             blocker.proceed();
@@ -809,14 +868,14 @@ export default function Chat() {
                                             <motion.div
                                                 animate={prefersReducedMotion ? {} : { rotate: 360 }}
                                                 transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-                                                className='absolute -inset-full opacity-0 transition-opacity duration-500 group-hover:opacity-100'
+                                                className={`absolute -inset-full transition-opacity duration-500 ${isAnalyzingResume ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                                                 style={{ background: 'conic-gradient(from 0deg, transparent 70%, rgba(161,161,170,0.9) 85%, transparent 100%)' }}
                                             />
 
                                             <motion.div
                                                 animate={prefersReducedMotion ? {} : { rotate: -360 }}
                                                 transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
-                                                className='absolute -inset-full opacity-0 transition-opacity duration-500 group-hover:opacity-100'
+                                                className={`absolute -inset-full transition-opacity duration-500 ${isAnalyzingResume ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                                                 style={{ background: 'conic-gradient(from 0deg, transparent 40%, rgba(228,228,231,0.6) 50%, transparent 60%)' }}
                                             />
 
@@ -881,6 +940,7 @@ export default function Chat() {
                                                                 className='mx-auto mt-3 flex w-fit max-w-md items-center justify-center gap-3 rounded-lg border border-rose-200/70 bg-rose-50/70 px-4 py-2.5 text-left dark:border-rose-900/40 dark:bg-rose-950/30'
                                                             >
                                                                 <AlertCircle className='h-3.5 w-3.5 shrink-0 text-rose-500 dark:text-rose-400' strokeWidth={1.8} />
+
                                                                 <div>
                                                                     <p className='mb-0.5 text-[13px] font-medium leading-tight text-rose-700 dark:text-rose-300'>Invalid resume</p>
                                                                     <p className='text-[12px] leading-5 text-rose-500/90 dark:text-rose-400/80'>{analysisError}</p>
@@ -916,112 +976,161 @@ export default function Chat() {
                     ) : (
                         <motion.div key='chat' initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className='flex h-full min-h-0 flex-col pt-16'>
                             <div ref={chatScrollRef} onScroll={handleChatScroll} className='chat-scrollbar min-h-0 flex-1 overflow-y-auto'>
-                                <div className='mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 pb-8 pt-6 sm:px-6'>
-                                    {messages.map((message) => (
-                                        <motion.div key={message.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
-                                            {message.role === 'assistant' ? (
-                                                <div className='max-w-[88%]'>
-                                                    <div className='mb-2 font-mono text-[9px] uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-600'>Resume Intelligence</div>
-                                                    <div className='whitespace-pre-wrap wrap-break-word text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 dark:text-zinc-200'>{message.content}</div>
-                                                </div>
-                                            ) : (
-                                                <div className='max-w-[78%] rounded-[18px] rounded-br-md border border-zinc-200/80 bg-zinc-100 px-4.5 py-3 text-[14.5px] leading-6 tracking-[-0.005em] text-zinc-800 shadow-[0_2px_10px_-5px_rgba(0,0,0,0.18)] dark:border-zinc-800/80 dark:bg-zinc-900 dark:text-zinc-100 dark:shadow-[0_2px_12px_-5px_rgba(0,0,0,0.5)]'>
-                                                    {message.content}
-                                                </div>
-                                            )}
-                                        </motion.div>
-                                    ))}
+                                <div className='mx-auto flex h-full w-full max-w-4xl flex-col px-4 pt-6 pb-6 sm:px-6'>
+                                    {messages.length === 1 ? (
+                                        <div className='flex flex-1 items-start justify-center pt-[18vh] sm:pt-[20vh]'>
+                                            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }} className='w-full max-w-2xl text-center px-4'>
+                                                <div className='mb-3 font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-zinc-400 dark:text-zinc-600'>Resume Intelligence</div>
 
-                                    {isSending && (
-                                        <div className='flex justify-start'>
-                                            <div className='flex items-start gap-4'>
-                                                <div className='mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-200/60 bg-linear-to-b from-zinc-50 to-zinc-100 text-zinc-600 shadow-sm dark:border-zinc-800/60 dark:from-zinc-900 dark:to-zinc-950 dark:text-zinc-300'>
-                                                    <Sparkles className='h-4 w-4' strokeWidth={1.5} />
-                                                </div>
-                                                <div className='flex h-9.5 items-center gap-1.5 px-2 text-zinc-400 dark:text-zinc-600'>
-                                                    <span className='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 dark:bg-zinc-500' style={{ animationDelay: '0ms' }} />
-                                                    <span className='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 dark:bg-zinc-500' style={{ animationDelay: '150ms' }} />
-                                                    <span className='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 dark:bg-zinc-500' style={{ animationDelay: '300ms' }} />
-                                                </div>
-                                            </div>
+                                                <div className='mx-auto max-w-xl whitespace-pre-wrap wrap-break-word text-[16px] font-normal leading-7 tracking-[-0.008em] text-zinc-700 dark:text-zinc-300 sm:text-[17px] sm:leading-8'>{messages[0].content}</div>
+                                            </motion.div>
                                         </div>
-                                    )}
+                                    ) : (
+                                        <>
+                                            <div className='flex flex-col gap-8'>
+                                                {messages.map((message) => (
+                                                    <motion.div key={message.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
+                                                        {message.role === 'assistant' ? (
+                                                            <div className='max-w-[78%]'>
+                                                                <div className='mb-2 font-mono text-[9px] uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-600'>Resume Intelligence</div>
 
-                                    {messages.length === 1 && (
-                                        <div className='ml-0 mt-2 sm:ml-11'>
-                                            <p className='mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500'>Suggested questions</p>
-                                            <div className='flex flex-wrap gap-2.5'>
-                                                {suggestions.map((suggestion) => (
-                                                    <button
-                                                        key={suggestion}
-                                                        type='button'
-                                                        onClick={() => handleSuggestion(suggestion)}
-                                                        className='rounded-xl border border-zinc-200/80 bg-white/60 px-3.5 py-2 text-[12.5px] font-medium text-zinc-600 shadow-[0_2px_8px_-5px_rgba(0,0,0,0.2)] transition-all duration-200 hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-white hover:text-zinc-900 hover:shadow-md dark:border-zinc-800/80 dark:bg-zinc-950/60 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-950 dark:hover:text-zinc-200'
-                                                    >
-                                                        {suggestion}
-                                                    </button>
+                                                                <div className='whitespace-pre-wrap wrap-break-word text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 dark:text-zinc-200'>{message.content}</div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className='max-w-[68%] rounded-[18px] rounded-br-md border border-zinc-200/80 bg-zinc-100 px-4.5 py-3 text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 shadow-[0_2px_10px_-5px_rgba(0,0,0,0.18)] dark:border-zinc-800/80 dark:bg-zinc-900 dark:text-zinc-100 dark:shadow-[0_2px_12px_-5px_rgba(0,0,0,0.5)]'>
+                                                                {message.content}
+                                                            </div>
+                                                        )}
+                                                    </motion.div>
                                                 ))}
                                             </div>
-                                        </div>
+
+                                            {isSending && (
+                                                <div className='mt-8 flex justify-start'>
+                                                    <div className='flex items-start gap-4'>
+                                                        <div className='mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-200/60 bg-linear-to-b from-zinc-50 to-zinc-100 text-zinc-600 shadow-sm dark:border-zinc-800/60 dark:from-zinc-900 dark:to-zinc-950 dark:text-zinc-300'>
+                                                            <Sparkles className='h-4 w-4' strokeWidth={1.5} />
+                                                        </div>
+
+                                                        <div className='flex h-9.5 items-center gap-1.5 px-2 text-zinc-400 dark:text-zinc-600'>
+                                                            <span className='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 dark:bg-zinc-500' style={{ animationDelay: '0ms' }} />
+                                                            <span className='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 dark:bg-zinc-500' style={{ animationDelay: '150ms' }} />
+                                                            <span className='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 dark:bg-zinc-500' style={{ animationDelay: '300ms' }} />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
                                     )}
 
-                                    <div ref={messagesEndRef} className='h-4' />
+                                    <div ref={messagesEndRef} className='h-8 shrink-0' />
                                 </div>
                             </div>
 
-                            <AnimatePresence>
-                                {showScrollToBottom && (
-                                    <motion.button
-                                        type='button'
-                                        onClick={scrollToBottom}
-                                        aria-label='Scroll to latest message'
-                                        title='Scroll to latest message'
-                                        initial={{ opacity: 0, scale: 0.85, y: 8 }}
-                                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                                        exit={{ opacity: 0, scale: 0.85, y: 8 }}
-                                        transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                                        className='absolute bottom-25 left-1/2 z-20 flex h-9 w-9 -translate-x-1/2 cursor-pointer items-center justify-center rounded-full border border-zinc-200/80 bg-white/90 text-zinc-500 shadow-[0_6px_20px_-8px_rgba(0,0,0,0.25)] backdrop-blur-md transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-zinc-950/90 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
-                                    >
-                                        <ArrowDown className='h-4 w-4' strokeWidth={1.8} />
-                                    </motion.button>
-                                )}
-                            </AnimatePresence>
+                            <div className='relative mx-auto w-full max-w-4xl shrink-0 px-4 pb-3 sm:px-6'>
+                                {messages.length === 1 && !isSending && (
+                                    <div className='mb-4 text-center'>
+                                        <p className='mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500'>Suggested questions</p>
 
-                            <div className='mx-auto w-full max-w-4xl shrink-0 px-4 pb-3 pt-1.5 sm:px-6'>
-                                <div className='group relative flex w-full items-center gap-2 rounded-[22px] border border-zinc-200 bg-white px-3.5 py-2.5 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.12)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.16)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.7)] dark:focus-within:border-zinc-700 dark:focus-within:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.85)]'>
-                                    <div className='relative flex min-h-6 min-w-0 flex-1 items-center'>
-                                        <div ref={caretMeasureRef} aria-hidden='true' className='pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap wrap-break-words text-[15px] leading-6 text-transparent' />
-                                        <textarea
-                                            ref={textareaRef}
-                                            autoFocus
-                                            value={input}
-                                            onChange={handleInputChange}
-                                            onKeyDown={handleKeyDown}
-                                            onFocus={() => {
-                                                caretBlinkOpacity.set(1);
-                                                requestAnimationFrame(updateSmoothCaret);
-                                            }}
-                                            onBlur={() => {
-                                                caretBlinkOpacity.set(1);
-                                            }}
-                                            rows={1}
-                                            disabled={isSending}
-                                            placeholder='Ask anything about your resume...'
-                                            className='chat-composer-scrollbar relative z-10 my-auto max-h-40 min-h-6 w-full resize-none overflow-y-auto caret-transparent select-none bg-transparent p-0 text-[15px] leading-6 text-zinc-900 outline-none placeholder:text-zinc-400 disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100 dark:placeholder:text-zinc-600'
-                                            style={{ height: '24px' }}
-                                        />
-
-                                        <motion.div aria-hidden='true' className='pointer-events-none absolute left-0 top-px z-20 h-[1.05em] w-px rounded-full bg-zinc-900 dark:bg-zinc-100' style={{ x: springCaretX, y: springCaretY, opacity: combinedCaretOpacity }} />
+                                        <div className='mx-auto flex max-w-3xl flex-wrap justify-center gap-2'>
+                                            {suggestions.map((suggestion) => (
+                                                <button
+                                                    key={suggestion}
+                                                    type='button'
+                                                    onClick={() => handleSuggestion(suggestion)}
+                                                    disabled={isSending}
+                                                    className='cursor-pointer select-none rounded-lg border border-zinc-200/80 bg-transparent px-3 py-1.5 text-left text-[12.5px] font-medium text-zinc-500 transition-colors duration-150 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800/80 dark:text-zinc-500 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/70 dark:hover:text-zinc-200'
+                                                >
+                                                    {suggestion}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
-                                    <button
-                                        type='button'
-                                        onClick={() => void sendMessage()}
-                                        disabled={!input.trim() || isSending}
-                                        aria-label='Send message'
-                                        className='flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-zinc-950 text-white transition-all duration-200 hover:bg-zinc-800 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-900 dark:disabled:text-zinc-600'
-                                    >
-                                        <ArrowUp className='h-4 w-4' strokeWidth={1.8} />
-                                    </button>
+                                )}
+
+                                <AnimatePresence>
+                                    {showScrollToBottom && (
+                                        <motion.button
+                                            type='button'
+                                            onClick={scrollToBottom}
+                                            aria-label='Scroll to latest message'
+                                            title='Scroll to latest message'
+                                            initial={{ opacity: 0, scale: 0.85, y: 8 }}
+                                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                                            exit={{ opacity: 0, scale: 0.85, y: 8 }}
+                                            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                                            className='absolute bottom-full left-1/2 z-20 mb-2 flex h-9 w-9 -translate-x-1/2 cursor-pointer items-center justify-center rounded-full border border-zinc-200/80 bg-white/90 text-zinc-500 shadow-[0_6px_20px_-8px_rgba(0,0,0,0.25)] backdrop-blur-md transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-zinc-950/90 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
+                                        >
+                                            <ArrowDown className='h-4 w-4' strokeWidth={1.8} />
+                                        </motion.button>
+                                    )}
+                                </AnimatePresence>
+                                <div className='group relative flex w-full items-end gap-2 rounded-2xl border border-zinc-200 bg-white pl-5 pb-3 px-2 py-2 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.12)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.16)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.7)] dark:focus-within:border-zinc-700 dark:focus-within:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.85)]'>
+                                    <div className='relative flex min-h-6 min-w-0 flex-1 items-center'>
+                                        <div className='relative w-full'>
+                                            {!input && messages.length === 1 && (
+                                                <div aria-hidden='true' className='pointer-events-none absolute inset-y-0 left-0 z-0 flex items-center -translate-y-0.5 overflow-hidden'>
+                                                    <span className='whitespace-nowrap text-[16px] leading-7 text-zinc-400 dark:text-zinc-600'>{placeholderText}</span>
+                                                </div>
+                                            )}
+
+                                            <textarea
+                                                ref={textareaRef}
+                                                autoFocus
+                                                value={input}
+                                                onChange={handleInputChange}
+                                                onKeyDown={handleKeyDown}
+                                                rows={1}
+                                                placeholder={messages.length > 1 ? 'Ask anything about your resume...' : ''}
+                                                className='chat-composer-scrollbar relative z-10 block max-h-40 min-h-7 w-full resize-none overflow-y-auto bg-transparent p-0 text-[16px] leading-5.75 text-zinc-900 outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100'
+                                                style={{ height: '28px' }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className='relative flex shrink-0 items-center gap-1.5'>
+                                        {micError && (
+                                            <div className='absolute bottom-full left-1/2 mb-2 w-max max-w-70 -translate-x-1/2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-center text-[11px] font-medium text-rose-600 shadow-sm dark:border-rose-900/60 dark:bg-rose-950/70 dark:text-rose-300'>
+                                                {micError}
+                                            </div>
+                                        )}
+
+                                        <button
+                                            type='button'
+                                            onClick={handleMicToggle}
+                                            disabled={isSending}
+                                            aria-label={listening ? 'Stop voice input' : 'Start voice input'}
+                                            title={listening ? 'Stop voice input' : 'Voice input'}
+                                            className={`flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 ${
+                                                listening ? 'bg-rose-100 text-rose-600 hover:bg-rose-200 dark:bg-rose-950/70 dark:text-rose-400 dark:hover:bg-rose-950' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
+                                            }`}
+                                        >
+                                            {listening ? <MicOff className='h-5 w-5' strokeWidth={1.8} /> : <Mic className='h-5 w-5' strokeWidth={1.8} />}
+                                        </button>
+
+                                        <div className='group/send relative'>
+                                            <button
+                                                type='button'
+                                                onClick={() => void sendMessage()}
+                                                disabled={!input.trim() || isSending}
+                                                aria-label='Send message'
+                                                className='flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-zinc-950 text-white transition-all duration-200 hover:bg-zinc-800 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-900 dark:disabled:text-zinc-600'
+                                            >
+                                                <ArrowUp className='h-5 w-5' strokeWidth={1.8} />
+                                            </button>
+
+                                            {(!input.trim() || isSending) && (
+                                                <div
+                                                    role='tooltip'
+                                                    className='pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 translate-y-1 scale-95 whitespace-nowrap rounded-md border border-zinc-300 bg-zinc-100 px-3 py-1.5 text-xs font-normal text-zinc-700 opacity-0 shadow-sm transition-all duration-150 ease-out group-hover/send:translate-y-0 group-hover/send:scale-100 group-hover/send:opacity-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100'
+                                                >
+                                                    {isSending && input.trim() ? 'wait for response' : 'type something'}
+                                                    <span aria-hidden='true' className='absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-zinc-300 dark:border-t-zinc-700' />
+                                                    <span aria-hidden='true' className='absolute left-1/2 top-full -mt-px z-10 h-0 w-0 -translate-x-1/2 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-zinc-100 dark:border-t-zinc-800' />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <p className='mt-2.5 text-center font-mono text-[9px] uppercase tracking-widest text-zinc-400 dark:text-zinc-600'>AI can make mistakes · verify important information</p>
@@ -1059,16 +1168,18 @@ export default function Chat() {
                                     type='button'
                                     onClick={() => {
                                         setShowLeaveConfirmation(false);
+                                        isLeavingChatRef.current = false;
+
                                         if (blocker.state === 'blocked') {
                                             blocker.reset();
                                         }
                                     }}
-                                    className='rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100 cursor-pointer select-none'
+                                    className='cursor-pointer select-none rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
                                 >
                                     Stay
                                 </button>
 
-                                <button type='button' onClick={handleLeaveChat} className='rounded-xl bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200 cursor-pointer select-none'>
+                                <button type='button' onClick={handleLeaveChat} className='cursor-pointer select-none rounded-xl bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200'>
                                     Leave
                                 </button>
                             </div>
