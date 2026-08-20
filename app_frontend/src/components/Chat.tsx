@@ -1119,12 +1119,12 @@ export default function Chat() {
                                                 <ArrowUp className='h-5 w-5' strokeWidth={1.8} />
                                             </button>
 
-                                            {!input.trim() && !isSending && (
+                                            {(!input.trim() || isSending) && (
                                                 <div
                                                     role='tooltip'
                                                     className='pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 translate-y-1 scale-95 whitespace-nowrap rounded-md border border-zinc-300 bg-zinc-100 px-3 py-1.5 text-xs font-normal text-zinc-700 opacity-0 shadow-sm transition-all duration-150 ease-out group-hover/send:translate-y-0 group-hover/send:scale-100 group-hover/send:opacity-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100'
                                                 >
-                                                    type something
+                                                    {isSending && input.trim() ? 'wait for response' : 'type something'}
                                                     <span aria-hidden='true' className='absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-zinc-300 dark:border-t-zinc-700' />
                                                     <span aria-hidden='true' className='absolute left-1/2 top-full -mt-px z-10 h-0 w-0 -translate-x-1/2 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-zinc-100 dark:border-t-zinc-800' />
                                                 </div>
