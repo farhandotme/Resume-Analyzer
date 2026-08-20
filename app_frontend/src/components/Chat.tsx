@@ -1069,8 +1069,8 @@ export default function Chat() {
                                     <div className='relative flex min-h-6 min-w-0 flex-1 items-center'>
                                         <div className='relative w-full'>
                                             {!input && messages.length === 1 && (
-                                                <div aria-hidden='true' className='pointer-events-none absolute inset-y-0 left-0 z-0 flex items-center -translate-y-0.5 overflow-hidden'>
-                                                    <span className='whitespace-nowrap text-[16px] leading-6.25 text-zinc-400 dark:text-zinc-600'>{placeholderText}</span>
+                                                <div aria-hidden='true' className='pointer-events-none absolute inset-y-0 left-0 z-0 flex items-center overflow-hidden'>
+                                                    <span className='whitespace-nowrap text-[16px] leading-7 text-zinc-400 dark:text-zinc-600'>{placeholderText}</span>
                                                 </div>
                                             )}
 
@@ -1082,8 +1082,8 @@ export default function Chat() {
                                                 onKeyDown={handleKeyDown}
                                                 rows={1}
                                                 disabled={isSending}
-                                                placeholder=''
-                                                className='chat-composer-scrollbar relative z-10 block max-h-40 min-h-7 w-full resize-none overflow-y-auto bg-transparent p-0 text-[16px] leading-6.25 text-zinc-900 outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100'
+                                                placeholder={messages.length > 1 ? 'Ask anything about your resume...' : ''}
+                                                className='chat-composer-scrollbar relative z-10 block max-h-40 min-h-7 w-full resize-none overflow-y-auto bg-transparent p-0 text-[16px] leading-5.75 text-zinc-900 outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100'
                                                 style={{ height: '28px' }}
                                             />
                                         </div>
