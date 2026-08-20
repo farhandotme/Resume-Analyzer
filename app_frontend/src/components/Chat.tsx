@@ -1069,7 +1069,7 @@ export default function Chat() {
                                     <div className='relative flex min-h-6 min-w-0 flex-1 items-center'>
                                         <div className='relative w-full'>
                                             {!input && messages.length === 1 && (
-                                                <div aria-hidden='true' className='pointer-events-none absolute inset-y-0 left-0 z-0 flex items-center overflow-hidden'>
+                                                <div aria-hidden='true' className='pointer-events-none absolute inset-y-0 left-0 z-0 flex items-center -translate-y-0.5 overflow-hidden'>
                                                     <span className='whitespace-nowrap text-[16px] leading-7 text-zinc-400 dark:text-zinc-600'>{placeholderText}</span>
                                                 </div>
                                             )}
