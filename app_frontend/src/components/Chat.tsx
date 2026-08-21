@@ -119,7 +119,8 @@ export default function Chat() {
 
     const blocker = useBlocker(({ currentLocation, nextLocation }) => {
         if (isLeavingChatRef.current) return false;
-        return Boolean(selectedFile && messages.length > 0) && currentLocation.pathname !== nextLocation.pathname;
+
+        return Boolean(selectedFile) && currentLocation.pathname !== nextLocation.pathname;
     });
 
     useEffect(() => {
@@ -733,6 +734,62 @@ export default function Chat() {
             onDragLeave={isLanding && !isAnalyzingResume ? handleDragLeave : undefined}
             onDrop={isLanding && !isAnalyzingResume ? handleDrop : undefined}
         >
+            <style>{`
+                @property --resume-mic-angle {
+                    syntax: '<angle>';
+                    initial-value: 0deg;
+                    inherits: false;
+                }
+
+                @keyframes resume-mic-border-spin {
+                    to {
+                        --resume-mic-angle: 360deg;
+                    }
+                }
+            `}</style>
+
+            <AnimatePresence>
+                {listening && (
+                    <>
+                        <motion.div
+                            aria-hidden='true'
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: prefersReducedMotion ? 0.5 : 0.92 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                            className='pointer-events-none fixed -inset-6 z-49 rounded-[40px] border-36 border-transparent blur-[120px]'
+                            style={{
+                                background: 'conic-gradient(from var(--resume-mic-angle), #ff6b22, #ff315d, #c84cff, #5a72ff, #ff6b22) border-box',
+                                WebkitMask: 'linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0)',
+                                WebkitMaskComposite: 'destination-out',
+                                mask: 'linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0)',
+                                maskComposite: 'exclude',
+                                animation: prefersReducedMotion ? undefined : 'resume-mic-border-spin 4.5s linear infinite',
+                            }}
+                        />
+
+                        {!prefersReducedMotion && (
+                            <motion.div
+                                aria-hidden='true'
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 0.6 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                                className='pointer-events-none fixed -inset-1 z-50 rounded-[28px] border-14 border-transparent blur-[46px]'
+                                style={{
+                                    background: 'conic-gradient(from var(--resume-mic-angle), #ff8a3d, #ff4f7a, #d36cff, #7090ff, #ff8a3d) border-box',
+                                    WebkitMask: 'linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0)',
+                                    WebkitMaskComposite: 'destination-out',
+                                    mask: 'linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0)',
+                                    maskComposite: 'exclude',
+                                    animation: 'resume-mic-border-spin 4.5s linear infinite',
+                                }}
+                            />
+                        )}
+                    </>
+                )}
+            </AnimatePresence>
+
             {!selectedFile && (
                 <div className='pointer-events-none fixed inset-0 z-0 overflow-hidden'>
                     <div className='absolute inset-0 bg-[radial-gradient(ellipse_68%_52%_at_50%_32%,rgba(228,228,231,0.9)_0%,rgba(244,244,245,0.65)_34%,rgba(250,250,250,0.25)_56%,rgba(255,255,255,0)_76%)] dark:bg-[radial-gradient(ellipse_65%_55%_at_50%_32%,transparent_0%,black_78%)]' />
@@ -1066,7 +1123,7 @@ export default function Chat() {
                                     )}
                                 </AnimatePresence>
                                 <div className='group relative flex w-full items-end gap-2 rounded-2xl border border-zinc-200 bg-white pl-5 pb-3 px-2 py-2 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.12)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.16)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.7)] dark:focus-within:border-zinc-700 dark:focus-within:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.85)]'>
-                                    <div className='relative flex min-h-6 min-w-0 flex-1 items-center'>
+                                    <div className='relative z-10 flex min-h-6 min-w-0 flex-1 items-center'>
                                         <div className='relative w-full'>
                                             {!input && messages.length === 1 && (
                                                 <div aria-hidden='true' className='pointer-events-none absolute inset-y-0 left-0 z-0 flex items-center -translate-y-0.5 overflow-hidden'>
@@ -1088,7 +1145,7 @@ export default function Chat() {
                                         </div>
                                     </div>
 
-                                    <div className='relative flex shrink-0 items-center gap-1.5'>
+                                    <div className='relative z-10 flex shrink-0 items-center gap-1.5'>
                                         {micError && (
                                             <div className='absolute bottom-full left-1/2 mb-2 w-max max-w-70 -translate-x-1/2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-center text-[11px] font-medium text-rose-600 shadow-sm dark:border-rose-900/60 dark:bg-rose-950/70 dark:text-rose-300'>
                                                 {micError}
@@ -1160,7 +1217,7 @@ export default function Chat() {
                             </h2>
 
                             <p id='leave-chat-description' className='mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-400'>
-                                Your current conversation will be cleared when you leave.
+                                Your uploaded resume and current session will be cleared when you leave.
                             </p>
 
                             <div className='mt-6 flex items-center justify-end gap-2.5'>
