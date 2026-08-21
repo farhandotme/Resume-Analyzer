@@ -1242,6 +1242,7 @@ export default function Chat() {
                                         <div className='group/send relative'>
                                             <button
                                                 type='button'
+                                                onMouseDown={(event) => event.preventDefault()}
                                                 onClick={() => void sendMessage()}
                                                 disabled={!input.trim() || isSending || listening}
                                                 aria-label='Send message'
