@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
-import { AlertCircle, ArrowDown, ArrowLeft, ArrowUp, FileText, Mic, MicOff, Moon, Sparkles, SquarePen, SunMedium } from 'lucide-react';
+import { AlertCircle, ArrowDown, ArrowLeft, ArrowUp, FileText, Mic, Moon, Sparkles, Square, SquarePen, SunMedium, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useBlocker, useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme.ts';
@@ -549,6 +549,29 @@ export default function Chat() {
         const maxHeight = 160;
         const nextHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
         textarea.style.height = `${nextHeight}px`;
+    };
+
+    const cancelVoiceInput = async () => {
+        shouldCommitTranscriptRef.current = false;
+        transcriptRef.current = '';
+
+        if (commitTranscriptTimeoutRef.current !== null) {
+            window.clearTimeout(commitTranscriptTimeoutRef.current);
+            commitTranscriptTimeoutRef.current = null;
+        }
+
+        try {
+            await SpeechRecognition.abortListening();
+        } catch (error) {
+            console.error('Unable to cancel speech recognition:', error);
+        }
+
+        resetTranscript();
+        setMicError('');
+
+        requestAnimationFrame(() => {
+            textareaRef.current?.focus();
+        });
     };
 
     const handleMicToggle = async () => {
@@ -1125,28 +1148,62 @@ export default function Chat() {
                                         </motion.button>
                                     )}
                                 </AnimatePresence>
-                                <div className='group relative flex w-full items-end gap-2 rounded-2xl border border-zinc-200 bg-white pl-5 pb-3 px-2 py-2 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.12)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.16)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.7)] dark:focus-within:border-zinc-700 dark:focus-within:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.85)]'>
-                                    <div className='relative z-10 flex min-h-6 min-w-0 flex-1 items-center'>
-                                        <div className='relative w-full'>
-                                            {!input && messages.length === 1 && (
-                                                <div aria-hidden='true' className='pointer-events-none absolute inset-y-0 left-0 z-0 flex items-center -translate-y-0.5 overflow-hidden'>
-                                                    <span className='whitespace-nowrap text-[16px] leading-7 text-zinc-400 dark:text-zinc-600'>{placeholderText}</span>
-                                                </div>
-                                            )}
+                                <div
+                                    className={`group relative flex w-full items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-2 py-2 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.12)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.16)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.7)] dark:focus-within:border-zinc-700 dark:focus-within:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.85)] ${listening ? 'border-zinc-300/90 dark:border-zinc-700/90' : ''}`}
+                                >
+                                    <AnimatePresence mode='wait' initial={false}>
+                                        {listening ? (
+                                            <motion.div key='voice-mode' initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className='flex min-w-0 flex-1 items-center gap-2'>
+                                                <button
+                                                    type='button'
+                                                    onClick={() => void cancelVoiceInput()}
+                                                    aria-label='Cancel voice input'
+                                                    title='Cancel voice input'
+                                                    className='flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-zinc-400 transition-colors duration-200 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-900 dark:hover:text-zinc-200'
+                                                >
+                                                    <X className='h-4.5 w-4.5' strokeWidth={1.8} />
+                                                </button>
 
-                                            <textarea
-                                                ref={textareaRef}
-                                                autoFocus
-                                                value={input}
-                                                onChange={handleInputChange}
-                                                onKeyDown={handleKeyDown}
-                                                rows={1}
-                                                placeholder={messages.length > 1 ? 'Ask anything about your resume...' : ''}
-                                                className='chat-composer-scrollbar relative z-10 block max-h-40 min-h-7 w-full resize-none overflow-y-auto bg-transparent p-0 text-[16px] leading-5.75 text-zinc-900 outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100'
-                                                style={{ height: '28px' }}
-                                            />
-                                        </div>
-                                    </div>
+                                                <div className='flex min-w-0 flex-1 items-center gap-3 px-1'>
+                                                    <span className='select-none whitespace-nowrap text-[13px] font-medium text-zinc-400 dark:text-zinc-500'>Listening</span>
+
+                                                    <div aria-hidden='true' className='flex h-9 min-w-0 flex-1 items-center gap-0.75 overflow-hidden'>
+                                                        {[12, 20, 9, 26, 15, 31, 12, 22, 35, 17, 27, 11, 24, 32, 16, 29, 13, 36, 21, 10, 28, 15, 34, 18, 24, 11, 30, 16].map((height, index) => (
+                                                            <motion.span
+                                                                key={index}
+                                                                className='w-0.5 shrink-0 rounded-full bg-zinc-400 dark:bg-zinc-500'
+                                                                style={{ height }}
+                                                                animate={prefersReducedMotion ? { opacity: 0.8, scaleY: 1 } : { opacity: [0.45, 0.95, 0.5], scaleY: [0.45, 1, 0.55] }}
+                                                                transition={{ duration: 0.72 + (index % 5) * 0.08, repeat: Infinity, ease: 'easeInOut', delay: index * 0.035 }}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        ) : (
+                                            <motion.div key='text-mode' initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className='relative flex min-h-7 min-w-0 flex-1 items-center pl-3'>
+                                                <div className='relative w-full'>
+                                                    {!input && messages.length === 1 && (
+                                                        <div aria-hidden='true' className='pointer-events-none absolute inset-y-0 left-0 z-0 flex items-center -translate-y-0.5 overflow-hidden'>
+                                                            <span className='whitespace-nowrap text-[16px] leading-7 text-zinc-400 dark:text-zinc-600'>{placeholderText}</span>
+                                                        </div>
+                                                    )}
+
+                                                    <textarea
+                                                        ref={textareaRef}
+                                                        autoFocus
+                                                        value={input}
+                                                        onChange={handleInputChange}
+                                                        onKeyDown={handleKeyDown}
+                                                        rows={1}
+                                                        placeholder={messages.length > 1 ? 'Ask anything about your resume...' : ''}
+                                                        className='chat-composer-scrollbar relative z-10 block max-h-40 min-h-7 w-full resize-none overflow-y-auto bg-transparent p-0 text-[16px] leading-5.75 text-zinc-900 outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100'
+                                                        style={{ height: '28px' }}
+                                                    />
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
 
                                     <div className='relative z-10 flex shrink-0 items-center gap-1.5'>
                                         {micError && (
@@ -1155,36 +1212,50 @@ export default function Chat() {
                                             </div>
                                         )}
 
-                                        <button
-                                            type='button'
-                                            onClick={handleMicToggle}
-                                            disabled={isSending}
-                                            aria-label={listening ? 'Stop voice input' : 'Start voice input'}
-                                            title={listening ? 'Stop voice input' : 'Voice input'}
-                                            className={`flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 ${
-                                                listening ? 'bg-rose-100 text-rose-600 hover:bg-rose-200 dark:bg-rose-950/70 dark:text-rose-400 dark:hover:bg-rose-950' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
-                                            }`}
-                                        >
-                                            {listening ? <MicOff className='h-5 w-5' strokeWidth={1.8} /> : <Mic className='h-5 w-5' strokeWidth={1.8} />}
-                                        </button>
+                                        {listening ? (
+                                            <button
+                                                type='button'
+                                                onClick={() => {
+                                                    shouldCommitTranscriptRef.current = true;
+                                                    void SpeechRecognition.stopListening();
+                                                }}
+                                                disabled={isSending}
+                                                aria-label='Stop voice input'
+                                                title='Stop voice input'
+                                                className='flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-zinc-100 text-zinc-600 transition-all duration-200 hover:bg-zinc-200 hover:text-zinc-900 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
+                                            >
+                                                <Square className='h-3.5 w-3.5 fill-current' strokeWidth={1.8} />
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type='button'
+                                                onClick={handleMicToggle}
+                                                disabled={isSending}
+                                                aria-label='Start voice input'
+                                                title='Voice input'
+                                                className='flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-zinc-400 transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
+                                            >
+                                                <Mic className='h-5 w-5' strokeWidth={1.8} />
+                                            </button>
+                                        )}
 
                                         <div className='group/send relative'>
                                             <button
                                                 type='button'
                                                 onClick={() => void sendMessage()}
-                                                disabled={!input.trim() || isSending}
+                                                disabled={!input.trim() || isSending || listening}
                                                 aria-label='Send message'
                                                 className='flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-zinc-950 text-white transition-all duration-200 hover:bg-zinc-800 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-900 dark:disabled:text-zinc-600'
                                             >
                                                 <ArrowUp className='h-5 w-5' strokeWidth={1.8} />
                                             </button>
 
-                                            {(!input.trim() || isSending) && (
+                                            {(!input.trim() || isSending || listening) && (
                                                 <div
                                                     role='tooltip'
                                                     className='pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 translate-y-1 scale-95 whitespace-nowrap rounded-md border border-zinc-300 bg-zinc-100 px-3 py-1.5 text-xs font-normal text-zinc-700 opacity-0 shadow-sm transition-all duration-150 ease-out group-hover/send:translate-y-0 group-hover/send:scale-100 group-hover/send:opacity-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100'
                                                 >
-                                                    {isSending && input.trim() ? 'wait for response' : 'type something'}
+                                                    {listening ? 'stop listening first' : isSending && input.trim() ? 'wait for response' : 'type something'}
                                                     <span aria-hidden='true' className='absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-zinc-300 dark:border-t-zinc-700' />
                                                     <span aria-hidden='true' className='absolute left-1/2 top-full -mt-px z-10 h-0 w-0 -translate-x-1/2 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-zinc-100 dark:border-t-zinc-800' />
                                                 </div>
