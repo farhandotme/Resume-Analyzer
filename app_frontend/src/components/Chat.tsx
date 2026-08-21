@@ -29,6 +29,14 @@ const heroWords = ['resume', 'experience', 'skills', 'story'];
 const CHAT_ANALYSIS_ROLE = 'General Resume Review';
 const CHAT_STORAGE_KEY = 'resume-analyzer-chat';
 
+const GLOW_LAYERS = [
+    { inset: 0, radius: 0, borderWidth: 2, blur: 4, opacity: { full: 0.9, reduced: 0.3 } },
+    { inset: -2, radius: 0, borderWidth: 12, blur: 16, opacity: { full: 0.6, reduced: 0.2 } },
+    { inset: -4, radius: 0, borderWidth: 32, blur: 36, opacity: { full: 0.25, reduced: 0.1 } },
+] as const;
+
+const MIC_GRADIENT = 'conic-gradient(from var(--resume-mic-angle), #ff6b22 0deg, #ff315d 70deg, #c84cff 145deg, #5a72ff 225deg, #7090ff 285deg, #ff6b22 360deg) border-box';
+
 type StoredChat = {
     sessionId: string;
     fileName: string;
@@ -44,7 +52,6 @@ const getStoredChat = (): StoredChat | null => {
         if (!stored) return null;
 
         const parsed = JSON.parse(stored) as StoredChat;
-
         if (!parsed.sessionId || !parsed.fileName || !parsed.pdfUrl || !Array.isArray(parsed.messages)) {
             sessionStorage.removeItem(CHAT_STORAGE_KEY);
             return null;
@@ -119,8 +126,7 @@ export default function Chat() {
 
     const blocker = useBlocker(({ currentLocation, nextLocation }) => {
         if (isLeavingChatRef.current) return false;
-
-        return Boolean(selectedFile) && currentLocation.pathname !== nextLocation.pathname;
+        return Boolean(selectedFile && messages.length > 0) && currentLocation.pathname !== nextLocation.pathname;
     });
 
     useEffect(() => {
@@ -740,7 +746,6 @@ export default function Chat() {
                     initial-value: 0deg;
                     inherits: false;
                 }
-
                 @keyframes resume-mic-border-spin {
                     to {
                         --resume-mic-angle: 360deg;
@@ -748,45 +753,43 @@ export default function Chat() {
                 }
             `}</style>
 
-            <AnimatePresence>
-                {listening && (
-                    <>
-                        <motion.div
-                            aria-hidden='true'
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: prefersReducedMotion ? 0.5 : 0.92 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                            className='pointer-events-none fixed -inset-6 z-49 rounded-[40px] border-36 border-transparent blur-[120px]'
-                            style={{
-                                background: 'conic-gradient(from var(--resume-mic-angle), #ff6b22, #ff315d, #c84cff, #5a72ff, #ff6b22) border-box',
-                                WebkitMask: 'linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0)',
-                                WebkitMaskComposite: 'destination-out',
-                                mask: 'linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0)',
-                                maskComposite: 'exclude',
-                                animation: prefersReducedMotion ? undefined : 'resume-mic-border-spin 4.5s linear infinite',
-                            }}
-                        />
-
-                        {!prefersReducedMotion && (
-                            <motion.div
-                                aria-hidden='true'
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 0.6 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                                className='pointer-events-none fixed -inset-1 z-50 rounded-[28px] border-14 border-transparent blur-[46px]'
+            <AnimatePresence initial={false}>
+                {listening === true && (
+                    <motion.div
+                        key='mic-glow'
+                        aria-hidden='true'
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                        className='pointer-events-none fixed inset-0 z-49 mix-blend-screen dark:mix-blend-plus-lighter'
+                    >
+                        {GLOW_LAYERS.map((layer, index) => (
+                            <div
+                                key={index}
+                                className='absolute inset-0'
                                 style={{
-                                    background: 'conic-gradient(from var(--resume-mic-angle), #ff8a3d, #ff4f7a, #d36cff, #7090ff, #ff8a3d) border-box',
-                                    WebkitMask: 'linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0)',
-                                    WebkitMaskComposite: 'destination-out',
-                                    mask: 'linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0)',
-                                    maskComposite: 'exclude',
-                                    animation: 'resume-mic-border-spin 4.5s linear infinite',
+                                    filter: `blur(${layer.blur}px)`,
+                                    opacity: prefersReducedMotion ? layer.opacity.reduced : layer.opacity.full,
                                 }}
-                            />
-                        )}
-                    </>
+                            >
+                                <div
+                                    className='absolute border-transparent'
+                                    style={{
+                                        inset: layer.inset,
+                                        borderRadius: layer.radius,
+                                        borderWidth: layer.borderWidth,
+                                        background: MIC_GRADIENT,
+                                        WebkitMask: 'linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0)',
+                                        WebkitMaskComposite: 'destination-out',
+                                        mask: 'linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0)',
+                                        maskComposite: 'exclude',
+                                        animation: prefersReducedMotion ? undefined : 'resume-mic-border-spin 4.5s linear infinite',
+                                    }}
+                                />
+                            </div>
+                        ))}
+                    </motion.div>
                 )}
             </AnimatePresence>
 
