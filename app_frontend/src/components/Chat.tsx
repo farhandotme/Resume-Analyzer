@@ -762,7 +762,7 @@ export default function Chat() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                        className='pointer-events-none fixed inset-0 z-49 mix-blend-screen dark:mix-blend-plus-lighter'
+                        className='pointer-events-none fixed inset-0 z-49 mix-blend-multiply brightness-50 contrast-125 saturate-200 dark:mix-blend-plus-lighter dark:brightness-100 dark:contrast-100 dark:saturate-100'
                     >
                         {GLOW_LAYERS.map((layer, index) => (
                             <div
