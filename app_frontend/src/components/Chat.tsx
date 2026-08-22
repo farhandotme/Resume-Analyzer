@@ -714,6 +714,20 @@ export default function Chat() {
     };
 
     useEffect(() => {
+        if (editingMessageId !== null || !isSending) return;
+
+        const timer = window.setTimeout(() => {
+            const textarea = textareaRef.current;
+            if (!textarea) return;
+
+            textarea.focus();
+            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+        }, 0);
+
+        return () => window.clearTimeout(timer);
+    }, [editingMessageId, isSending]);
+
+    useEffect(() => {
         if (editingMessageId === null) return;
 
         const timer = setTimeout(() => {
