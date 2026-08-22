@@ -146,6 +146,7 @@ export default function Chat() {
     const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
     const [editingContent, setEditingContent] = useState('');
     const [originalEditingContent, setOriginalEditingContent] = useState('');
+    const [editValidationMessage, setEditValidationMessage] = useState('');
     const { transcript, listening, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
     const transcriptRef = useRef('');
     const shouldCommitTranscriptRef = useRef(false);
@@ -838,6 +839,14 @@ export default function Chat() {
         setEditingMessageId(null);
         setEditingContent('');
         setOriginalEditingContent('');
+        setEditValidationMessage('');
+    };
+
+    const showEditValidationMessage = () => {
+        setEditValidationMessage('Make a change before sending');
+        window.setTimeout(() => {
+            setEditValidationMessage((current) => (current === 'Make a change before sending' ? '' : current));
+        }, 2200);
     };
 
     useEffect(() => {
@@ -880,6 +889,7 @@ export default function Chat() {
     const handleEditingContentChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         const value = event.target.value;
         setEditingContent(value);
+        setEditValidationMessage('');
 
         const textarea = event.target;
         textarea.style.height = 'auto';
@@ -894,7 +904,7 @@ export default function Chat() {
     const saveEditedMessage = async () => {
         const trimmed = editingContent.trim();
 
-        if (!trimmed || editingMessageId === null || !selectedFile || !pdfUrl || isSending) {
+        if (!trimmed || trimmed === originalEditingContent.trim() || editingMessageId === null || !selectedFile || !pdfUrl || isSending) {
             return;
         }
 
@@ -1440,6 +1450,12 @@ export default function Chat() {
 
                                                                                 if (event.key === 'Enter' && !event.shiftKey) {
                                                                                     event.preventDefault();
+
+                                                                                    if (editingContent.trim() === originalEditingContent.trim()) {
+                                                                                        showEditValidationMessage();
+                                                                                        return;
+                                                                                    }
+
                                                                                     void saveEditedMessage();
                                                                                 }
                                                                             }}
@@ -1447,6 +1463,20 @@ export default function Chat() {
                                                                             className='block max-h-27 min-h-13 w-full resize-none overflow-x-hidden rounded-[18px] rounded-br-md border border-zinc-200 bg-white px-4.5 py-3 text-[15px] leading-7 tracking-[-0.005em] text-zinc-900 outline-none shadow-[0_8px_28px_-14px_rgba(0,0,0,0.14)] transition-colors duration-200 focus:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.8)] dark:focus:border-zinc-600'
                                                                             style={{ height: '52px', overflowY: 'hidden' }}
                                                                         />
+
+                                                                        <AnimatePresence>
+                                                                            {editValidationMessage && (
+                                                                                <motion.div
+                                                                                    initial={{ opacity: 0, y: 3 }}
+                                                                                    animate={{ opacity: 1, y: 0 }}
+                                                                                    exit={{ opacity: 0, y: -3 }}
+                                                                                    transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                                                                                    className='mt-2 text-right text-[11px] font-medium text-zinc-500 dark:text-zinc-500'
+                                                                                >
+                                                                                    {editValidationMessage}
+                                                                                </motion.div>
+                                                                            )}
+                                                                        </AnimatePresence>
 
                                                                         <div className='mt-2 flex items-center justify-end gap-2'>
                                                                             <button
@@ -1458,14 +1488,16 @@ export default function Chat() {
                                                                                 Cancel
                                                                             </button>
 
-                                                                            <button
-                                                                                type='button'
-                                                                                onClick={() => void saveEditedMessage()}
-                                                                                disabled={!editingContent.trim() || isSending || editingContent === originalEditingContent}
-                                                                                className='cursor-pointer rounded-lg bg-zinc-950 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-400 dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500 select-none'
-                                                                            >
-                                                                                {isSending ? 'Saving...' : 'Send'}
-                                                                            </button>
+                                                                            <Tooltip label={editingContent.trim() === originalEditingContent.trim() ? 'Make a change before sending' : isSending ? 'Saving...' : 'Send edited message'} position='top'>
+                                                                                <button
+                                                                                    type='button'
+                                                                                    onClick={() => void saveEditedMessage()}
+                                                                                    disabled={!editingContent.trim() || isSending || editingContent.trim() === originalEditingContent.trim()}
+                                                                                    className='cursor-pointer rounded-lg bg-zinc-950 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-400 dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500 select-none'
+                                                                                >
+                                                                                    {isSending ? 'Saving...' : 'Send'}
+                                                                                </button>
+                                                                            </Tooltip>
                                                                         </div>
                                                                     </motion.div>
                                                                 ) : (
