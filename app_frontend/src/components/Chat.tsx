@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
-import { AlertCircle, ArrowDown, ArrowLeft, ArrowUp, FileText, Mic, Moon, Sparkles, Square, SquarePen, SunMedium, X } from 'lucide-react';
+import { AlertCircle, ArrowDown, ArrowLeft, ArrowUp, Check, Copy, Edit3, FileText, Mic, Moon, Sparkles, Square, SquarePen, SunMedium, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useBlocker, useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme.ts';
@@ -70,6 +70,7 @@ export default function Chat() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const editingTextareaRef = useRef<HTMLTextAreaElement>(null);
     const chatScrollRef = useRef<HTMLDivElement>(null);
     const fileErrorTimeoutRef = useRef<number | null>(null);
     const micErrorTimeoutRef = useRef<number | null>(null);
@@ -118,6 +119,10 @@ export default function Chat() {
     const [isSending, setIsSending] = useState(false);
     const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
     const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+    const [copiedMessageId, setCopiedMessageId] = useState<number | null>(null);
+    const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
+    const [editingContent, setEditingContent] = useState('');
+    const [originalEditingContent, setOriginalEditingContent] = useState('');
     const { transcript, listening, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
     const transcriptRef = useRef('');
     const shouldCommitTranscriptRef = useRef(false);
@@ -181,6 +186,29 @@ export default function Chat() {
     }, [messages]);
 
     useEffect(() => {
+        const frame = requestAnimationFrame(() => {
+            const frame2 = requestAnimationFrame(() => {
+                const container = chatScrollRef.current;
+                if (!container) return;
+
+                const maxScrollTop = Math.max(container.scrollHeight - container.clientHeight, 0);
+
+                if (maxScrollTop <= 1) {
+                    setShowScrollToBottom(false);
+                    return;
+                }
+
+                const distanceFromBottom = maxScrollTop - container.scrollTop;
+                setShowScrollToBottom(distanceFromBottom > 120);
+            });
+
+            return () => cancelAnimationFrame(frame2);
+        });
+
+        return () => cancelAnimationFrame(frame);
+    }, [messages]);
+
+    useEffect(() => {
         if (!selectedFile) return;
 
         const focusChatInput = () => {
@@ -204,20 +232,20 @@ export default function Chat() {
 
         const handleGlobalKeyDown = (event: KeyboardEvent) => {
             const textarea = textareaRef.current;
-            if (!textarea || isSending || listening) return;
+            if (!textarea || isSending || listening || editingMessageId !== null) return;
             if (event.metaKey || event.ctrlKey || event.altKey || event.key === 'Tab' || event.key === 'Escape') {
                 return;
             }
 
             if (event.key === 'Enter') {
-                if (document.activeElement !== textarea) {
+                if (document.activeElement !== textarea && !(document.activeElement instanceof HTMLTextAreaElement) && !(document.activeElement instanceof HTMLInputElement)) {
                     textarea.focus();
                 }
                 return;
             }
 
             if (event.key.length !== 1) return;
-            if (document.activeElement === textarea) return;
+            if (document.activeElement instanceof HTMLTextAreaElement || document.activeElement instanceof HTMLInputElement) return;
 
             event.preventDefault();
 
@@ -240,7 +268,7 @@ export default function Chat() {
         return () => {
             window.removeEventListener('keydown', handleGlobalKeyDown);
         };
-    }, [selectedFile, isSending, listening]);
+    }, [selectedFile, isSending, listening, editingMessageId]);
 
     useEffect(() => {
         transcriptRef.current = transcript;
@@ -657,6 +685,126 @@ export default function Chat() {
             console.error('Unable to start speech recognition:', error);
             shouldCommitTranscriptRef.current = false;
             showMicErrorMessage('Unable to start voice input. Please allow microphone access and try again.');
+        }
+    };
+
+    const copyMessage = async (message: Message) => {
+        try {
+            await navigator.clipboard.writeText(message.content);
+            setCopiedMessageId(message.id);
+
+            window.setTimeout(() => {
+                setCopiedMessageId((current) => (current === message.id ? null : current));
+            }, 1500);
+        } catch (error) {
+            console.error('Failed to copy message:', error);
+        }
+    };
+
+    const editMessage = (message: Message) => {
+        setEditingMessageId(message.id);
+        setEditingContent(message.content);
+        setOriginalEditingContent(message.content);
+    };
+
+    const cancelEdit = () => {
+        setEditingMessageId(null);
+        setEditingContent('');
+        setOriginalEditingContent('');
+    };
+
+    useEffect(() => {
+        if (editingMessageId === null) return;
+
+        const timer = setTimeout(() => {
+            const textarea = editingTextareaRef.current;
+            if (!textarea) return;
+
+            textarea.focus();
+            const position = textarea.value.length;
+            textarea.setSelectionRange(position, position);
+
+            textarea.style.height = 'auto';
+            const minHeight = 52;
+            const maxHeight = 108;
+            const scrollHeight = textarea.scrollHeight;
+            const nextHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
+            textarea.style.height = `${nextHeight}px`;
+            textarea.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
+        }, 0);
+
+        return () => clearTimeout(timer);
+    }, [editingMessageId]);
+
+    const handleEditingContentChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const value = event.target.value;
+        setEditingContent(value);
+
+        const textarea = event.target;
+        textarea.style.height = 'auto';
+        const minHeight = 52;
+        const maxHeight = 108;
+        const scrollHeight = textarea.scrollHeight;
+        const nextHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
+        textarea.style.height = `${nextHeight}px`;
+        textarea.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
+    };
+
+    const saveEditedMessage = async () => {
+        const trimmed = editingContent.trim();
+
+        if (!trimmed || editingMessageId === null || !selectedFile || !pdfUrl || isSending) {
+            return;
+        }
+
+        setIsSending(true);
+
+        setMessages((current) => {
+            const editedIndex = current.findIndex((message) => message.id === editingMessageId);
+
+            if (editedIndex === -1) {
+                return current;
+            }
+
+            return current.slice(0, editedIndex + 1).map((message, index) => (index === editedIndex ? { ...message, content: trimmed } : message));
+        });
+
+        setEditingMessageId(null);
+        setEditingContent('');
+        setOriginalEditingContent('');
+        setShowScrollToBottom(false);
+
+        try {
+            const data = await sendChatMessage({
+                pdfUrl: hasIndexedResume ? undefined : pdfUrl,
+                message: trimmed,
+                sessionId,
+            });
+
+            setHasIndexedResume(true);
+            setMessages((current) => [
+                ...current,
+                {
+                    id: Date.now() + 1,
+                    role: 'assistant',
+                    content: data.data?.answer ?? 'I received your message.',
+                },
+            ]);
+        } catch (error) {
+            console.error('Edited chat request failed:', error);
+            setMessages((current) => [
+                ...current,
+                {
+                    id: Date.now() + 1,
+                    role: 'assistant',
+                    content: error instanceof Error ? error.message : 'Something went wrong. Please try again.',
+                },
+            ]);
+        } finally {
+            setIsSending(false);
+            requestAnimationFrame(() => {
+                textareaRef.current?.focus();
+            });
         }
     };
 
@@ -1116,8 +1264,80 @@ export default function Chat() {
                                                                 <div className='whitespace-pre-wrap wrap-break-word text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 dark:text-zinc-200'>{message.content}</div>
                                                             </div>
                                                         ) : (
-                                                            <div className='max-w-[68%] rounded-[18px] rounded-br-md border border-zinc-200/80 bg-zinc-100 px-4.5 py-3 text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 shadow-[0_2px_10px_-5px_rgba(0,0,0,0.18)] dark:border-zinc-800/80 dark:bg-zinc-900 dark:text-zinc-100 dark:shadow-[0_2px_12px_-5px_rgba(0,0,0,0.5)]'>
-                                                                {message.content}
+                                                            <div className={`flex flex-col items-end max-w-[78%] ${editingMessageId === message.id ? 'w-full' : ''}`}>
+                                                                {editingMessageId === message.id ? (
+                                                                    <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }} className='w-full'>
+                                                                        <textarea
+                                                                            ref={editingTextareaRef}
+                                                                            value={editingContent}
+                                                                            onChange={handleEditingContentChange}
+                                                                            onKeyDown={(event) => {
+                                                                                if (event.key === 'Escape') {
+                                                                                    event.preventDefault();
+                                                                                    cancelEdit();
+                                                                                }
+
+                                                                                if (event.key === 'Enter' && !event.shiftKey) {
+                                                                                    event.preventDefault();
+                                                                                    void saveEditedMessage();
+                                                                                }
+                                                                            }}
+                                                                            rows={1}
+                                                                            className='block max-h-27 min-h-13 w-full resize-none overflow-x-hidden rounded-[18px] rounded-br-md border border-zinc-700 bg-zinc-950 px-4.5 py-3 text-[15px] leading-7 tracking-[-0.005em] text-zinc-100 outline-none shadow-[0_8px_28px_-14px_rgba(0,0,0,0.8)] transition-colors duration-200 focus:border-zinc-600'
+                                                                            style={{ height: '52px', overflowY: 'hidden' }}
+                                                                        />
+
+                                                                        <div className='mt-2 flex items-center justify-end gap-2'>
+                                                                            <button
+                                                                                type='button'
+                                                                                onClick={cancelEdit}
+                                                                                disabled={isSending}
+                                                                                className='cursor-pointer rounded-lg border border-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200 disabled:cursor-not-allowed disabled:opacity-50'
+                                                                            >
+                                                                                Cancel
+                                                                            </button>
+
+                                                                            <button
+                                                                                type='button'
+                                                                                onClick={() => void saveEditedMessage()}
+                                                                                disabled={!editingContent.trim() || isSending || editingContent === originalEditingContent}
+                                                                                className='cursor-pointer rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-black transition-colors hover:bg-zinc-200 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500'
+                                                                            >
+                                                                                {isSending ? 'Saving...' : 'Send'}
+                                                                            </button>
+                                                                        </div>
+                                                                    </motion.div>
+                                                                ) : (
+                                                                    <>
+                                                                        <div className='group flex flex-col items-end gap-2'>
+                                                                            <div className='rounded-[18px] rounded-br-md border border-zinc-200/80 bg-zinc-100 px-4.5 py-3 text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 shadow-[0_2px_10px_-5px_rgba(0,0,0,0.18)] dark:border-zinc-800/80 dark:bg-zinc-900 dark:text-zinc-100 dark:shadow-[0_2px_12px_-5px_rgba(0,0,0,0.5)]'>
+                                                                                {message.content}
+                                                                            </div>
+
+                                                                            <div className='flex -translate-y-0.5 items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100'>
+                                                                                <button
+                                                                                    type='button'
+                                                                                    onClick={() => void copyMessage(message)}
+                                                                                    aria-label={copiedMessageId === message.id ? 'Copied' : 'Copy message'}
+                                                                                    title={copiedMessageId === message.id ? 'Copied' : 'Copy message'}
+                                                                                    className='flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-zinc-400 transition-colors duration-150 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
+                                                                                >
+                                                                                    {copiedMessageId === message.id ? <Check className='h-3.5 w-3.5' strokeWidth={2} /> : <Copy className='h-3.5 w-3.5' strokeWidth={1.8} />}
+                                                                                </button>
+
+                                                                                <button
+                                                                                    type='button'
+                                                                                    onClick={() => editMessage(message)}
+                                                                                    aria-label='Edit message'
+                                                                                    title='Edit message'
+                                                                                    className='flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-zinc-400 transition-colors duration-150 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
+                                                                                >
+                                                                                    <Edit3 className='h-3.5 w-3.5' strokeWidth={1.8} />
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </>
+                                                                )}
                                                             </div>
                                                         )}
                                                     </motion.div>
@@ -1234,6 +1454,7 @@ export default function Chat() {
                                                         rows={1}
                                                         placeholder={messages.length > 1 ? 'Ask anything about your resume...' : ''}
                                                         className='chat-composer-scrollbar relative z-10 block max-h-40 min-h-7 w-full translate-y-0.5 resize-none overflow-y-auto bg-transparent p-0 text-[16px] font-normal leading-5.75 text-zinc-900 outline-none placeholder:font-normal placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-600 disabled:cursor-not-allowed disabled:opacity-60'
+                                                        disabled={editingMessageId !== null}
                                                         style={{ height: '28px' }}
                                                     />
                                                 </div>
@@ -1255,7 +1476,7 @@ export default function Chat() {
                                                     shouldCommitTranscriptRef.current = true;
                                                     void SpeechRecognition.stopListening();
                                                 }}
-                                                disabled={isSending}
+                                                disabled={isSending || editingMessageId !== null}
                                                 aria-label='Stop voice input'
                                                 title='Stop voice input'
                                                 className='flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-zinc-100 text-zinc-600 transition-all duration-200 hover:bg-zinc-200 hover:text-zinc-900 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
@@ -1266,7 +1487,7 @@ export default function Chat() {
                                             <button
                                                 type='button'
                                                 onClick={handleMicToggle}
-                                                disabled={isSending}
+                                                disabled={isSending || editingMessageId !== null}
                                                 aria-label='Start voice input'
                                                 title='Voice input'
                                                 className='flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-zinc-400 transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
@@ -1280,7 +1501,7 @@ export default function Chat() {
                                                 type='button'
                                                 onMouseDown={(event) => event.preventDefault()}
                                                 onClick={() => void sendMessage()}
-                                                disabled={!input.trim() || isSending || listening}
+                                                disabled={!input.trim() || isSending || listening || editingMessageId !== null}
                                                 aria-label='Send message'
                                                 className='flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-zinc-950 text-white transition-all duration-200 hover:bg-zinc-800 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-900 dark:disabled:text-zinc-600'
                                             >
