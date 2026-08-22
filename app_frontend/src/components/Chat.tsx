@@ -1,7 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { AlertCircle, ArrowDown, ArrowLeft, ArrowUp, Check, Copy, Edit3, FileText, Mic, Moon, Sparkles, Square, SquarePen, SunMedium, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useBlocker, useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme.ts';
 import { uploadResume } from '../services/uploadResume.ts';
@@ -36,6 +36,29 @@ const GLOW_LAYERS = [
 ] as const;
 
 const MIC_GRADIENT = 'conic-gradient(from var(--resume-mic-angle), #ff6b22 0deg, #ff315d 70deg, #c84cff 145deg, #5a72ff 225deg, #7090ff 285deg, #ff6b22 360deg) border-box';
+
+const Tooltip = ({ children, label, position = 'top', delay = false }: { children: ReactNode; label: string; position?: 'top' | 'bottom'; delay?: boolean }) => (
+    <div className='group/tooltip relative'>
+        {children}
+
+        <div
+            role='tooltip'
+            className={`pointer-events-none absolute left-1/2 z-50 whitespace-nowrap rounded-md border border-zinc-300 bg-zinc-100 px-3 py-1.5 text-xs font-normal text-zinc-700 opacity-0 shadow-sm ${
+                delay
+                    ? 'transition-all duration-150 ease-out group-hover/tooltip:delay-800 group-hover/tooltip:translate-y-0 group-hover/tooltip:scale-100 group-hover/tooltip:opacity-100'
+                    : 'transition-all duration-150 ease-out group-hover/tooltip:translate-y-0 group-hover/tooltip:scale-100 group-hover/tooltip:opacity-100'
+            } dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 ${position === 'bottom' ? 'top-full mt-2 -translate-x-1/2 -translate-y-1 scale-95' : 'bottom-full mb-2 -translate-x-1/2 translate-y-1 scale-95'}`}
+        >
+            {label}
+
+            {position === 'bottom' ? (
+                <span aria-hidden='true' className='absolute left-1/2 bottom-full h-0 w-0 -translate-x-1/2 border-l-[5px] border-r-[5px] border-b-[5px] border-l-transparent border-r-transparent border-b-zinc-300 dark:border-b-zinc-700' />
+            ) : (
+                <span aria-hidden='true' className='absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-zinc-300 dark:border-t-zinc-700' />
+            )}
+        </div>
+    </div>
+);
 
 type StoredChat = {
     sessionId: string;
@@ -1052,26 +1075,28 @@ export default function Chat() {
 
                     <div className='ml-auto flex items-center gap-2'>
                         {selectedFile && (
-                            <button
-                                type='button'
-                                onClick={removeFile}
-                                aria-label='New chat'
-                                title='New chat'
-                                className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-zinc-200/80 bg-white/60 text-zinc-500 transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-black/60 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
-                            >
-                                <SquarePen className='h-4.5 w-4.5' strokeWidth={1.8} />
-                            </button>
+                            <Tooltip label='New chat' position='bottom' delay>
+                                <button
+                                    type='button'
+                                    onClick={removeFile}
+                                    aria-label='New chat'
+                                    className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-zinc-200/80 bg-white/60 text-zinc-500 transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-black/60 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
+                                >
+                                    <SquarePen className='h-4.5 w-4.5' strokeWidth={1.8} />
+                                </button>
+                            </Tooltip>
                         )}
 
-                        <button
-                            type='button'
-                            onClick={toggleTheme}
-                            aria-label='Toggle theme'
-                            title='Toggle theme'
-                            className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-zinc-200/80 bg-white/60 text-zinc-500 transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-black/60 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
-                        >
-                            {theme === 'light' ? <Moon className='h-4.5 w-4.5' strokeWidth={1.8} /> : <SunMedium className='h-4.5 w-4.5' strokeWidth={1.8} />}
-                        </button>
+                        <Tooltip label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} position='bottom' delay>
+                            <button
+                                type='button'
+                                onClick={toggleTheme}
+                                aria-label='Toggle theme'
+                                className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-zinc-200/80 bg-white/60 text-zinc-500 transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-black/60 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
+                            >
+                                {theme === 'light' ? <Moon className='h-4.5 w-4.5' strokeWidth={1.8} /> : <SunMedium className='h-4.5 w-4.5' strokeWidth={1.8} />}
+                            </button>
+                        </Tooltip>
                     </div>
                 </div>
             </header>
@@ -1329,25 +1354,27 @@ export default function Chat() {
                                                                             </div>
 
                                                                             <div className='flex -translate-y-0.5 items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100'>
-                                                                                <button
-                                                                                    type='button'
-                                                                                    onClick={() => void copyMessage(message)}
-                                                                                    aria-label={copiedMessageId === message.id ? 'Copied' : 'Copy message'}
-                                                                                    title={copiedMessageId === message.id ? 'Copied' : 'Copy message'}
-                                                                                    className='flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-zinc-400 transition-colors duration-150 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
-                                                                                >
-                                                                                    {copiedMessageId === message.id ? <Check className='h-3.5 w-3.5' strokeWidth={2} /> : <Copy className='h-3.5 w-3.5' strokeWidth={1.8} />}
-                                                                                </button>
+                                                                                <Tooltip label={copiedMessageId === message.id ? 'Copied' : 'Copy message'} position='top'>
+                                                                                    <button
+                                                                                        type='button'
+                                                                                        onClick={() => void copyMessage(message)}
+                                                                                        aria-label={copiedMessageId === message.id ? 'Copied' : 'Copy message'}
+                                                                                        className='flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-zinc-400 transition-colors duration-150 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
+                                                                                    >
+                                                                                        {copiedMessageId === message.id ? <Check className='h-3.5 w-3.5' strokeWidth={2} /> : <Copy className='h-3.5 w-3.5' strokeWidth={1.8} />}
+                                                                                    </button>
+                                                                                </Tooltip>
 
-                                                                                <button
-                                                                                    type='button'
-                                                                                    onClick={() => editMessage(message)}
-                                                                                    aria-label='Edit message'
-                                                                                    title='Edit message'
-                                                                                    className='flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-zinc-400 transition-colors duration-150 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
-                                                                                >
-                                                                                    <Edit3 className='h-3.5 w-3.5' strokeWidth={1.8} />
-                                                                                </button>
+                                                                                <Tooltip label='Edit message' position='top'>
+                                                                                    <button
+                                                                                        type='button'
+                                                                                        onClick={() => editMessage(message)}
+                                                                                        aria-label='Edit message'
+                                                                                        className='flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-zinc-400 transition-colors duration-150 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
+                                                                                    >
+                                                                                        <Edit3 className='h-3.5 w-3.5' strokeWidth={1.8} />
+                                                                                    </button>
+                                                                                </Tooltip>
                                                                             </div>
                                                                         </div>
                                                                     </>
@@ -1403,19 +1430,20 @@ export default function Chat() {
 
                                 <AnimatePresence>
                                     {showScrollToBottom && (
-                                        <motion.button
-                                            type='button'
-                                            onClick={scrollToBottom}
-                                            aria-label='Scroll to latest message'
-                                            title='Scroll to latest message'
-                                            initial={{ opacity: 0, scale: 0.85, y: 8 }}
-                                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                                            exit={{ opacity: 0, scale: 0.85, y: 8 }}
-                                            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                                            className='absolute bottom-full left-1/2 z-20 mb-2 flex h-9 w-9 -translate-x-1/2 cursor-pointer items-center justify-center rounded-full border border-zinc-200/80 bg-white/90 text-zinc-500 shadow-[0_6px_20px_-8px_rgba(0,0,0,0.25)] backdrop-blur-md transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-zinc-950/90 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
-                                        >
-                                            <ArrowDown className='h-4 w-4' strokeWidth={1.8} />
-                                        </motion.button>
+                                        <Tooltip label='Scroll to latest message' position='top'>
+                                            <motion.button
+                                                type='button'
+                                                onClick={scrollToBottom}
+                                                aria-label='Scroll to latest message'
+                                                initial={{ opacity: 0, scale: 0.85, y: 8 }}
+                                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                exit={{ opacity: 0, scale: 0.85, y: 8 }}
+                                                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                                                className='absolute bottom-full left-1/2 z-20 mb-2 flex h-9 w-9 -translate-x-1/2 cursor-pointer items-center justify-center rounded-full border border-zinc-200/80 bg-white/90 text-zinc-500 shadow-[0_6px_20px_-8px_rgba(0,0,0,0.25)] backdrop-blur-md transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-zinc-950/90 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
+                                            >
+                                                <ArrowDown className='h-4 w-4' strokeWidth={1.8} />
+                                            </motion.button>
+                                        </Tooltip>
                                     )}
                                 </AnimatePresence>
                                 <div className='group/composer relative'>
@@ -1436,15 +1464,16 @@ export default function Chat() {
                                         <AnimatePresence mode='wait' initial={false}>
                                             {listening ? (
                                                 <motion.div key='voice-mode' initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className='flex min-w-0 flex-1 items-center gap-2'>
-                                                    <button
-                                                        type='button'
-                                                        onClick={() => void cancelVoiceInput()}
-                                                        aria-label='Cancel voice input'
-                                                        title='Cancel voice input'
-                                                        className='flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-zinc-400 transition-colors duration-200 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-900 dark:hover:text-zinc-200'
-                                                    >
-                                                        <X className='h-4.5 w-4.5' strokeWidth={1.8} />
-                                                    </button>
+                                                    <Tooltip label='Cancel voice input' position='top' delay>
+                                                        <button
+                                                            type='button'
+                                                            onClick={() => void cancelVoiceInput()}
+                                                            aria-label='Cancel voice input'
+                                                            className='flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-zinc-400 transition-colors duration-200 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-900 dark:hover:text-zinc-200'
+                                                        >
+                                                            <X className='h-4.5 w-4.5' strokeWidth={1.8} />
+                                                        </button>
+                                                    </Tooltip>
 
                                                     <div className='flex min-w-0 flex-1 items-center gap-3 px-1'>
                                                         <span className='select-none whitespace-nowrap text-[13px] font-medium text-zinc-400 dark:text-zinc-500'>Listening</span>
@@ -1496,30 +1525,32 @@ export default function Chat() {
                                             )}
 
                                             {listening ? (
-                                                <button
-                                                    type='button'
-                                                    onClick={() => {
-                                                        shouldCommitTranscriptRef.current = true;
-                                                        void SpeechRecognition.stopListening();
-                                                    }}
-                                                    disabled={isSending || editingMessageId !== null}
-                                                    aria-label='Stop voice input'
-                                                    title='Stop voice input'
-                                                    className='flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-zinc-100 text-zinc-600 transition-all duration-200 hover:bg-zinc-200 hover:text-zinc-900 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
-                                                >
-                                                    <Square className='h-3.5 w-3.5 fill-current' strokeWidth={1.8} />
-                                                </button>
+                                                <Tooltip label='Stop voice input' position='top' delay>
+                                                    <button
+                                                        type='button'
+                                                        onClick={() => {
+                                                            shouldCommitTranscriptRef.current = true;
+                                                            void SpeechRecognition.stopListening();
+                                                        }}
+                                                        disabled={isSending || editingMessageId !== null}
+                                                        aria-label='Stop voice input'
+                                                        className='flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-zinc-100 text-zinc-600 transition-all duration-200 hover:bg-zinc-200 hover:text-zinc-900 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
+                                                    >
+                                                        <Square className='h-3.5 w-3.5 fill-current' strokeWidth={1.8} />
+                                                    </button>
+                                                </Tooltip>
                                             ) : (
-                                                <button
-                                                    type='button'
-                                                    onClick={handleMicToggle}
-                                                    disabled={isSending || editingMessageId !== null}
-                                                    aria-label='Start voice input'
-                                                    title='Voice input'
-                                                    className='flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-zinc-400 transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
-                                                >
-                                                    <Mic className='h-5 w-5' strokeWidth={1.8} />
-                                                </button>
+                                                <Tooltip label='Voice input' position='top' delay>
+                                                    <button
+                                                        type='button'
+                                                        onClick={handleMicToggle}
+                                                        disabled={isSending || editingMessageId !== null}
+                                                        aria-label='Start voice input'
+                                                        className='flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-zinc-400 transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
+                                                    >
+                                                        <Mic className='h-5 w-5' strokeWidth={1.8} />
+                                                    </button>
+                                                </Tooltip>
                                             )}
 
                                             <div className='group/send relative'>
