@@ -608,12 +608,12 @@ export default function Home() {
 
                         <div className='relative z-10 flex w-full max-w-2xl flex-col items-center'>
                             <div data-gsap='panel' className='relative w-full max-w-md p-8'>
-                                <div className='mx-auto relative h-104 w-64 rounded-xl bg-white border border-zinc-200 dark:bg-zinc-950 dark:border-zinc-800 transition-colors duration-300'>
-                                    <div ref={resumeViewportRef} className='absolute inset-0 overflow-hidden rounded-xl'>
-                                        <div className='absolute -left-px -top-px z-30 h-5 w-5 rounded-tl-xl border-l-2 border-t-2 border-zinc-300 dark:border-zinc-400/60' />
-                                        <div className='absolute -right-px -top-px z-30 h-5 w-5 rounded-tr-xl border-r-2 border-t-2 border-zinc-300 dark:border-zinc-400/60' />
-                                        <div className='absolute -bottom-px -left-px z-30 h-5 w-5 rounded-bl-xl border-b-2 border-l-2 border-zinc-300 dark:border-zinc-400/60' />
-                                        <div className='absolute -bottom-px -right-px z-30 h-5 w-5 rounded-br-xl border-b-2 border-r-2 border-zinc-300 dark:border-zinc-400/60' />
+                                <div className='mx-auto relative h-104 w-64 rounded-none bg-white border border-zinc-200 dark:bg-zinc-950 dark:border-zinc-800 transition-colors duration-300'>
+                                    <div ref={resumeViewportRef} className='absolute inset-0 rounded-xl'>
+                                        <div className='absolute -left-3 -top-3 z-30 h-5 w-5 border-l-2 border-t-2 border-zinc-300 dark:border-zinc-400/60' />
+                                        <div className='absolute -right-3 -top-3 z-30 h-5 w-5 border-r-2 border-t-2 border-zinc-300 dark:border-zinc-400/60' />
+                                        <div className='absolute -bottom-3 -left-3 z-30 h-5 w-5 border-b-2 border-l-2 border-zinc-300 dark:border-zinc-400/60' />
+                                        <div className='absolute -bottom-3 -right-3 z-30 h-5 w-5 border-b-2 border-r-2 border-zinc-300 dark:border-zinc-400/60' />
 
                                         <div ref={resumeStageRef} className='relative h-full w-full px-5 pb-8 pt-6 will-change-transform'>
                                             <ResumeDocument refs={{ nameRef, experienceBlockRef, experienceHeadingRef, projectsHeadingRef, educationHeadingRef, skillsHeadingRef }} />
