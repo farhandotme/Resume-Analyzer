@@ -95,6 +95,8 @@ export default function Chat() {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const editingTextareaRef = useRef<HTMLTextAreaElement>(null);
     const chatScrollRef = useRef<HTMLDivElement>(null);
+    const composerRef = useRef<HTMLDivElement>(null);
+    const composerActionsRef = useRef<HTMLDivElement>(null);
     const fileErrorTimeoutRef = useRef<number | null>(null);
     const micErrorTimeoutRef = useRef<number | null>(null);
 
@@ -147,6 +149,7 @@ export default function Chat() {
     const [editingContent, setEditingContent] = useState('');
     const [originalEditingContent, setOriginalEditingContent] = useState('');
     const [editValidationMessage, setEditValidationMessage] = useState('');
+    const [isComposerMultiline, setIsComposerMultiline] = useState(false);
     const { transcript, listening, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
     const transcriptRef = useRef('');
     const shouldCommitTranscriptRef = useRef(false);
@@ -387,6 +390,7 @@ export default function Chat() {
 
                 const nextCursorPosition = start + event.key.length;
                 textarea.setSelectionRange(nextCursorPosition, nextCursorPosition);
+                updateComposerHeight(textarea);
             });
         };
 
@@ -434,6 +438,7 @@ export default function Chat() {
                         const nextHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
 
                         textarea.style.height = `${nextHeight}px`;
+                        updateComposerHeight(textarea);
                         textarea.focus();
 
                         const pos = pendingCursorPositionRef.current ?? textarea.value.length;
@@ -728,6 +733,7 @@ export default function Chat() {
         setSessionId(crypto.randomUUID());
         setMessages([]);
         setInput('');
+        setIsComposerMultiline(false);
         setIsSending(false);
         setAnalysisError('');
         setMicError('');
@@ -737,16 +743,80 @@ export default function Chat() {
         }
     };
 
+    const updateComposerHeight = (textarea: HTMLTextAreaElement) => {
+        textarea.style.height = 'auto';
+
+        const minHeight = 28;
+        const maxHeight = 160;
+        const scrollHeight = textarea.scrollHeight;
+        const nextHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
+
+        textarea.style.height = `${nextHeight}px`;
+
+        const composer = composerRef.current;
+        const actions = composerActionsRef.current;
+
+        if (!composer || !actions) {
+            setIsComposerMultiline(scrollHeight > minHeight + 1);
+            return;
+        }
+
+        const computedStyles = window.getComputedStyle(textarea);
+
+        const measurer = document.createElement('span');
+        measurer.textContent = textarea.value || ' ';
+        measurer.style.position = 'fixed';
+        measurer.style.left = '-99999px';
+        measurer.style.top = '0';
+        measurer.style.visibility = 'hidden';
+        measurer.style.pointerEvents = 'none';
+        measurer.style.whiteSpace = 'pre';
+        measurer.style.fontFamily = computedStyles.fontFamily;
+        measurer.style.fontSize = computedStyles.fontSize;
+        measurer.style.fontWeight = computedStyles.fontWeight;
+        measurer.style.fontStyle = computedStyles.fontStyle;
+        measurer.style.letterSpacing = computedStyles.letterSpacing;
+        measurer.style.lineHeight = computedStyles.lineHeight;
+
+        document.body.appendChild(measurer);
+        const textWidth = measurer.getBoundingClientRect().width;
+        measurer.remove();
+
+        const composerStyle = window.getComputedStyle(composer);
+        const paddingLeft = Number.parseFloat(composerStyle.paddingLeft) || 0;
+        const paddingRight = Number.parseFloat(composerStyle.paddingRight) || 0;
+        const actionButtons = Array.from(actions.querySelectorAll('button'));
+        const actionGap = Number.parseFloat(window.getComputedStyle(actions).gap) || 0;
+        const actionWidth = actionButtons.reduce((total, button) => total + button.getBoundingClientRect().width, 0) + Math.max(actionButtons.length - 1, 0) * actionGap;
+
+        const availableSingleLineWidth = Math.max(composer.clientWidth - paddingLeft - paddingRight - actionWidth - 8, 0);
+
+        const hasExplicitLineBreak = textarea.value.includes('\n');
+        const shouldStack = hasExplicitLineBreak || textWidth >= availableSingleLineWidth - 12;
+
+        setIsComposerMultiline(shouldStack);
+    };
+
+    useEffect(() => {
+        const handleResize = () => {
+            const textarea = textareaRef.current;
+            if (textarea) {
+                updateComposerHeight(textarea);
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [isComposerMultiline]);
+
     const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         const value = event.target.value;
         setInput(value);
+
         const textarea = textareaRef.current;
         if (!textarea) return;
-        textarea.style.height = 'auto';
-        const minHeight = 24;
-        const maxHeight = 160;
-        const nextHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
-        textarea.style.height = `${nextHeight}px`;
+
+        updateComposerHeight(textarea);
     };
 
     const cancelVoiceInput = async () => {
@@ -977,6 +1047,7 @@ export default function Chat() {
 
         setIsSending(true);
         setInput('');
+        setIsComposerMultiline(false);
 
         if (textareaRef.current) {
             textareaRef.current.style.height = '28px';
@@ -1070,6 +1141,7 @@ export default function Chat() {
         setSessionId(crypto.randomUUID());
         setMessages([]);
         setInput('');
+        setIsComposerMultiline(false);
         setIsSending(false);
         setAnalysisError('');
         setMicError('');
@@ -1611,7 +1683,8 @@ export default function Chat() {
                                     )}
 
                                     <div
-                                        className={`group relative flex w-full items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-2 py-2 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.12)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.16)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.7)] dark:focus-within:border-zinc-700 dark:focus-within:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.85)] ${listening ? 'border-zinc-300/90 dark:border-zinc-700/90' : ''} ${editingMessageId !== null ? 'cursor-not-allowed' : ''}`}
+                                        ref={composerRef}
+                                        className={`group relative flex w-full gap-2 rounded-2xl border border-zinc-200 bg-white px-2 py-2 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.12)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.16)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.7)] dark:focus-within:border-zinc-700 dark:focus-within:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.85)] ${isComposerMultiline && !listening ? 'flex-wrap items-end' : 'items-center'} ${listening ? 'border-zinc-300/90 dark:border-zinc-700/90' : ''} ${editingMessageId !== null ? 'cursor-not-allowed' : ''}`}
                                     >
                                         <AnimatePresence mode='wait' initial={false}>
                                             {listening ? (
@@ -1644,7 +1717,14 @@ export default function Chat() {
                                                     </div>
                                                 </motion.div>
                                             ) : (
-                                                <motion.div key='text-mode' initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 4 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className='relative flex min-h-7 min-w-0 flex-1 items-center pl-3'>
+                                                <motion.div
+                                                    key='text-mode'
+                                                    initial={{ opacity: 0, y: -4 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: 4 }}
+                                                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                                                    className={`relative flex min-h-7 items-center pl-3 ${isComposerMultiline ? 'w-full flex-none' : 'min-w-0 flex-1'}`}
+                                                >
                                                     <div className='relative w-full'>
                                                         {!input && messages.length === 1 && (
                                                             <div aria-hidden='true' className='pointer-events-none absolute inset-y-0 left-0 z-0 flex items-center overflow-hidden'>
@@ -1662,14 +1742,13 @@ export default function Chat() {
                                                             placeholder={messages.length > 1 ? 'Ask anything about your resume...' : ''}
                                                             className='chat-composer-scrollbar relative z-10 block max-h-40 min-h-7 w-full translate-y-0.5 resize-none overflow-y-auto bg-transparent p-0 text-[16px] font-normal leading-5.75 text-zinc-900 outline-none placeholder:font-normal placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-600 disabled:cursor-not-allowed disabled:opacity-60'
                                                             disabled={editingMessageId !== null}
-                                                            style={{ height: '28px' }}
                                                         />
                                                     </div>
                                                 </motion.div>
                                             )}
                                         </AnimatePresence>
 
-                                        <div className='relative z-10 flex shrink-0 items-center gap-1.5'>
+                                        <div ref={composerActionsRef} className={`relative z-10 flex shrink-0 items-center gap-1.5 ${isComposerMultiline && !listening ? 'w-full justify-end' : ''}`}>
                                             {micError && (
                                                 <div className='absolute bottom-full left-1/2 mb-2 w-max max-w-70 -translate-x-1/2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-center text-[11px] font-medium text-rose-600 shadow-sm dark:border-rose-900/60 dark:bg-rose-950/70 dark:text-rose-300'>
                                                     {micError}
