@@ -770,106 +770,145 @@ export default function Home() {
                                     fileInputRef.current?.click();
                                 }
                             }}
-                            className={`group mt-6 flex min-h-55 select-none flex-col items-center justify-center rounded-2xl border-2 border-dashed px-8 py-7 text-center transition-all duration-200 ${
+                            className={`group relative mt-6 flex min-h-55 select-none flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed text-center transition-all duration-200 ${
                                 selectedFile
                                     ? 'cursor-default border-zinc-200 bg-white/50 dark:border-zinc-800 dark:bg-zinc-900/40'
                                     : isDragging
-                                      ? 'cursor-copy border-zinc-500 bg-zinc-100/80 dark:border-zinc-500 dark:bg-zinc-800/80'
-                                      : 'cursor-pointer border-zinc-200 bg-white/50 hover:border-zinc-400 hover:bg-zinc-50/50 dark:border-zinc-800 dark:bg-zinc-900/40 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/80'
+                                      ? 'cursor-copy border-zinc-500 dark:border-zinc-500'
+                                      : 'cursor-pointer border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-700'
                             }`}
                         >
-                            <input
-                                ref={fileInputRef}
-                                type='file'
-                                accept='application/pdf,.pdf'
-                                onChange={handleFileChange}
-                                onClick={(event) => {
-                                    event.currentTarget.value = '';
-                                }}
-                                className='hidden'
-                            />
-                            <div
-                                className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full transition-all duration-200 ${
-                                    selectedFile ? 'bg-zinc-100 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700' : isDragging ? 'bg-zinc-200 ring-2 ring-zinc-300 dark:bg-zinc-700 dark:ring-zinc-600' : 'bg-zinc-50 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700'
-                                }`}
-                            >
-                                {selectedFile ? <FileText className='h-6 w-6 text-zinc-600 dark:text-zinc-300' /> : <UploadCloud className='h-6 w-6 text-zinc-600 dark:text-zinc-300 transition-transform duration-300' />}
-                            </div>
-                            <div className='mt-3 w-full'>
-                                <h3 className='mx-auto max-w-[90%] truncate text-base font-semibold text-zinc-900 dark:text-zinc-100'>{selectedFile ? selectedFile.name : isDragging ? 'Drop your PDF here' : 'Upload your resume'}</h3>
-
-                                <p className='mt-2 text-sm text-zinc-500 dark:text-zinc-400'>{selectedFile ? `Choose the role you're targeting — your analysis will be tailored to it.` : 'Drag and drop your PDF here, or click to browse.'}</p>
-
-                                <AnimatePresence>
-                                    {(showFileError || analysisError) && (
-                                        <motion.div
-                                            initial={{ opacity: 0, scale: 0.92 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.92 }}
-                                            transition={{ duration: 0.25, ease: 'easeOut' }}
-                                            className='mt-3 mx-auto flex w-fit items-center justify-center gap-3 rounded-lg border border-rose-200/70 bg-rose-50/70 px-4 py-2 dark:border-rose-900/40 dark:bg-rose-950/30'
-                                        >
-                                            <AlertCircle className='h-3.5 w-3.5 shrink-0 text-rose-500 dark:text-rose-400' />
-                                            <div className='text-left'>
-                                                <p className='mb-0.5 text-[13px] font-medium leading-tight text-rose-700 dark:text-rose-300'>{analysisError ? 'Invalid resume' : 'Invalid file type'}</p>
-                                                <p className='text-[12px] leading-tight text-rose-500/90 dark:text-rose-400/80'>{analysisError || 'Please upload a PDF file only'}</p>
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-                            {selectedFile && <TargetRoleSelector value={targetRole} onChange={setTargetRole} onSelectionChange={setIsRoleSelected} onEnter={handleAnalyze} isSelected={isRoleSelected} />}
-                            {selectedFile ? (
-                                <div className='mt-3 flex w-full gap-2.5'>
-                                    <button
-                                        type='button'
-                                        onClick={(event) => {
-                                            event.stopPropagation();
-                                            fileInputRef.current?.click();
+                            {!selectedFile && (
+                                <>
+                                    <motion.div
+                                        aria-hidden='true'
+                                        animate={prefersReducedMotion ? {} : { rotate: 360 }}
+                                        transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+                                        className={`pointer-events-none absolute -inset-full z-0 transition-opacity duration-500 ${isDragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                        style={{
+                                            background:
+                                                theme === 'light' ? 'conic-gradient(from 0deg, transparent 72%, rgba(82,82,91,0.88) 84%, rgba(39,39,42,0.72) 87%, transparent 98%)' : 'conic-gradient(from 0deg, transparent 72%, rgba(161,161,170,0.9) 84%, rgba(113,113,122,0.72) 87%, transparent 98%)',
                                         }}
-                                        className='inline-flex h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 text-sm font-medium text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
-                                    >
-                                        <UploadCloud className='h-3.5 w-3.5' />
-                                        <span>Change PDF</span>
-                                    </button>
+                                    />
 
-                                    <div className='group/analyze relative flex-1'>
+                                    <motion.div
+                                        aria-hidden='true'
+                                        animate={prefersReducedMotion ? {} : { rotate: -360 }}
+                                        transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+                                        className={`pointer-events-none absolute -inset-full z-0 transition-opacity duration-500 ${isDragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                        style={{
+                                            background:
+                                                theme === 'light'
+                                                    ? 'conic-gradient(from 0deg, transparent 40%, rgba(113,113,122,0.7) 50%, rgba(63,63,70,0.58) 53%, transparent 61%)'
+                                                    : 'conic-gradient(from 0deg, transparent 40%, rgba(228,228,231,0.62) 50%, rgba(161,161,170,0.5) 53%, transparent 61%)',
+                                        }}
+                                    />
+                                </>
+                            )}
+
+                            <div className={`relative z-10 flex min-h-55 w-full flex-col items-center justify-center overflow-hidden rounded-[calc(1rem-2px)] px-8 py-7 transition-colors duration-300 ${isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'}`}>
+                                <div
+                                    aria-hidden='true'
+                                    className={`pointer-events-none absolute inset-0 z-0 bg-size-[16px_16px] transition-opacity duration-500 ${isDragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} ${
+                                        theme === 'light' ? 'bg-[radial-gradient(rgba(0,0,0,0.045)_1px,transparent_1px)]' : 'bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)]'
+                                    }`}
+                                />
+
+                                <input
+                                    ref={fileInputRef}
+                                    type='file'
+                                    accept='application/pdf,.pdf'
+                                    onChange={handleFileChange}
+                                    onClick={(event) => {
+                                        event.currentTarget.value = '';
+                                    }}
+                                    className='hidden'
+                                />
+                                <div
+                                    className={`relative z-20 flex h-14 w-14 shrink-0 items-center justify-center rounded-full transition-all duration-200 ${
+                                        selectedFile ? 'bg-zinc-100 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700' : isDragging ? 'bg-zinc-200 ring-2 ring-zinc-300 dark:bg-zinc-700 dark:ring-zinc-600' : 'bg-zinc-50 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700'
+                                    }`}
+                                >
+                                    {selectedFile ? <FileText className='h-6 w-6 text-zinc-600 dark:text-zinc-300' /> : <UploadCloud className='h-6 w-6 text-zinc-600 dark:text-zinc-300 transition-transform duration-300' />}
+                                </div>
+                                <div className='relative z-20 mt-3 w-full'>
+                                    <h3 className='mx-auto max-w-[90%] truncate text-base font-semibold text-zinc-900 dark:text-zinc-100'>{selectedFile ? selectedFile.name : isDragging ? 'Drop your PDF here' : 'Upload your resume'}</h3>
+
+                                    <p className='mt-2 text-sm text-zinc-500 dark:text-zinc-400'>{selectedFile ? `Choose the role you're targeting — your analysis will be tailored to it.` : 'Drag and drop your PDF here, or click to browse.'}</p>
+
+                                    <AnimatePresence>
+                                        {(showFileError || analysisError) && (
+                                            <motion.div
+                                                initial={{ opacity: 0, scale: 0.92 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                exit={{ opacity: 0, scale: 0.92 }}
+                                                transition={{ duration: 0.25, ease: 'easeOut' }}
+                                                className='mt-3 mx-auto flex w-fit items-center justify-center gap-3 rounded-lg border border-rose-200/70 bg-rose-50/70 px-4 py-2 dark:border-rose-900/40 dark:bg-rose-950/30'
+                                            >
+                                                <AlertCircle className='h-3.5 w-3.5 shrink-0 text-rose-500 dark:text-rose-400' />
+                                                <div className='text-left'>
+                                                    <p className='mb-0.5 text-[13px] font-medium leading-tight text-rose-700 dark:text-rose-300'>{analysisError ? 'Invalid resume' : 'Invalid file type'}</p>
+                                                    <p className='text-[12px] leading-tight text-rose-500/90 dark:text-rose-400/80'>{analysisError || 'Please upload a PDF file only'}</p>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                                <div className='relative z-20 w-full'>
+                                    {selectedFile && <TargetRoleSelector value={targetRole} onChange={setTargetRole} onSelectionChange={setIsRoleSelected} onEnter={handleAnalyze} isSelected={isRoleSelected} />}
+                                    {selectedFile ? (
+                                        <div className='mt-3 flex w-full gap-2.5'>
+                                            <button
+                                                type='button'
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    fileInputRef.current?.click();
+                                                }}
+                                                className='inline-flex h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 text-sm font-medium text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
+                                            >
+                                                <UploadCloud className='h-3.5 w-3.5' />
+                                                <span>Change PDF</span>
+                                            </button>
+
+                                            <div className='group/analyze relative flex-1'>
+                                                <button
+                                                    type='button'
+                                                    disabled={!isRoleSelected}
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        handleAnalyze();
+                                                    }}
+                                                    className={`group/btn inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl px-5 font-medium transition-all duration-200 focus:outline-none ${
+                                                        isRoleSelected ? 'cursor-pointer bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200' : 'cursor-not-allowed bg-zinc-200 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-600'
+                                                    }`}
+                                                >
+                                                    <span>Analyze Resume</span>
+
+                                                    <ChevronRight className={`h-4 w-4 transition-transform duration-300 ease-out ${isRoleSelected ? 'group-hover/btn:translate-x-1.5' : ''}`} />
+                                                </button>
+
+                                                {!isRoleSelected && (
+                                                    <div className='pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 translate-y-1 opacity-0 transition-all duration-150 group-hover/analyze:translate-y-0 group-hover/analyze:opacity-100'>
+                                                        <div className='whitespace-nowrap rounded-lg bg-zinc-900 px-3 py-2 text-xs font-medium text-white shadow-lg dark:bg-zinc-100 dark:text-zinc-900'>Select a target role to continue</div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ) : (
                                         <button
                                             type='button'
-                                            disabled={!isRoleSelected}
                                             onClick={(event) => {
                                                 event.stopPropagation();
-                                                handleAnalyze();
+                                                fileInputRef.current?.click();
                                             }}
-                                            className={`group/btn inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl px-5 font-medium transition-all duration-200 focus:outline-none ${
-                                                isRoleSelected ? 'cursor-pointer bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200' : 'cursor-not-allowed bg-zinc-200 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-600'
-                                            }`}
+                                            className='group/btn mx-auto mt-6 inline-flex h-12 w-full max-w-60 cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-medium text-white transition-all duration-200 hover:bg-zinc-800 focus:outline-none focus:ring-0 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200'
                                         >
-                                            <span>Analyze Resume</span>
-
-                                            <ChevronRight className={`h-4 w-4 transition-transform duration-300 ease-out ${isRoleSelected ? 'group-hover/btn:translate-x-1.5' : ''}`} />
+                                            <span>Select PDF</span>
+                                            <ChevronRight className='h-4 w-4 transition-transform duration-300 ease-out group-hover/btn:translate-x-1.5' />
                                         </button>
-
-                                        {!isRoleSelected && (
-                                            <div className='pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 translate-y-1 opacity-0 transition-all duration-150 group-hover/analyze:translate-y-0 group-hover/analyze:opacity-100'>
-                                                <div className='whitespace-nowrap rounded-lg bg-zinc-900 px-3 py-2 text-xs font-medium text-white shadow-lg dark:bg-zinc-100 dark:text-zinc-900'>Select a target role to continue</div>
-                                            </div>
-                                        )}
-                                    </div>
+                                    )}
                                 </div>
-                            ) : (
-                                <button
-                                    type='button'
-                                    onClick={(event) => {
-                                        event.stopPropagation();
-                                        fileInputRef.current?.click();
-                                    }}
-                                    className='group/btn mx-auto mt-6 inline-flex h-12 w-full max-w-60 cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-medium text-white transition-all duration-200 hover:bg-zinc-800 focus:outline-none focus:ring-0 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200'
-                                >
-                                    <span>Select PDF</span>
-                                    <ChevronRight className='h-4 w-4 transition-transform duration-300 ease-out group-hover/btn:translate-x-1.5' />
-                                </button>
-                            )}
+                            </div>
                         </div>
                         <div className='mt-6 pl-1 flex flex-wrap items-center gap-x-6 gap-y-3 text-[13px] font-medium text-zinc-600 dark:text-zinc-400'>
                             <span className='flex items-center gap-2'>
