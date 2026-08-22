@@ -102,6 +102,7 @@ export default function Home() {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isComplete, setIsComplete] = useState(false);
     const [analysisStep, setAnalysisStep] = useState(0);
+    const [messageIndex, setMessageIndex] = useState(0);
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [headlineIndex, setHeadlineIndex] = useState(0);
     const navigate = useNavigate();
@@ -203,6 +204,25 @@ export default function Home() {
 
         return () => window.clearTimeout(timeoutId);
     }, [isAnalyzing, analysisStep]);
+
+    useEffect(() => {
+        if (!isAnalyzing) {
+            setMessageIndex(0);
+            return;
+        }
+        if (isComplete) return;
+
+        let delay = 3000;
+        if (messageIndex === 0) delay = 3000;
+        else if (messageIndex === 1) delay = 3000;
+        else if (messageIndex === 2) delay = 3000;
+
+        const timeoutId = window.setTimeout(() => {
+            setMessageIndex((current) => (current + 1) % analysisMessages.length);
+        }, delay);
+
+        return () => window.clearTimeout(timeoutId);
+    }, [isAnalyzing, isComplete, messageIndex]);
 
     useEffect(() => {
         if (!isAnalyzing) {
@@ -442,6 +462,7 @@ export default function Home() {
         setIsAnalyzing(true);
         setIsComplete(false);
         setAnalysisStep(0);
+        setMessageIndex(0);
         setAnalysisError('');
         animationCompleteRef.current = false;
 
@@ -489,6 +510,7 @@ export default function Home() {
             }
 
             setAnalysisStep(analysisSteps.length - 1);
+            setMessageIndex(analysisMessages.length - 1);
             setIsComplete(true);
 
             await playCompletionAnimation();
@@ -644,10 +666,10 @@ export default function Home() {
 
                                 <div className='mt-8 text-center min-h-18'>
                                     <AnimatePresence mode='wait'>
-                                        <motion.div key={analysisStep} initial={{ opacity: 0, y: 12, filter: 'blur(4px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, y: -12, filter: 'blur(4px)' }} transition={{ duration: 0.4, ease: 'easeOut' }}>
-                                            <h2 className='text-xl font-semibold tracking-tight text-zinc-900 dark:text-white'>{analysisMessages[analysisStep].title}</h2>
+                                        <motion.div key={messageIndex} initial={{ opacity: 0, y: 12, filter: 'blur(4px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, y: -12, filter: 'blur(4px)' }} transition={{ duration: 0.4, ease: 'easeOut' }}>
+                                            <h2 className='text-xl font-semibold tracking-tight text-zinc-900 dark:text-white'>{analysisMessages[messageIndex].title}</h2>
 
-                                            <p className='mt-2 text-sm text-zinc-500 dark:text-zinc-400'>{analysisMessages[analysisStep].subtitle}</p>
+                                            <p className='mt-2 text-sm text-zinc-500 dark:text-zinc-400'>{analysisMessages[messageIndex].subtitle}</p>
                                         </motion.div>
                                     </AnimatePresence>
                                 </div>
