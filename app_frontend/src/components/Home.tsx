@@ -542,65 +542,35 @@ export default function Home() {
                         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                         role='status'
                         aria-live='polite'
-                        className='fixed inset-0 z-100 flex h-screen w-full select-none flex-col items-center justify-center overflow-hidden bg-white dark:bg-zinc-950 px-6 text-zinc-900 dark:text-zinc-100 font-sans'
+                        className='fixed inset-0 z-100 flex h-screen w-full select-none flex-col items-center justify-center overflow-hidden bg-black px-6 text-zinc-100 font-sans'
                     >
                         <div data-gsap='status' className='absolute left-6 top-6 z-20 flex items-center gap-2'>
-                            <span className='h-1.5 w-1.5 rounded-full bg-zinc-500 dark:bg-zinc-400' />
-                            <span className='font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400'>Resume Analysis</span>
+                            <span className='h-1.5 w-1.5 rounded-full bg-zinc-400' />
+                            <span className='font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-400'>Resume Analysis</span>
                         </div>
 
                         <style>{`
-                            @keyframes key-light-drift {
-                                0%   { transform: translate(-50%, -50%) translate(0px, 0px) scale(1); opacity: 0.5; }
-                                20%  { transform: translate(-50%, -50%) translate(16px, 10px) scale(1.035); opacity: 0.68; }
-                                45%  { transform: translate(-50%, -50%) translate(-10px, 18px) scale(1.06); opacity: 0.85; }
-                                70%  { transform: translate(-50%, -50%) translate(-18px, -6px) scale(1.02); opacity: 0.6; }
-                                100% { transform: translate(-50%, -50%) translate(0px, 0px) scale(1); opacity: 0.5; }
-                            }
-                            @keyframes ambient-pool-drift {
-                                0%   { transform: translate(-50%, -50%) translate(0px, 0px) scale(1); opacity: 0.35; }
-                                30%  { transform: translate(-50%, -50%) translate(-20px, 8px) scale(1.05); opacity: 0.55; }
-                                58%  { transform: translate(-50%, -50%) translate(8px, -16px) scale(0.97); opacity: 0.7; }
-                                82%  { transform: translate(-50%, -50%) translate(18px, 10px) scale(1.03); opacity: 0.45; }
-                                100% { transform: translate(-50%, -50%) translate(0px, 0px) scale(1); opacity: 0.35; }
+                            @keyframes pedestal-glow {
+                                0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.55; }
+                                50%      { transform: translate(-50%, -50%) scale(1.12); opacity: 0.85; }
                             }
                         `}</style>
-                        <div className='pointer-events-none absolute inset-0 z-0 overflow-hidden bg-white dark:bg-zinc-950 select-none transition-colors duration-300'>
+
+                        <div className='pointer-events-none absolute inset-0 z-0 overflow-hidden bg-black select-none'>
+                            <div aria-hidden='true' className='absolute inset-0 opacity-[0.12]' style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,1) 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+
                             <div
-                                className='absolute left-[45%] top-[29%] h-225 w-225 rounded-full'
-                                style={{
-                                    background: theme === 'dark' ? 'radial-gradient(circle, rgba(244,244,245,0.09) 0%, rgba(244,244,245,0.03) 34%, transparent 70%)' : 'radial-gradient(circle, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 34%, transparent 70%)',
-                                    filter: 'blur(75px)',
-                                    transform: 'translate(-50%, -50%) scale(1)',
-                                    opacity: 0.5,
-                                    animation: prefersReducedMotion ? 'none' : 'key-light-drift 26s ease-in-out infinite',
-                                }}
+                                className='absolute left-1/2 top-[74%] h-140 w-260 rounded-full'
+                                style={{ background: 'radial-gradient(ellipse 50% 100% at 50% 50%, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.06) 40%, transparent 72%)', filter: 'blur(60px)', animation: prefersReducedMotion ? 'none' : 'pedestal-glow 6s ease-in-out infinite' }}
                             />
-                            <div
-                                className='absolute left-[63%] top-[46%] h-190 w-190 rounded-full'
-                                style={{
-                                    background: theme === 'dark' ? 'radial-gradient(circle, rgba(228,228,231,0.05) 0%, rgba(228,228,231,0.016) 40%, transparent 72%)' : 'radial-gradient(circle, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.01) 40%, transparent 72%)',
-                                    filter: 'blur(100px)',
-                                    transform: 'translate(-50%, -50%) scale(1)',
-                                    opacity: 0.35,
-                                    animation: prefersReducedMotion ? 'none' : 'ambient-pool-drift 29s ease-in-out infinite',
-                                }}
-                            />
-                            <div
-                                className='absolute inset-0'
-                                style={{
-                                    background:
-                                        theme === 'dark'
-                                            ? 'radial-gradient(ellipse 85% 65% at 47% 27%, transparent 0%, rgba(9,9,11,0.5) 58%, rgba(9,9,11,0.97) 100%), linear-gradient(to bottom, rgba(9,9,11,0) 0%, rgba(9,9,11,0.4) 100%)'
-                                            : 'radial-gradient(ellipse 85% 65% at 47% 27%, transparent 0%, rgba(255,255,255,0.5) 58%, rgba(255,255,255,0.97) 100%), linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 100%)',
-                                }}
-                            />
+
+                            <div className='absolute inset-0' style={{ background: 'radial-gradient(ellipse 85% 65% at 47% 27%, transparent 0%, rgba(0,0,0,0.55) 58%, rgba(0,0,0,0.97) 100%), linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 100%)' }} />
                             <div
                                 className='absolute inset-0'
                                 style={{
                                     backgroundImage:
                                         'url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27240%27%20height=%27240%27%20viewBox=%270%200%20240%20240%27%3E%3Cfilter%20id=%27n%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%270.9%27%20numOctaves=%272%27%20stitchTiles=%27stitch%27/%3E%3C/filter%3E%3Crect%20width=%27100%25%27%20height=%27100%25%27%20filter=%27url(%23n)%27/%3E%3C/svg%3E)',
-                                    opacity: 0.045,
+                                    opacity: 0.05,
                                     mixBlendMode: 'overlay',
                                 }}
                             />
@@ -608,27 +578,27 @@ export default function Home() {
 
                         <div className='relative z-10 flex w-full max-w-2xl flex-col items-center'>
                             <div data-gsap='panel' className='relative w-full max-w-md p-8'>
-                                <div className='mx-auto relative h-104 w-64 rounded-none bg-white border border-zinc-200 dark:bg-zinc-950 dark:border-zinc-800 transition-colors duration-300'>
+                                <div className='mx-auto relative h-104 w-64 rounded-none bg-zinc-950 border border-zinc-800'>
                                     <div ref={resumeViewportRef} className='absolute inset-0 rounded-xl'>
-                                        <div className='absolute -left-3 -top-3 z-30 h-5 w-5 border-l-2 border-t-2 border-zinc-300 dark:border-zinc-400/60' />
-                                        <div className='absolute -right-3 -top-3 z-30 h-5 w-5 border-r-2 border-t-2 border-zinc-300 dark:border-zinc-400/60' />
-                                        <div className='absolute -bottom-3 -left-3 z-30 h-5 w-5 border-b-2 border-l-2 border-zinc-300 dark:border-zinc-400/60' />
-                                        <div className='absolute -bottom-3 -right-3 z-30 h-5 w-5 border-b-2 border-r-2 border-zinc-300 dark:border-zinc-400/60' />
+                                        <div className='absolute -left-3 -top-3 z-30 h-5 w-5 border-l-2 border-t-2 border-zinc-400/60' />
+                                        <div className='absolute -right-3 -top-3 z-30 h-5 w-5 border-r-2 border-t-2 border-zinc-400/60' />
+                                        <div className='absolute -bottom-3 -left-3 z-30 h-5 w-5 border-b-2 border-l-2 border-zinc-400/60' />
+                                        <div className='absolute -bottom-3 -right-3 z-30 h-5 w-5 border-b-2 border-r-2 border-zinc-400/60' />
 
                                         <div ref={resumeStageRef} className='relative h-full w-full px-5 pb-8 pt-6 will-change-transform'>
                                             <ResumeDocument refs={{ nameRef, experienceBlockRef, experienceHeadingRef, projectsHeadingRef, educationHeadingRef, skillsHeadingRef }} />
                                         </div>
 
-                                        <div ref={finishFlashRef} className='pointer-events-none absolute inset-0 z-25 bg-black/5 dark:bg-white/10 opacity-0' />
-                                        <div className='pointer-events-none absolute inset-x-0 top-0 z-20 h-8 bg-linear-to-b from-white dark:from-zinc-950 to-transparent' />
-                                        <div className='pointer-events-none absolute inset-x-0 bottom-0 z-20 h-8 bg-linear-to-t from-white dark:from-zinc-950 to-transparent' />
+                                        <div ref={finishFlashRef} className='pointer-events-none absolute inset-0 z-25 bg-white/10 opacity-0' />
+                                        <div className='pointer-events-none absolute inset-x-0 top-0 z-20 h-8 bg-linear-to-b from-zinc-950 to-transparent' />
+                                        <div className='pointer-events-none absolute inset-x-0 bottom-0 z-20 h-8 bg-linear-to-t from-zinc-950 to-transparent' />
                                     </div>
 
                                     <div ref={lensRef} className='pointer-events-none absolute left-0 top-0 z-30 opacity-0' style={{ width: LENS_SIZE, height: LENS_SIZE }}>
                                         <div ref={calloutRef} className='absolute left-[calc(100%+18px)] top-1/2 -translate-y-1/2 flex items-center whitespace-nowrap opacity-0 z-40 drop-shadow-md'>
-                                            <span className='font-sans text-[13px] font-light tracking-wide text-zinc-700 dark:text-zinc-200'>Let me analyze this resume</span>
+                                            <span className='font-sans text-[13px] font-light tracking-wide text-zinc-200'>Let me analyze this resume</span>
 
-                                            <svg width='28' height='20' viewBox='0 0 28 20' className='absolute right-full mr-2 text-zinc-400/50 dark:text-zinc-500/50'>
+                                            <svg width='28' height='20' viewBox='0 0 28 20' className='absolute right-full mr-2 text-zinc-500/50'>
                                                 <line x1='28' y1='10' x2='0' y2='10' stroke='currentColor' strokeWidth='1' />
                                             </svg>
                                         </div>
@@ -641,41 +611,41 @@ export default function Home() {
                                             <div className='absolute -left-2.25 top-48 h-4.5 w-4.5 rounded-full border border-zinc-600/50 bg-linear-to-br from-zinc-700 to-zinc-900 shadow-[inset_1px_1px_3px_rgba(255,255,255,0.2)]' />
                                         </div>
 
-                                        <div className='absolute inset-0 overflow-hidden rounded-full bg-white dark:bg-zinc-950'>
+                                        <div className='absolute inset-0 overflow-hidden rounded-full bg-zinc-950'>
                                             <div ref={lensCloneRef} className='absolute left-0 top-0 w-64 px-5 pb-8 pt-6'>
                                                 <ResumeDocument />
                                             </div>
-                                            <div className='pointer-events-none absolute inset-0 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]' />
+                                            <div className='pointer-events-none absolute inset-0 rounded-full shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]' />
                                         </div>
-                                        <div className='pointer-events-none absolute inset-0 rounded-full border border-zinc-200/50 dark:border-zinc-300/25 shadow-[0_10px_30px_-6px_rgba(0,0,0,0.15),0_0_0_1px_rgba(0,0,0,0.05)] dark:shadow-[0_10px_30px_-6px_rgba(0,0,0,0.65),0_0_0_1px_rgba(255,255,255,0.03)]' />
-                                        <div className='pointer-events-none absolute left-[14%] top-[10%] h-[38%] w-[46%] rounded-full bg-white/60 dark:bg-white/10 blur-[6px]' />
-                                        <div className='pointer-events-none absolute inset-0 rounded-full bg-linear-to-br from-black/5 dark:from-white/4 via-transparent to-transparent' />
+                                        <div className='pointer-events-none absolute inset-0 rounded-full border border-zinc-300/25 shadow-[0_10px_30px_-6px_rgba(0,0,0,0.65),0_0_0_1px_rgba(255,255,255,0.03)]' />
+                                        <div className='pointer-events-none absolute left-[14%] top-[10%] h-[38%] w-[46%] rounded-full bg-white/10 blur-[6px]' />
+                                        <div className='pointer-events-none absolute inset-0 rounded-full bg-linear-to-br from-white/4 via-transparent to-transparent' />
                                     </div>
                                 </div>
 
                                 <div className='mt-8 text-center min-h-18'>
                                     <AnimatePresence mode='wait'>
                                         <motion.div key={analysisStep} initial={{ opacity: 0, y: 12, filter: 'blur(4px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, y: -12, filter: 'blur(4px)' }} transition={{ duration: 0.4, ease: 'easeOut' }}>
-                                            <h2 className='text-xl font-semibold tracking-tight text-zinc-900 dark:text-white'>{analysisMessages[analysisStep].title}</h2>
+                                            <h2 className='text-xl font-semibold tracking-tight text-white'>{analysisMessages[analysisStep].title}</h2>
 
-                                            <p className='mt-2 text-sm text-zinc-500 dark:text-zinc-400'>{analysisMessages[analysisStep].subtitle}</p>
+                                            <p className='mt-2 text-sm text-zinc-400'>{analysisMessages[analysisStep].subtitle}</p>
                                         </motion.div>
                                     </AnimatePresence>
                                 </div>
                             </div>
                             <div data-gsap='role' className='mt-2 flex items-center gap-2 text-center'>
-                                <span className='text-[12px] font-mono uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500'>Tailoring for</span>
-                                <span className='text-[14px] font-medium text-zinc-700 dark:text-zinc-300'>{targetRole}</span>
+                                <span className='text-[12px] font-mono uppercase tracking-[0.16em] text-zinc-500'>Tailoring for</span>
+                                <span className='text-[14px] font-medium text-zinc-300'>{targetRole}</span>
                             </div>
                         </div>
 
                         <div data-gsap='footer' className='absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500'>
                             {isComplete ? (
-                                <span className='text-zinc-700 dark:text-zinc-200'>Analysis complete</span>
+                                <span className='text-zinc-200'>Analysis complete</span>
                             ) : (
                                 <>
-                                    <Loader2 className='h-3.5 w-3.5 animate-spin text-zinc-400 dark:text-zinc-500' />
-                                    <span className='text-zinc-500 dark:text-zinc-400'>Analyzing · {elapsedSeconds}s</span>
+                                    <Loader2 className='h-3.5 w-3.5 animate-spin text-zinc-500' />
+                                    <span className='text-zinc-400'>Analyzing · {elapsedSeconds}s</span>
                                 </>
                             )}
                         </div>
