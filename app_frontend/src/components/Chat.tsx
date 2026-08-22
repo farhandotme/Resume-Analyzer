@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
-import { AlertCircle, ArrowDown, ArrowLeft, ArrowUp, Check, Copy, Edit3, FileText, Mic, Moon, Sparkles, Square, SquarePen, SunMedium, X } from 'lucide-react';
+import { AlertCircle, ArrowDown, ArrowLeft, ArrowUp, Check, Copy, Edit3, FileText, Mic, Moon, Sparkles, Square, SquarePen, SunMedium, Volume2, X } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useBlocker, useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme.ts';
@@ -151,6 +151,9 @@ export default function Chat() {
     const shouldCommitTranscriptRef = useRef(false);
     const commitTranscriptTimeoutRef = useRef<number | null>(null);
     const isLeavingChatRef = useRef(false);
+    const speechSynthesisRef = useRef<SpeechSynthesis | null>(null);
+    const speechUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+    const [speakingMessageId, setSpeakingMessageId] = useState<number | null>(null);
 
     const cursorPositionRef = useRef(0);
     const pendingCursorPositionRef = useRef<number | null>(null);
@@ -166,6 +169,106 @@ export default function Chat() {
         }
 
         requestAnimationFrame(() => callback(textarea));
+    };
+
+    const getPreferredSpeechVoice = () => {
+        if (!speechSynthesisRef.current) return null;
+
+        const voices = speechSynthesisRef.current.getVoices();
+        const englishVoices = voices.filter((voice) => /^en(-|_)/i.test(voice.lang));
+
+        const maleKeywords = ['daniel', 'alex', 'david', 'james', 'arthur', 'thomas', 'george', 'fred', 'tom', 'guy', 'male', 'man'];
+
+        return (
+            englishVoices.find((voice) => maleKeywords.some((keyword) => voice.name.toLowerCase().includes(keyword))) ??
+            englishVoices.find((voice) => /google us english|microsoft david|microsoft guy/i.test(voice.name)) ??
+            englishVoices.find((voice) => /^en-US$/i.test(voice.lang)) ??
+            englishVoices[0] ??
+            voices[0] ??
+            null
+        );
+    };
+
+    useEffect(() => {
+        if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+        const synthesis = window.speechSynthesis;
+        speechSynthesisRef.current = synthesis;
+
+        const loadVoices = () => {
+            synthesis.getVoices();
+        };
+
+        loadVoices();
+        synthesis.addEventListener('voiceschanged', loadVoices);
+
+        return () => {
+            synthesis.removeEventListener('voiceschanged', loadVoices);
+            synthesis.cancel();
+            speechSynthesisRef.current = null;
+            speechUtteranceRef.current = null;
+        };
+    }, []);
+
+    const stopSpeaking = () => {
+        const synthesis = speechSynthesisRef.current;
+
+        if (synthesis) {
+            synthesis.cancel();
+        }
+
+        speechUtteranceRef.current = null;
+        setSpeakingMessageId(null);
+    };
+
+    const speakMessage = (message: Message) => {
+        const synthesis = speechSynthesisRef.current;
+
+        if (!synthesis) {
+            return;
+        }
+
+        if (speakingMessageId === message.id) {
+            stopSpeaking();
+            return;
+        }
+
+        synthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(message.content);
+        const voice = getPreferredSpeechVoice();
+
+        if (voice) {
+            utterance.voice = voice;
+        }
+
+        utterance.lang = voice?.lang ?? 'en-US';
+        utterance.rate = 0.84;
+        utterance.pitch = 0.52;
+        utterance.volume = 1;
+
+        utterance.onstart = () => {
+            speechUtteranceRef.current = utterance;
+            setSpeakingMessageId(message.id);
+        };
+
+        utterance.onend = () => {
+            if (speechUtteranceRef.current === utterance) {
+                speechUtteranceRef.current = null;
+                setSpeakingMessageId(null);
+            }
+        };
+
+        utterance.onerror = () => {
+            if (speechUtteranceRef.current === utterance) {
+                speechUtteranceRef.current = null;
+                setSpeakingMessageId(null);
+            }
+        };
+
+        speechUtteranceRef.current = utterance;
+        setSpeakingMessageId(message.id);
+        synthesis.speak(utterance);
     };
 
     const blocker = useBlocker(({ currentLocation, nextLocation }) => {
@@ -614,6 +717,7 @@ export default function Chat() {
 
         void SpeechRecognition.abortListening();
         resetTranscript();
+        stopSpeaking();
 
         sessionStorage.removeItem(CHAT_STORAGE_KEY);
 
@@ -946,6 +1050,7 @@ export default function Chat() {
 
         void SpeechRecognition.abortListening();
         resetTranscript();
+        stopSpeaking();
 
         sessionStorage.removeItem(CHAT_STORAGE_KEY);
 
@@ -1295,12 +1400,29 @@ export default function Chat() {
                                         <>
                                             <div className='flex flex-col gap-8'>
                                                 {messages.map((message) => (
-                                                    <motion.div key={message.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
+                                                    <motion.div key={message.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className={message.role === 'user' ? 'flex justify-end' : 'group flex justify-start'}>
                                                         {message.role === 'assistant' ? (
                                                             <div className='max-w-[78%]'>
                                                                 <div className='mb-2 font-mono text-[9px] uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-600'>Resume Intelligence</div>
 
                                                                 <div className='whitespace-pre-wrap wrap-break-word text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 dark:text-zinc-200'>{message.content}</div>
+
+                                                                <div className='mt-2 flex items-center'>
+                                                                    <Tooltip label={speakingMessageId === message.id ? 'Stop reading' : 'Read aloud'} position='top'>
+                                                                        <button
+                                                                            type='button'
+                                                                            onClick={() => speakMessage(message)}
+                                                                            aria-label={speakingMessageId === message.id ? 'Stop reading' : 'Read aloud'}
+                                                                            className={`flex h-7 w-7 cursor-pointer items-center justify-center rounded-md transition-colors duration-150 ${
+                                                                                speakingMessageId === message.id
+                                                                                    ? 'bg-zinc-100 text-zinc-800 hover:bg-zinc-200 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800'
+                                                                                    : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
+                                                                            }`}
+                                                                        >
+                                                                            {speakingMessageId === message.id ? <Square className='h-3.5 w-3.5 fill-current' strokeWidth={1.8} /> : <Volume2 className='h-3.5 w-3.5' strokeWidth={1.8} />}
+                                                                        </button>
+                                                                    </Tooltip>
+                                                                </div>
                                                             </div>
                                                         ) : (
                                                             <div className={`flex flex-col items-end max-w-[78%] ${editingMessageId === message.id ? 'w-full' : ''}`}>
