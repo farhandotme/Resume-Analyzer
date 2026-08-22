@@ -1383,14 +1383,24 @@ export default function Chat() {
                                                 animate={prefersReducedMotion ? {} : { rotate: 360 }}
                                                 transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
                                                 className={`absolute -inset-full transition-opacity duration-500 ${isAnalyzingResume ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-                                                style={{ background: 'conic-gradient(from 0deg, transparent 70%, rgba(161,161,170,0.9) 85%, transparent 100%)' }}
+                                                style={{
+                                                    background:
+                                                        theme === 'light'
+                                                            ? 'conic-gradient(from 0deg, transparent 72%, rgba(82,82,91,0.88) 84%, rgba(39,39,42,0.72) 87%, transparent 98%)'
+                                                            : 'conic-gradient(from 0deg, transparent 72%, rgba(161,161,170,0.9) 84%, rgba(113,113,122,0.72) 87%, transparent 98%)',
+                                                }}
                                             />
 
                                             <motion.div
                                                 animate={prefersReducedMotion ? {} : { rotate: -360 }}
                                                 transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
                                                 className={`absolute -inset-full transition-opacity duration-500 ${isAnalyzingResume ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-                                                style={{ background: 'conic-gradient(from 0deg, transparent 40%, rgba(228,228,231,0.6) 50%, transparent 60%)' }}
+                                                style={{
+                                                    background:
+                                                        theme === 'light'
+                                                            ? 'conic-gradient(from 0deg, transparent 40%, rgba(113,113,122,0.7) 50%, rgba(63,63,70,0.58) 53%, transparent 61%)'
+                                                            : 'conic-gradient(from 0deg, transparent 40%, rgba(228,228,231,0.62) 50%, rgba(161,161,170,0.5) 53%, transparent 61%)',
+                                                }}
                                             />
 
                                             <div className={`relative flex min-h-55 flex-col items-center justify-center overflow-hidden rounded-[calc(1.5rem-1px)] px-5 py-6 transition-colors duration-300 sm:px-8 ${isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'}`}>
