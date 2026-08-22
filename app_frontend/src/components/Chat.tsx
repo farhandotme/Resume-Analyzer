@@ -1,7 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
-import { AlertCircle, ArrowDown, ArrowLeft, ArrowUp, FileText, Mic, MicOff, Moon, Sparkles, SquarePen, SunMedium } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { AlertCircle, ArrowDown, ArrowLeft, ArrowUp, Check, Copy, Edit3, FileText, Mic, Moon, Sparkles, Square, SquarePen, SunMedium, Volume2, X } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useBlocker, useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme.ts';
 import { uploadResume } from '../services/uploadResume.ts';
@@ -29,6 +29,37 @@ const heroWords = ['resume', 'experience', 'skills', 'story'];
 const CHAT_ANALYSIS_ROLE = 'General Resume Review';
 const CHAT_STORAGE_KEY = 'resume-analyzer-chat';
 
+const GLOW_LAYERS = [
+    { inset: 0, radius: 0, borderWidth: 2, blur: 4, opacity: { full: 0.9, reduced: 0.3 } },
+    { inset: -2, radius: 0, borderWidth: 12, blur: 16, opacity: { full: 0.6, reduced: 0.2 } },
+    { inset: -4, radius: 0, borderWidth: 32, blur: 36, opacity: { full: 0.25, reduced: 0.1 } },
+] as const;
+
+const MIC_GRADIENT = 'conic-gradient(from var(--resume-mic-angle), #ff6b22 0deg, #ff315d 70deg, #c84cff 145deg, #5a72ff 225deg, #7090ff 285deg, #ff6b22 360deg) border-box';
+
+const Tooltip = ({ children, label, position = 'top', delay = false }: { children: ReactNode; label: string; position?: 'top' | 'bottom'; delay?: boolean }) => (
+    <div className='group/tooltip relative'>
+        {children}
+
+        <div
+            role='tooltip'
+            className={`pointer-events-none absolute left-1/2 z-50 whitespace-nowrap rounded-md border border-zinc-300 bg-zinc-100 px-3 py-1.5 text-xs font-normal text-zinc-700 opacity-0 shadow-sm ${
+                delay
+                    ? 'transition-all duration-150 ease-out group-hover/tooltip:delay-800 group-hover/tooltip:translate-y-0 group-hover/tooltip:scale-100 group-hover/tooltip:opacity-100'
+                    : 'transition-all duration-150 ease-out group-hover/tooltip:translate-y-0 group-hover/tooltip:scale-100 group-hover/tooltip:opacity-100'
+            } dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 ${position === 'bottom' ? 'top-full mt-2 -translate-x-1/2 -translate-y-1 scale-95' : 'bottom-full mb-2 -translate-x-1/2 translate-y-1 scale-95'}`}
+        >
+            {label}
+
+            {position === 'bottom' ? (
+                <span aria-hidden='true' className='absolute left-1/2 bottom-full h-0 w-0 -translate-x-1/2 border-l-[5px] border-r-[5px] border-b-[5px] border-l-transparent border-r-transparent border-b-zinc-300 dark:border-b-zinc-700' />
+            ) : (
+                <span aria-hidden='true' className='absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-zinc-300 dark:border-t-zinc-700' />
+            )}
+        </div>
+    </div>
+);
+
 type StoredChat = {
     sessionId: string;
     fileName: string;
@@ -40,11 +71,16 @@ type StoredChat = {
 
 const getStoredChat = (): StoredChat | null => {
     try {
+        if (sessionStorage.getItem('resume-analyzer-discard-on-return') === '1') {
+            sessionStorage.removeItem('resume-analyzer-discard-on-return');
+            sessionStorage.removeItem(CHAT_STORAGE_KEY);
+            return null;
+        }
+
         const stored = sessionStorage.getItem(CHAT_STORAGE_KEY);
         if (!stored) return null;
 
         const parsed = JSON.parse(stored) as StoredChat;
-
         if (!parsed.sessionId || !parsed.fileName || !parsed.pdfUrl || !Array.isArray(parsed.messages)) {
             sessionStorage.removeItem(CHAT_STORAGE_KEY);
             return null;
@@ -63,7 +99,10 @@ export default function Chat() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const editingTextareaRef = useRef<HTMLTextAreaElement>(null);
     const chatScrollRef = useRef<HTMLDivElement>(null);
+    const composerRef = useRef<HTMLDivElement>(null);
+    const composerActionsRef = useRef<HTMLDivElement>(null);
     const fileErrorTimeoutRef = useRef<number | null>(null);
     const micErrorTimeoutRef = useRef<number | null>(null);
 
@@ -111,16 +150,156 @@ export default function Chat() {
     const [isSending, setIsSending] = useState(false);
     const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
     const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+    const [copiedMessageId, setCopiedMessageId] = useState<number | null>(null);
+    const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
+    const [editingContent, setEditingContent] = useState('');
+    const [originalEditingContent, setOriginalEditingContent] = useState('');
+    const [editValidationMessage, setEditValidationMessage] = useState('');
+    const [isComposerMultiline, setIsComposerMultiline] = useState(false);
     const { transcript, listening, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
     const transcriptRef = useRef('');
     const shouldCommitTranscriptRef = useRef(false);
     const commitTranscriptTimeoutRef = useRef<number | null>(null);
     const isLeavingChatRef = useRef(false);
+    const speechSynthesisRef = useRef<SpeechSynthesis | null>(null);
+    const speechUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+    const [speakingMessageId, setSpeakingMessageId] = useState<number | null>(null);
+
+    const cursorPositionRef = useRef(0);
+    const pendingCursorPositionRef = useRef<number | null>(null);
+    const pendingCancelRef = useRef(false);
+
+    const withRemountedTextarea = (callback: (textarea: HTMLTextAreaElement) => void, attemptsLeft = 60) => {
+        const textarea = textareaRef.current;
+
+        if (!textarea) {
+            if (attemptsLeft <= 0) return;
+            requestAnimationFrame(() => withRemountedTextarea(callback, attemptsLeft - 1));
+            return;
+        }
+
+        requestAnimationFrame(() => callback(textarea));
+    };
+
+    const getPreferredSpeechVoice = () => {
+        if (!speechSynthesisRef.current) return null;
+
+        const voices = speechSynthesisRef.current.getVoices();
+        const englishVoices = voices.filter((voice) => /^en(-|_)/i.test(voice.lang));
+
+        const maleKeywords = ['daniel', 'alex', 'david', 'james', 'arthur', 'thomas', 'george', 'fred', 'tom', 'guy', 'male', 'man'];
+
+        return (
+            englishVoices.find((voice) => maleKeywords.some((keyword) => voice.name.toLowerCase().includes(keyword))) ??
+            englishVoices.find((voice) => /google us english|microsoft david|microsoft guy/i.test(voice.name)) ??
+            englishVoices.find((voice) => /^en-US$/i.test(voice.lang)) ??
+            englishVoices[0] ??
+            voices[0] ??
+            null
+        );
+    };
+
+    useEffect(() => {
+        if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+        const synthesis = window.speechSynthesis;
+        speechSynthesisRef.current = synthesis;
+
+        const loadVoices = () => {
+            synthesis.getVoices();
+        };
+
+        loadVoices();
+        synthesis.addEventListener('voiceschanged', loadVoices);
+
+        return () => {
+            synthesis.removeEventListener('voiceschanged', loadVoices);
+            synthesis.cancel();
+            speechSynthesisRef.current = null;
+            speechUtteranceRef.current = null;
+        };
+    }, []);
+
+    const stopSpeaking = () => {
+        const synthesis = speechSynthesisRef.current;
+
+        if (synthesis) {
+            synthesis.cancel();
+        }
+
+        speechUtteranceRef.current = null;
+        setSpeakingMessageId(null);
+    };
+
+    const speakMessage = (message: Message) => {
+        const synthesis = speechSynthesisRef.current;
+
+        if (!synthesis) {
+            return;
+        }
+
+        if (speakingMessageId === message.id) {
+            stopSpeaking();
+            return;
+        }
+
+        synthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(message.content);
+        const voice = getPreferredSpeechVoice();
+
+        if (voice) {
+            utterance.voice = voice;
+        }
+
+        utterance.lang = voice?.lang ?? 'en-US';
+        utterance.rate = 0.84;
+        utterance.pitch = 0.52;
+        utterance.volume = 1;
+
+        utterance.onstart = () => {
+            speechUtteranceRef.current = utterance;
+            setSpeakingMessageId(message.id);
+        };
+
+        utterance.onend = () => {
+            if (speechUtteranceRef.current === utterance) {
+                speechUtteranceRef.current = null;
+                setSpeakingMessageId(null);
+            }
+        };
+
+        utterance.onerror = () => {
+            if (speechUtteranceRef.current === utterance) {
+                speechUtteranceRef.current = null;
+                setSpeakingMessageId(null);
+            }
+        };
+
+        speechUtteranceRef.current = utterance;
+        setSpeakingMessageId(message.id);
+        synthesis.speak(utterance);
+    };
 
     const blocker = useBlocker(({ currentLocation, nextLocation }) => {
         if (isLeavingChatRef.current) return false;
         return Boolean(selectedFile && messages.length > 0) && currentLocation.pathname !== nextLocation.pathname;
     });
+
+    useEffect(() => {
+        const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+            if (!selectedFile || messages.length === 0) return;
+            sessionStorage.setItem('resume-analyzer-discard-on-return', '1');
+            event.preventDefault();
+            event.returnValue = '';
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [selectedFile, messages.length]);
 
     useEffect(() => {
         if (blocker.state === 'blocked') {
@@ -158,6 +337,29 @@ export default function Chat() {
     }, [messages]);
 
     useEffect(() => {
+        const frame = requestAnimationFrame(() => {
+            const frame2 = requestAnimationFrame(() => {
+                const container = chatScrollRef.current;
+                if (!container) return;
+
+                const maxScrollTop = Math.max(container.scrollHeight - container.clientHeight, 0);
+
+                if (maxScrollTop <= 1) {
+                    setShowScrollToBottom(false);
+                    return;
+                }
+
+                const distanceFromBottom = maxScrollTop - container.scrollTop;
+                setShowScrollToBottom(distanceFromBottom > 120);
+            });
+
+            return () => cancelAnimationFrame(frame2);
+        });
+
+        return () => cancelAnimationFrame(frame);
+    }, [messages]);
+
+    useEffect(() => {
         if (!selectedFile) return;
 
         const focusChatInput = () => {
@@ -181,20 +383,20 @@ export default function Chat() {
 
         const handleGlobalKeyDown = (event: KeyboardEvent) => {
             const textarea = textareaRef.current;
-            if (!textarea || isSending || listening) return;
+            if (!textarea || isSending || listening || editingMessageId !== null) return;
             if (event.metaKey || event.ctrlKey || event.altKey || event.key === 'Tab' || event.key === 'Escape') {
                 return;
             }
 
             if (event.key === 'Enter') {
-                if (document.activeElement !== textarea) {
+                if (document.activeElement !== textarea && !(document.activeElement instanceof HTMLTextAreaElement) && !(document.activeElement instanceof HTMLInputElement)) {
                     textarea.focus();
                 }
                 return;
             }
 
             if (event.key.length !== 1) return;
-            if (document.activeElement === textarea) return;
+            if (document.activeElement instanceof HTMLTextAreaElement || document.activeElement instanceof HTMLInputElement) return;
 
             event.preventDefault();
 
@@ -209,6 +411,7 @@ export default function Chat() {
 
                 const nextCursorPosition = start + event.key.length;
                 textarea.setSelectionRange(nextCursorPosition, nextCursorPosition);
+                updateComposerHeight(textarea);
             });
         };
 
@@ -217,7 +420,7 @@ export default function Chat() {
         return () => {
             window.removeEventListener('keydown', handleGlobalKeyDown);
         };
-    }, [selectedFile, isSending, listening]);
+    }, [selectedFile, isSending, listening, editingMessageId]);
 
     useEffect(() => {
         transcriptRef.current = transcript;
@@ -234,13 +437,21 @@ export default function Chat() {
 
                 if (spokenText) {
                     setInput((current) => {
-                        const separator = current.trim() ? ' ' : '';
-                        return `${current}${separator}${spokenText}`;
+                        const insertAt = Math.min(Math.max(cursorPositionRef.current, 0), current.length);
+                        const before = current.slice(0, insertAt);
+                        const after = current.slice(insertAt);
+
+                        const needsLeadingSpace = before.length > 0 && !/\s$/.test(before);
+                        const needsTrailingSpace = after.length > 0 && !/^\s/.test(after);
+
+                        const insertedText = `${needsLeadingSpace ? ' ' : ''}${spokenText}${needsTrailingSpace ? ' ' : ''}`;
+
+                        pendingCursorPositionRef.current = insertAt + (needsLeadingSpace ? 1 : 0) + spokenText.length;
+
+                        return `${before}${insertedText}${after}`;
                     });
 
-                    requestAnimationFrame(() => {
-                        const textarea = textareaRef.current;
-                        if (!textarea) return;
+                    withRemountedTextarea((textarea) => {
                         textarea.style.height = 'auto';
 
                         const minHeight = 28;
@@ -248,11 +459,18 @@ export default function Chat() {
                         const nextHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
 
                         textarea.style.height = `${nextHeight}px`;
+                        updateComposerHeight(textarea);
                         textarea.focus();
 
-                        requestAnimationFrame(() => {
-                            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
-                        });
+                        const pos = pendingCursorPositionRef.current ?? textarea.value.length;
+                        textarea.setSelectionRange(pos, pos);
+                        pendingCursorPositionRef.current = null;
+                    });
+                } else {
+                    withRemountedTextarea((textarea) => {
+                        textarea.focus();
+                        const pos = Math.min(Math.max(cursorPositionRef.current, 0), textarea.value.length);
+                        textarea.setSelectionRange(pos, pos);
                     });
                 }
 
@@ -270,6 +488,18 @@ export default function Chat() {
             }
         };
     }, [listening, resetTranscript]);
+
+    useEffect(() => {
+        if (!listening && pendingCancelRef.current) {
+            pendingCancelRef.current = false;
+
+            withRemountedTextarea((textarea) => {
+                textarea.focus();
+                const pos = Math.min(Math.max(cursorPositionRef.current, 0), textarea.value.length);
+                textarea.setSelectionRange(pos, pos);
+            });
+        }
+    }, [listening]);
 
     useEffect(() => {
         return () => {
@@ -514,6 +744,7 @@ export default function Chat() {
 
         void SpeechRecognition.abortListening();
         resetTranscript();
+        stopSpeaking();
 
         sessionStorage.removeItem(CHAT_STORAGE_KEY);
 
@@ -523,6 +754,7 @@ export default function Chat() {
         setSessionId(crypto.randomUUID());
         setMessages([]);
         setInput('');
+        setIsComposerMultiline(false);
         setIsSending(false);
         setAnalysisError('');
         setMicError('');
@@ -532,16 +764,101 @@ export default function Chat() {
         }
     };
 
+    const updateComposerHeight = (textarea: HTMLTextAreaElement) => {
+        textarea.style.height = 'auto';
+
+        const minHeight = 28;
+        const maxHeight = 160;
+        const scrollHeight = textarea.scrollHeight;
+        const nextHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
+
+        textarea.style.height = `${nextHeight}px`;
+
+        const composer = composerRef.current;
+        const actions = composerActionsRef.current;
+
+        if (!composer || !actions) {
+            setIsComposerMultiline(scrollHeight > minHeight + 1);
+            return;
+        }
+
+        const computedStyles = window.getComputedStyle(textarea);
+
+        const measurer = document.createElement('span');
+        measurer.textContent = textarea.value || ' ';
+        measurer.style.position = 'fixed';
+        measurer.style.left = '-99999px';
+        measurer.style.top = '0';
+        measurer.style.visibility = 'hidden';
+        measurer.style.pointerEvents = 'none';
+        measurer.style.whiteSpace = 'pre';
+        measurer.style.fontFamily = computedStyles.fontFamily;
+        measurer.style.fontSize = computedStyles.fontSize;
+        measurer.style.fontWeight = computedStyles.fontWeight;
+        measurer.style.fontStyle = computedStyles.fontStyle;
+        measurer.style.letterSpacing = computedStyles.letterSpacing;
+        measurer.style.lineHeight = computedStyles.lineHeight;
+
+        document.body.appendChild(measurer);
+        const textWidth = measurer.getBoundingClientRect().width;
+        measurer.remove();
+
+        const composerStyle = window.getComputedStyle(composer);
+        const paddingLeft = Number.parseFloat(composerStyle.paddingLeft) || 0;
+        const paddingRight = Number.parseFloat(composerStyle.paddingRight) || 0;
+        const actionButtons = Array.from(actions.querySelectorAll('button'));
+        const actionGap = Number.parseFloat(window.getComputedStyle(actions).gap) || 0;
+        const actionWidth = actionButtons.reduce((total, button) => total + button.getBoundingClientRect().width, 0) + Math.max(actionButtons.length - 1, 0) * actionGap;
+
+        const availableSingleLineWidth = Math.max(composer.clientWidth - paddingLeft - paddingRight - actionWidth - 8, 0);
+
+        const hasExplicitLineBreak = textarea.value.includes('\n');
+        const shouldStack = hasExplicitLineBreak || textWidth >= availableSingleLineWidth - 12;
+
+        setIsComposerMultiline(shouldStack);
+    };
+
+    useEffect(() => {
+        const handleResize = () => {
+            const textarea = textareaRef.current;
+            if (textarea) {
+                updateComposerHeight(textarea);
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [isComposerMultiline]);
+
     const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
         const value = event.target.value;
         setInput(value);
+
         const textarea = textareaRef.current;
         if (!textarea) return;
-        textarea.style.height = 'auto';
-        const minHeight = 24;
-        const maxHeight = 160;
-        const nextHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
-        textarea.style.height = `${nextHeight}px`;
+
+        updateComposerHeight(textarea);
+    };
+
+    const cancelVoiceInput = async () => {
+        shouldCommitTranscriptRef.current = false;
+        transcriptRef.current = '';
+        pendingCancelRef.current = true;
+
+        if (commitTranscriptTimeoutRef.current !== null) {
+            window.clearTimeout(commitTranscriptTimeoutRef.current);
+            commitTranscriptTimeoutRef.current = null;
+        }
+
+        try {
+            await SpeechRecognition.abortListening();
+        } catch (error) {
+            console.error('Unable to cancel speech recognition:', error);
+            pendingCancelRef.current = false;
+        }
+
+        resetTranscript();
+        setMicError('');
     };
 
     const handleMicToggle = async () => {
@@ -570,6 +887,9 @@ export default function Chat() {
             commitTranscriptTimeoutRef.current = null;
         }
 
+        const textarea = textareaRef.current;
+        cursorPositionRef.current = textarea ? (textarea.selectionStart ?? textarea.value.length) : input.length;
+
         setMicError('');
         shouldCommitTranscriptRef.current = false;
         transcriptRef.current = '';
@@ -584,6 +904,149 @@ export default function Chat() {
             console.error('Unable to start speech recognition:', error);
             shouldCommitTranscriptRef.current = false;
             showMicErrorMessage('Unable to start voice input. Please allow microphone access and try again.');
+        }
+    };
+
+    const copyMessage = async (message: Message) => {
+        try {
+            await navigator.clipboard.writeText(message.content);
+            setCopiedMessageId(message.id);
+
+            window.setTimeout(() => {
+                setCopiedMessageId((current) => (current === message.id ? null : current));
+            }, 1500);
+        } catch (error) {
+            console.error('Failed to copy message:', error);
+        }
+    };
+
+    const editMessage = (message: Message) => {
+        setEditingMessageId(message.id);
+        setEditingContent(message.content);
+        setOriginalEditingContent(message.content);
+    };
+
+    const cancelEdit = () => {
+        setEditingMessageId(null);
+        setEditingContent('');
+        setOriginalEditingContent('');
+        setEditValidationMessage('');
+    };
+
+    const showEditValidationMessage = () => {
+        setEditValidationMessage('Make a change before sending');
+        window.setTimeout(() => {
+            setEditValidationMessage((current) => (current === 'Make a change before sending' ? '' : current));
+        }, 2200);
+    };
+
+    useEffect(() => {
+        if (editingMessageId !== null || !isSending) return;
+
+        const timer = window.setTimeout(() => {
+            const textarea = textareaRef.current;
+            if (!textarea) return;
+
+            textarea.focus();
+            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+        }, 0);
+
+        return () => window.clearTimeout(timer);
+    }, [editingMessageId, isSending]);
+
+    useEffect(() => {
+        if (editingMessageId === null) return;
+
+        const timer = setTimeout(() => {
+            const textarea = editingTextareaRef.current;
+            if (!textarea) return;
+
+            textarea.focus();
+            const position = textarea.value.length;
+            textarea.setSelectionRange(position, position);
+
+            textarea.style.height = 'auto';
+            const minHeight = 52;
+            const maxHeight = 108;
+            const scrollHeight = textarea.scrollHeight;
+            const nextHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
+            textarea.style.height = `${nextHeight}px`;
+            textarea.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
+        }, 0);
+
+        return () => clearTimeout(timer);
+    }, [editingMessageId]);
+
+    const handleEditingContentChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const value = event.target.value;
+        setEditingContent(value);
+        setEditValidationMessage('');
+
+        const textarea = event.target;
+        textarea.style.height = 'auto';
+        const minHeight = 52;
+        const maxHeight = 108;
+        const scrollHeight = textarea.scrollHeight;
+        const nextHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
+        textarea.style.height = `${nextHeight}px`;
+        textarea.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
+    };
+
+    const saveEditedMessage = async () => {
+        const trimmed = editingContent.trim();
+
+        if (!trimmed || trimmed === originalEditingContent.trim() || editingMessageId === null || !selectedFile || !pdfUrl || isSending) {
+            return;
+        }
+
+        setIsSending(true);
+
+        setMessages((current) => {
+            const editedIndex = current.findIndex((message) => message.id === editingMessageId);
+
+            if (editedIndex === -1) {
+                return current;
+            }
+
+            return current.slice(0, editedIndex + 1).map((message, index) => (index === editedIndex ? { ...message, content: trimmed } : message));
+        });
+
+        setEditingMessageId(null);
+        setEditingContent('');
+        setOriginalEditingContent('');
+        setShowScrollToBottom(false);
+
+        try {
+            const data = await sendChatMessage({
+                pdfUrl: hasIndexedResume ? undefined : pdfUrl,
+                message: trimmed,
+                sessionId,
+            });
+
+            setHasIndexedResume(true);
+            setMessages((current) => [
+                ...current,
+                {
+                    id: Date.now() + 1,
+                    role: 'assistant',
+                    content: data.data?.answer ?? 'I received your message.',
+                },
+            ]);
+        } catch (error) {
+            console.error('Edited chat request failed:', error);
+            setMessages((current) => [
+                ...current,
+                {
+                    id: Date.now() + 1,
+                    role: 'assistant',
+                    content: error instanceof Error ? error.message : 'Something went wrong. Please try again.',
+                },
+            ]);
+        } finally {
+            setIsSending(false);
+            requestAnimationFrame(() => {
+                textareaRef.current?.focus();
+            });
         }
     };
 
@@ -605,6 +1068,7 @@ export default function Chat() {
 
         setIsSending(true);
         setInput('');
+        setIsComposerMultiline(false);
 
         if (textareaRef.current) {
             textareaRef.current.style.height = '28px';
@@ -688,6 +1152,7 @@ export default function Chat() {
 
         void SpeechRecognition.abortListening();
         resetTranscript();
+        stopSpeaking();
 
         sessionStorage.removeItem(CHAT_STORAGE_KEY);
 
@@ -697,6 +1162,7 @@ export default function Chat() {
         setSessionId(crypto.randomUUID());
         setMessages([]);
         setInput('');
+        setIsComposerMultiline(false);
         setIsSending(false);
         setAnalysisError('');
         setMicError('');
@@ -733,6 +1199,52 @@ export default function Chat() {
             onDragLeave={isLanding && !isAnalyzingResume ? handleDragLeave : undefined}
             onDrop={isLanding && !isAnalyzingResume ? handleDrop : undefined}
         >
+            <style>{`
+                @property --resume-mic-angle {
+                    syntax: '<angle>';
+                    initial-value: 0deg;
+                    inherits: false;
+                }
+                @keyframes resume-mic-border-spin {
+                    to {
+                        --resume-mic-angle: 360deg;
+                    }
+                }
+            `}</style>
+
+            <AnimatePresence initial={false}>
+                {listening === true && (
+                    <motion.div
+                        key='mic-glow'
+                        aria-hidden='true'
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                        className='pointer-events-none fixed inset-0 z-49 mix-blend-multiply brightness-50 contrast-125 saturate-200 dark:mix-blend-plus-lighter dark:brightness-100 dark:contrast-100 dark:saturate-100'
+                    >
+                        {GLOW_LAYERS.map((layer, index) => (
+                            <div key={index} className='absolute inset-0' style={{ filter: `blur(${layer.blur}px)`, opacity: prefersReducedMotion ? layer.opacity.reduced : layer.opacity.full }}>
+                                <div
+                                    className='absolute border-transparent'
+                                    style={{
+                                        inset: layer.inset,
+                                        borderRadius: layer.radius,
+                                        borderWidth: layer.borderWidth,
+                                        background: MIC_GRADIENT,
+                                        WebkitMask: 'linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0)',
+                                        WebkitMaskComposite: 'destination-out',
+                                        mask: 'linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0)',
+                                        maskComposite: 'exclude',
+                                        animation: prefersReducedMotion ? undefined : 'resume-mic-border-spin 4.5s linear infinite',
+                                    }}
+                                />
+                            </div>
+                        ))}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {!selectedFile && (
                 <div className='pointer-events-none fixed inset-0 z-0 overflow-hidden'>
                     <div className='absolute inset-0 bg-[radial-gradient(ellipse_68%_52%_at_50%_32%,rgba(228,228,231,0.9)_0%,rgba(244,244,245,0.65)_34%,rgba(250,250,250,0.25)_56%,rgba(255,255,255,0)_76%)] dark:bg-[radial-gradient(ellipse_65%_55%_at_50%_32%,transparent_0%,black_78%)]' />
@@ -771,26 +1283,28 @@ export default function Chat() {
 
                     <div className='ml-auto flex items-center gap-2'>
                         {selectedFile && (
-                            <button
-                                type='button'
-                                onClick={removeFile}
-                                aria-label='New chat'
-                                title='New chat'
-                                className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-zinc-200/80 bg-white/60 text-zinc-500 transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-black/60 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
-                            >
-                                <SquarePen className='h-4.5 w-4.5' strokeWidth={1.8} />
-                            </button>
+                            <Tooltip label='New chat' position='bottom' delay>
+                                <button
+                                    type='button'
+                                    onClick={removeFile}
+                                    aria-label='New chat'
+                                    className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-zinc-200/80 bg-white/60 text-zinc-500 transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-black/60 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
+                                >
+                                    <SquarePen className='h-4.5 w-4.5' strokeWidth={1.8} />
+                                </button>
+                            </Tooltip>
                         )}
 
-                        <button
-                            type='button'
-                            onClick={toggleTheme}
-                            aria-label='Toggle theme'
-                            title='Toggle theme'
-                            className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-zinc-200/80 bg-white/60 text-zinc-500 transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-black/60 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
-                        >
-                            {theme === 'light' ? <Moon className='h-4.5 w-4.5' strokeWidth={1.8} /> : <SunMedium className='h-4.5 w-4.5' strokeWidth={1.8} />}
-                        </button>
+                        <Tooltip label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} position='bottom' delay>
+                            <button
+                                type='button'
+                                onClick={toggleTheme}
+                                aria-label='Toggle theme'
+                                className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-zinc-200/80 bg-white/60 text-zinc-500 transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-black/60 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
+                            >
+                                {theme === 'light' ? <Moon className='h-4.5 w-4.5' strokeWidth={1.8} /> : <SunMedium className='h-4.5 w-4.5' strokeWidth={1.8} />}
+                            </button>
+                        </Tooltip>
                     </div>
                 </div>
             </header>
@@ -869,18 +1383,33 @@ export default function Chat() {
                                                 animate={prefersReducedMotion ? {} : { rotate: 360 }}
                                                 transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
                                                 className={`absolute -inset-full transition-opacity duration-500 ${isAnalyzingResume ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-                                                style={{ background: 'conic-gradient(from 0deg, transparent 70%, rgba(161,161,170,0.9) 85%, transparent 100%)' }}
+                                                style={{
+                                                    background:
+                                                        theme === 'light'
+                                                            ? 'conic-gradient(from 0deg, transparent 72%, rgba(82,82,91,0.88) 84%, rgba(39,39,42,0.72) 87%, transparent 98%)'
+                                                            : 'conic-gradient(from 0deg, transparent 72%, rgba(161,161,170,0.9) 84%, rgba(113,113,122,0.72) 87%, transparent 98%)',
+                                                }}
                                             />
 
                                             <motion.div
                                                 animate={prefersReducedMotion ? {} : { rotate: -360 }}
                                                 transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
                                                 className={`absolute -inset-full transition-opacity duration-500 ${isAnalyzingResume ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-                                                style={{ background: 'conic-gradient(from 0deg, transparent 40%, rgba(228,228,231,0.6) 50%, transparent 60%)' }}
+                                                style={{
+                                                    background:
+                                                        theme === 'light'
+                                                            ? 'conic-gradient(from 0deg, transparent 40%, rgba(113,113,122,0.7) 50%, rgba(63,63,70,0.58) 53%, transparent 61%)'
+                                                            : 'conic-gradient(from 0deg, transparent 40%, rgba(228,228,231,0.62) 50%, rgba(161,161,170,0.5) 53%, transparent 61%)',
+                                                }}
                                             />
 
                                             <div className={`relative flex min-h-55 flex-col items-center justify-center overflow-hidden rounded-[calc(1.5rem-1px)] px-5 py-6 transition-colors duration-300 sm:px-8 ${isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'}`}>
-                                                <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(0,0,0,0.04)_1px,transparent_1px)] bg-size-[16px_16px] opacity-0 transition-opacity duration-500 group-hover:opacity-100 dark:bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)]' />
+                                                <div
+                                                    aria-hidden='true'
+                                                    className={`pointer-events-none absolute inset-0 bg-size-[16px_16px] transition-opacity duration-500 ${isAnalyzingResume || isDragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} ${
+                                                        theme === 'light' ? 'bg-[radial-gradient(rgba(0,0,0,0.045)_1px,transparent_1px)]' : 'bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)]'
+                                                    }`}
+                                                />
 
                                                 <div className='relative z-20 flex flex-col items-center'>
                                                     <div className='relative flex items-center justify-center'>
@@ -989,16 +1518,129 @@ export default function Chat() {
                                         <>
                                             <div className='flex flex-col gap-8'>
                                                 {messages.map((message) => (
-                                                    <motion.div key={message.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
+                                                    <motion.div key={message.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className={message.role === 'user' ? 'flex justify-end' : 'group flex justify-start'}>
                                                         {message.role === 'assistant' ? (
                                                             <div className='max-w-[78%]'>
                                                                 <div className='mb-2 font-mono text-[9px] uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-600'>Resume Intelligence</div>
 
                                                                 <div className='whitespace-pre-wrap wrap-break-word text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 dark:text-zinc-200'>{message.content}</div>
+
+                                                                <div className='mt-2 flex items-center'>
+                                                                    <Tooltip label={speakingMessageId === message.id ? 'Stop reading' : 'Read aloud'} position='top'>
+                                                                        <button
+                                                                            type='button'
+                                                                            onClick={() => speakMessage(message)}
+                                                                            aria-label={speakingMessageId === message.id ? 'Stop reading' : 'Read aloud'}
+                                                                            className={`flex h-7 w-7 cursor-pointer items-center justify-center rounded-md transition-colors duration-150 ${
+                                                                                speakingMessageId === message.id
+                                                                                    ? 'bg-zinc-100 text-zinc-800 hover:bg-zinc-200 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800'
+                                                                                    : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
+                                                                            }`}
+                                                                        >
+                                                                            {speakingMessageId === message.id ? <Square className='h-3.5 w-3.5 fill-current' strokeWidth={1.8} /> : <Volume2 className='h-3.5 w-3.5' strokeWidth={1.8} />}
+                                                                        </button>
+                                                                    </Tooltip>
+                                                                </div>
                                                             </div>
                                                         ) : (
-                                                            <div className='max-w-[68%] rounded-[18px] rounded-br-md border border-zinc-200/80 bg-zinc-100 px-4.5 py-3 text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 shadow-[0_2px_10px_-5px_rgba(0,0,0,0.18)] dark:border-zinc-800/80 dark:bg-zinc-900 dark:text-zinc-100 dark:shadow-[0_2px_12px_-5px_rgba(0,0,0,0.5)]'>
-                                                                {message.content}
+                                                            <div className={`flex flex-col items-end max-w-[78%] ${editingMessageId === message.id ? 'w-full' : ''}`}>
+                                                                {editingMessageId === message.id ? (
+                                                                    <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }} className='w-full'>
+                                                                        <textarea
+                                                                            ref={editingTextareaRef}
+                                                                            value={editingContent}
+                                                                            onChange={handleEditingContentChange}
+                                                                            onKeyDown={(event) => {
+                                                                                if (event.key === 'Escape') {
+                                                                                    event.preventDefault();
+                                                                                    cancelEdit();
+                                                                                }
+
+                                                                                if (event.key === 'Enter' && !event.shiftKey) {
+                                                                                    event.preventDefault();
+
+                                                                                    if (editingContent.trim() === originalEditingContent.trim()) {
+                                                                                        showEditValidationMessage();
+                                                                                        return;
+                                                                                    }
+
+                                                                                    void saveEditedMessage();
+                                                                                }
+                                                                            }}
+                                                                            rows={1}
+                                                                            className='block max-h-27 min-h-13 w-full resize-none overflow-x-hidden rounded-[18px] rounded-br-md border border-zinc-200 bg-white px-4.5 py-3 text-[15px] leading-7 tracking-[-0.005em] text-zinc-900 outline-none shadow-[0_8px_28px_-14px_rgba(0,0,0,0.14)] transition-colors duration-200 focus:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.8)] dark:focus:border-zinc-600'
+                                                                            style={{ height: '52px', overflowY: 'hidden' }}
+                                                                        />
+
+                                                                        <AnimatePresence>
+                                                                            {editValidationMessage && (
+                                                                                <motion.div
+                                                                                    initial={{ opacity: 0, y: 3 }}
+                                                                                    animate={{ opacity: 1, y: 0 }}
+                                                                                    exit={{ opacity: 0, y: -3 }}
+                                                                                    transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                                                                                    className='mt-2 text-right text-[11px] font-medium text-zinc-500 dark:text-zinc-500'
+                                                                                >
+                                                                                    {editValidationMessage}
+                                                                                </motion.div>
+                                                                            )}
+                                                                        </AnimatePresence>
+
+                                                                        <div className='mt-2 flex items-center justify-end gap-2'>
+                                                                            <button
+                                                                                type='button'
+                                                                                onClick={cancelEdit}
+                                                                                disabled={isSending}
+                                                                                className='cursor-pointer rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-transparent dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-200 select-none'
+                                                                            >
+                                                                                Cancel
+                                                                            </button>
+
+                                                                            <Tooltip label={editingContent.trim() === originalEditingContent.trim() ? 'Make a change before sending' : isSending ? 'Saving...' : 'Send edited message'} position='top'>
+                                                                                <button
+                                                                                    type='button'
+                                                                                    onClick={() => void saveEditedMessage()}
+                                                                                    disabled={!editingContent.trim() || isSending || editingContent.trim() === originalEditingContent.trim()}
+                                                                                    className='cursor-pointer rounded-lg bg-zinc-950 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-400 dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500 select-none'
+                                                                                >
+                                                                                    {isSending ? 'Saving...' : 'Send'}
+                                                                                </button>
+                                                                            </Tooltip>
+                                                                        </div>
+                                                                    </motion.div>
+                                                                ) : (
+                                                                    <>
+                                                                        <div className='group flex flex-col items-end gap-2'>
+                                                                            <div className='rounded-[18px] rounded-br-md border border-zinc-200/80 bg-zinc-100 px-4.5 py-3 text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 shadow-[0_2px_10px_-5px_rgba(0,0,0,0.18)] dark:border-zinc-800/80 dark:bg-zinc-900 dark:text-zinc-100 dark:shadow-[0_2px_12px_-5px_rgba(0,0,0,0.5)]'>
+                                                                                {message.content}
+                                                                            </div>
+
+                                                                            <div className='flex -translate-y-0.5 items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100'>
+                                                                                <Tooltip label={copiedMessageId === message.id ? 'Copied' : 'Copy message'} position='top'>
+                                                                                    <button
+                                                                                        type='button'
+                                                                                        onClick={() => void copyMessage(message)}
+                                                                                        aria-label={copiedMessageId === message.id ? 'Copied' : 'Copy message'}
+                                                                                        className='flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-zinc-400 transition-colors duration-150 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
+                                                                                    >
+                                                                                        {copiedMessageId === message.id ? <Check className='h-3.5 w-3.5' strokeWidth={2} /> : <Copy className='h-3.5 w-3.5' strokeWidth={1.8} />}
+                                                                                    </button>
+                                                                                </Tooltip>
+
+                                                                                <Tooltip label='Edit message' position='top'>
+                                                                                    <button
+                                                                                        type='button'
+                                                                                        onClick={() => editMessage(message)}
+                                                                                        aria-label='Edit message'
+                                                                                        className='flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-zinc-400 transition-colors duration-150 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
+                                                                                    >
+                                                                                        <Edit3 className='h-3.5 w-3.5' strokeWidth={1.8} />
+                                                                                    </button>
+                                                                                </Tooltip>
+                                                                            </div>
+                                                                        </div>
+                                                                    </>
+                                                                )}
                                                             </div>
                                                         )}
                                                     </motion.div>
@@ -1054,7 +1696,6 @@ export default function Chat() {
                                             type='button'
                                             onClick={scrollToBottom}
                                             aria-label='Scroll to latest message'
-                                            title='Scroll to latest message'
                                             initial={{ opacity: 0, scale: 0.85, y: 8 }}
                                             animate={{ opacity: 1, scale: 1, y: 0 }}
                                             exit={{ opacity: 0, scale: 0.85, y: 8 }}
@@ -1065,70 +1706,143 @@ export default function Chat() {
                                         </motion.button>
                                     )}
                                 </AnimatePresence>
-                                <div className='group relative flex w-full items-end gap-2 rounded-2xl border border-zinc-200 bg-white pl-5 pb-3 px-2 py-2 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.12)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.16)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.7)] dark:focus-within:border-zinc-700 dark:focus-within:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.85)]'>
-                                    <div className='relative flex min-h-6 min-w-0 flex-1 items-center'>
-                                        <div className='relative w-full'>
-                                            {!input && messages.length === 1 && (
-                                                <div aria-hidden='true' className='pointer-events-none absolute inset-y-0 left-0 z-0 flex items-center -translate-y-0.5 overflow-hidden'>
-                                                    <span className='whitespace-nowrap text-[16px] leading-7 text-zinc-400 dark:text-zinc-600'>{placeholderText}</span>
-                                                </div>
-                                            )}
-
-                                            <textarea
-                                                ref={textareaRef}
-                                                autoFocus
-                                                value={input}
-                                                onChange={handleInputChange}
-                                                onKeyDown={handleKeyDown}
-                                                rows={1}
-                                                placeholder={messages.length > 1 ? 'Ask anything about your resume...' : ''}
-                                                className='chat-composer-scrollbar relative z-10 block max-h-40 min-h-7 w-full resize-none overflow-y-auto bg-transparent p-0 text-[16px] leading-5.75 text-zinc-900 outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-100'
-                                                style={{ height: '28px' }}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className='relative flex shrink-0 items-center gap-1.5'>
-                                        {micError && (
-                                            <div className='absolute bottom-full left-1/2 mb-2 w-max max-w-70 -translate-x-1/2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-center text-[11px] font-medium text-rose-600 shadow-sm dark:border-rose-900/60 dark:bg-rose-950/70 dark:text-rose-300'>
-                                                {micError}
-                                            </div>
-                                        )}
-
-                                        <button
-                                            type='button'
-                                            onClick={handleMicToggle}
-                                            disabled={isSending}
-                                            aria-label={listening ? 'Stop voice input' : 'Start voice input'}
-                                            title={listening ? 'Stop voice input' : 'Voice input'}
-                                            className={`flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 ${
-                                                listening ? 'bg-rose-100 text-rose-600 hover:bg-rose-200 dark:bg-rose-950/70 dark:text-rose-400 dark:hover:bg-rose-950' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
-                                            }`}
+                                <div className='group/composer relative'>
+                                    {editingMessageId !== null && (
+                                        <div
+                                            role='tooltip'
+                                            className='pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 translate-y-1 scale-95 whitespace-nowrap rounded-md border border-zinc-300 bg-zinc-100 px-3 py-1.5 text-xs font-normal text-zinc-700 opacity-0 shadow-sm transition-all duration-150 ease-out group-hover/composer:translate-y-0 group-hover/composer:scale-100 group-hover/composer:opacity-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100'
                                         >
-                                            {listening ? <MicOff className='h-5 w-5' strokeWidth={1.8} /> : <Mic className='h-5 w-5' strokeWidth={1.8} />}
-                                        </button>
+                                            Complete your edit to continue
+                                            <span aria-hidden='true' className='absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-zinc-300 dark:border-t-zinc-700' />
+                                            <span aria-hidden='true' className='absolute left-1/2 top-full -mt-px z-10 h-0 w-0 -translate-x-1/2 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-zinc-100 dark:border-t-zinc-800' />
+                                        </div>
+                                    )}
 
-                                        <div className='group/send relative'>
-                                            <button
-                                                type='button'
-                                                onClick={() => void sendMessage()}
-                                                disabled={!input.trim() || isSending}
-                                                aria-label='Send message'
-                                                className='flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-zinc-950 text-white transition-all duration-200 hover:bg-zinc-800 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-900 dark:disabled:text-zinc-600'
-                                            >
-                                                <ArrowUp className='h-5 w-5' strokeWidth={1.8} />
-                                            </button>
+                                    <div
+                                        ref={composerRef}
+                                        className={`group relative flex w-full gap-2 rounded-2xl border border-zinc-200 bg-white px-2 py-2 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.12)] transition-all duration-200 focus-within:border-zinc-300 focus-within:shadow-[0_10px_30px_-12px_rgba(0,0,0,0.16)] dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.7)] dark:focus-within:border-zinc-700 dark:focus-within:shadow-[0_12px_34px_-14px_rgba(0,0,0,0.85)] ${isComposerMultiline && !listening ? 'flex-wrap items-end' : 'items-center'} ${listening ? 'border-zinc-300/90 dark:border-zinc-700/90' : ''} ${editingMessageId !== null ? 'cursor-not-allowed' : ''}`}
+                                    >
+                                        <AnimatePresence mode='wait' initial={false}>
+                                            {listening ? (
+                                                <motion.div key='voice-mode' initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className='flex min-w-0 flex-1 items-center gap-2'>
+                                                    <Tooltip label='Cancel voice input' position='top' delay>
+                                                        <button
+                                                            type='button'
+                                                            onClick={() => void cancelVoiceInput()}
+                                                            aria-label='Cancel voice input'
+                                                            className='flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-zinc-400 transition-colors duration-200 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-900 dark:hover:text-zinc-200'
+                                                        >
+                                                            <X className='h-4.5 w-4.5' strokeWidth={1.8} />
+                                                        </button>
+                                                    </Tooltip>
 
-                                            {(!input.trim() || isSending) && (
-                                                <div
-                                                    role='tooltip'
-                                                    className='pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 translate-y-1 scale-95 whitespace-nowrap rounded-md border border-zinc-300 bg-zinc-100 px-3 py-1.5 text-xs font-normal text-zinc-700 opacity-0 shadow-sm transition-all duration-150 ease-out group-hover/send:translate-y-0 group-hover/send:scale-100 group-hover/send:opacity-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100'
+                                                    <div className='flex min-w-0 flex-1 items-center gap-3 px-1'>
+                                                        <span className='select-none whitespace-nowrap text-[13px] font-medium text-zinc-400 dark:text-zinc-500'>Listening</span>
+
+                                                        <div aria-hidden='true' className='flex h-9 min-w-0 flex-1 items-center gap-0.75 overflow-hidden'>
+                                                            {[12, 20, 9, 26, 15, 31, 12, 22, 35, 17, 27, 11, 24, 32, 16, 29, 13, 36, 21, 10, 28, 15, 34, 18, 24, 11, 30, 16].map((height, index) => (
+                                                                <motion.span
+                                                                    key={index}
+                                                                    className='w-0.5 shrink-0 rounded-full bg-zinc-400 dark:bg-zinc-500'
+                                                                    style={{ height }}
+                                                                    animate={prefersReducedMotion ? { opacity: 0.8, scaleY: 1 } : { opacity: [0.45, 0.95, 0.5], scaleY: [0.45, 1, 0.55] }}
+                                                                    transition={{ duration: 0.72 + (index % 5) * 0.08, repeat: Infinity, ease: 'easeInOut', delay: index * 0.035 }}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </motion.div>
+                                            ) : (
+                                                <motion.div
+                                                    key='text-mode'
+                                                    initial={{ opacity: 0, y: -4 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: 4 }}
+                                                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                                                    className={`relative flex min-h-7 items-center pl-1.5 ${isComposerMultiline ? 'w-full flex-none' : 'min-w-0 flex-1'}`}
                                                 >
-                                                    {isSending && input.trim() ? 'wait for response' : 'type something'}
-                                                    <span aria-hidden='true' className='absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-zinc-300 dark:border-t-zinc-700' />
-                                                    <span aria-hidden='true' className='absolute left-1/2 top-full -mt-px z-10 h-0 w-0 -translate-x-1/2 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-zinc-100 dark:border-t-zinc-800' />
+                                                    <div className='relative w-full'>
+                                                        {!input && messages.length === 1 && (
+                                                            <div aria-hidden='true' className='pointer-events-none absolute inset-y-0 left-0 z-0 flex items-center overflow-hidden'>
+                                                                <span className='whitespace-nowrap text-[16px] leading-7 text-zinc-400 dark:text-zinc-600'>{placeholderText}</span>
+                                                            </div>
+                                                        )}
+
+                                                        <textarea
+                                                            ref={textareaRef}
+                                                            autoFocus
+                                                            value={input}
+                                                            onChange={handleInputChange}
+                                                            onKeyDown={handleKeyDown}
+                                                            rows={1}
+                                                            placeholder={messages.length > 1 ? 'Ask anything about your resume...' : ''}
+                                                            className='chat-composer-scrollbar select-none relative z-10 block max-h-40 min-h-7 w-full translate-y-0.5 resize-none overflow-y-auto bg-transparent p-0 text-[16px] font-normal leading-5.75 text-zinc-900 outline-none placeholder:font-normal placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-600 disabled:cursor-not-allowed disabled:opacity-60'
+                                                            disabled={editingMessageId !== null}
+                                                        />
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+
+                                        <div ref={composerActionsRef} className={`relative z-10 flex shrink-0 items-center gap-1.5 ${isComposerMultiline && !listening ? 'w-full justify-end' : ''}`}>
+                                            {micError && (
+                                                <div className='absolute bottom-full left-1/2 mb-2 w-max max-w-70 -translate-x-1/2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-center text-[11px] font-medium text-rose-600 shadow-sm dark:border-rose-900/60 dark:bg-rose-950/70 dark:text-rose-300'>
+                                                    {micError}
                                                 </div>
                                             )}
+
+                                            {listening ? (
+                                                <Tooltip label='Stop voice input' position='top' delay>
+                                                    <button
+                                                        type='button'
+                                                        onClick={() => {
+                                                            shouldCommitTranscriptRef.current = true;
+                                                            void SpeechRecognition.stopListening();
+                                                        }}
+                                                        disabled={isSending || editingMessageId !== null}
+                                                        aria-label='Stop voice input'
+                                                        className='flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-zinc-100 text-zinc-600 transition-all duration-200 hover:bg-zinc-200 hover:text-zinc-900 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
+                                                    >
+                                                        <Square className='h-3.5 w-3.5 fill-current' strokeWidth={1.8} />
+                                                    </button>
+                                                </Tooltip>
+                                            ) : (
+                                                <Tooltip label='Voice input' position='top' delay>
+                                                    <button
+                                                        type='button'
+                                                        onClick={handleMicToggle}
+                                                        disabled={isSending || editingMessageId !== null}
+                                                        aria-label='Start voice input'
+                                                        className='flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-zinc-400 transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
+                                                    >
+                                                        <Mic className='h-5 w-5' strokeWidth={1.8} />
+                                                    </button>
+                                                </Tooltip>
+                                            )}
+
+                                            <div className='group/send relative'>
+                                                <button
+                                                    type='button'
+                                                    onMouseDown={(event) => event.preventDefault()}
+                                                    onClick={() => void sendMessage()}
+                                                    disabled={!input.trim() || isSending || listening || editingMessageId !== null}
+                                                    aria-label='Send message'
+                                                    className='flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-zinc-950 text-white transition-all duration-200 hover:bg-zinc-800 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 disabled:shadow-none dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-900 dark:disabled:text-zinc-600'
+                                                >
+                                                    <ArrowUp className='h-5 w-5' strokeWidth={1.8} />
+                                                </button>
+
+                                                {(!input.trim() || isSending || listening) && (
+                                                    <div
+                                                        role='tooltip'
+                                                        className='pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 translate-y-1 scale-95 whitespace-nowrap rounded-md border border-zinc-300 bg-zinc-100 px-3 py-1.5 text-xs font-normal text-zinc-700 opacity-0 shadow-sm transition-all duration-150 ease-out group-hover/send:translate-y-0 group-hover/send:scale-100 group-hover/send:opacity-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100'
+                                                    >
+                                                        {listening ? 'stop listening first' : isSending && input.trim() ? 'wait for response' : 'type something'}
+                                                        <span aria-hidden='true' className='absolute left-1/2 top-full h-0 w-0 -translate-x-1/2 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-zinc-300 dark:border-t-zinc-700' />
+                                                        <span aria-hidden='true' className='absolute left-1/2 top-full -mt-px z-10 h-0 w-0 -translate-x-1/2 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-zinc-100 dark:border-t-zinc-800' />
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -1160,7 +1874,7 @@ export default function Chat() {
                             </h2>
 
                             <p id='leave-chat-description' className='mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-400'>
-                                Your current conversation will be cleared when you leave.
+                                Your uploaded resume and current session will be cleared when you leave.
                             </p>
 
                             <div className='mt-6 flex items-center justify-end gap-2.5'>
