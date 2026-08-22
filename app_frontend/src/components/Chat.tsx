@@ -71,6 +71,12 @@ type StoredChat = {
 
 const getStoredChat = (): StoredChat | null => {
     try {
+        if (sessionStorage.getItem('resume-analyzer-discard-on-return') === '1') {
+            sessionStorage.removeItem('resume-analyzer-discard-on-return');
+            sessionStorage.removeItem(CHAT_STORAGE_KEY);
+            return null;
+        }
+
         const stored = sessionStorage.getItem(CHAT_STORAGE_KEY);
         if (!stored) return null;
 
@@ -283,7 +289,7 @@ export default function Chat() {
     useEffect(() => {
         const handleBeforeUnload = (event: BeforeUnloadEvent) => {
             if (!selectedFile || messages.length === 0) return;
-
+            sessionStorage.setItem('resume-analyzer-discard-on-return', '1');
             event.preventDefault();
             event.returnValue = '';
         };
