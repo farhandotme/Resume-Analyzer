@@ -770,7 +770,7 @@ export default function Home() {
                                     fileInputRef.current?.click();
                                 }
                             }}
-                            className={`group relative mt-6 flex min-h-55 select-none flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed text-center transition-all duration-200 ${
+                            className={`group relative mt-6 flex min-h-55 select-none flex-col items-center justify-center rounded-2xl border-2 border-dashed text-center transition-all duration-200 ${
                                 selectedFile
                                     ? 'cursor-default border-zinc-200 bg-white/50 dark:border-zinc-800 dark:bg-zinc-900/40'
                                     : isDragging
@@ -779,7 +779,7 @@ export default function Home() {
                             }`}
                         >
                             {!selectedFile && (
-                                <>
+                                <div className='pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-[calc(1rem-2px)]'>
                                     <motion.div
                                         aria-hidden='true'
                                         animate={prefersReducedMotion ? {} : { rotate: 360 }}
@@ -803,10 +803,10 @@ export default function Home() {
                                                     : 'conic-gradient(from 0deg, transparent 40%, rgba(228,228,231,0.62) 50%, rgba(161,161,170,0.5) 53%, transparent 61%)',
                                         }}
                                     />
-                                </>
+                                </div>
                             )}
 
-                            <div className={`relative z-10 flex min-h-55 w-full flex-col items-center justify-center overflow-hidden rounded-[calc(1rem-2px)] px-8 py-7 transition-colors duration-300 ${isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'}`}>
+                            <div className={`relative z-10 flex min-h-55 w-full flex-col items-center justify-center rounded-[calc(1rem-2px)] px-8 py-7 transition-colors duration-300 ${isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'}`}>
                                 <div
                                     aria-hidden='true'
                                     className={`pointer-events-none absolute inset-0 z-0 bg-size-[16px_16px] transition-opacity duration-500 ${isDragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} ${
