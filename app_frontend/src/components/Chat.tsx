@@ -1723,7 +1723,7 @@ export default function Chat() {
                                                     animate={{ opacity: 1, y: 0 }}
                                                     exit={{ opacity: 0, y: 4 }}
                                                     transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                                                    className={`relative flex min-h-7 items-center pl-3 ${isComposerMultiline ? 'w-full flex-none' : 'min-w-0 flex-1'}`}
+                                                    className={`relative flex min-h-7 items-center pl-1.5 ${isComposerMultiline ? 'w-full flex-none' : 'min-w-0 flex-1'}`}
                                                 >
                                                     <div className='relative w-full'>
                                                         {!input && messages.length === 1 && (
@@ -1740,7 +1740,7 @@ export default function Chat() {
                                                             onKeyDown={handleKeyDown}
                                                             rows={1}
                                                             placeholder={messages.length > 1 ? 'Ask anything about your resume...' : ''}
-                                                            className='chat-composer-scrollbar relative z-10 block max-h-40 min-h-7 w-full translate-y-0.5 resize-none overflow-y-auto bg-transparent p-0 text-[16px] font-normal leading-5.75 text-zinc-900 outline-none placeholder:font-normal placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-600 disabled:cursor-not-allowed disabled:opacity-60'
+                                                            className='chat-composer-scrollbar select-none relative z-10 block max-h-40 min-h-7 w-full translate-y-0.5 resize-none overflow-y-auto bg-transparent p-0 text-[16px] font-normal leading-5.75 text-zinc-900 outline-none placeholder:font-normal placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-600 disabled:cursor-not-allowed disabled:opacity-60'
                                                             disabled={editingMessageId !== null}
                                                         />
                                                     </div>
