@@ -1404,7 +1404,12 @@ export default function Chat() {
                                             />
 
                                             <div className={`relative flex min-h-55 flex-col items-center justify-center overflow-hidden rounded-[calc(1.5rem-1px)] px-5 py-6 transition-colors duration-300 sm:px-8 ${isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'}`}>
-                                                <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(0,0,0,0.04)_1px,transparent_1px)] bg-size-[16px_16px] opacity-0 transition-opacity duration-500 group-hover:opacity-100 dark:bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)]' />
+                                                <div
+                                                    aria-hidden='true'
+                                                    className={`pointer-events-none absolute inset-0 bg-size-[16px_16px] transition-opacity duration-500 ${isAnalyzingResume || isDragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} ${
+                                                        theme === 'light' ? 'bg-[radial-gradient(rgba(0,0,0,0.045)_1px,transparent_1px)]' : 'bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)]'
+                                                    }`}
+                                                />
 
                                                 <div className='relative z-20 flex flex-col items-center'>
                                                     <div className='relative flex items-center justify-center'>
