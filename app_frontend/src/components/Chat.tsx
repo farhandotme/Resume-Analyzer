@@ -124,6 +124,22 @@ export default function Chat() {
     const commitTranscriptTimeoutRef = useRef<number | null>(null);
     const isLeavingChatRef = useRef(false);
 
+    const cursorPositionRef = useRef(0);
+    const pendingCursorPositionRef = useRef<number | null>(null);
+    const pendingCancelRef = useRef(false);
+
+    const withRemountedTextarea = (callback: (textarea: HTMLTextAreaElement) => void, attemptsLeft = 60) => {
+        const textarea = textareaRef.current;
+
+        if (!textarea) {
+            if (attemptsLeft <= 0) return;
+            requestAnimationFrame(() => withRemountedTextarea(callback, attemptsLeft - 1));
+            return;
+        }
+
+        requestAnimationFrame(() => callback(textarea));
+    };
+
     const blocker = useBlocker(({ currentLocation, nextLocation }) => {
         if (isLeavingChatRef.current) return false;
         return Boolean(selectedFile && messages.length > 0) && currentLocation.pathname !== nextLocation.pathname;
@@ -241,13 +257,21 @@ export default function Chat() {
 
                 if (spokenText) {
                     setInput((current) => {
-                        const separator = current.trim() ? ' ' : '';
-                        return `${current}${separator}${spokenText}`;
+                        const insertAt = Math.min(Math.max(cursorPositionRef.current, 0), current.length);
+                        const before = current.slice(0, insertAt);
+                        const after = current.slice(insertAt);
+
+                        const needsLeadingSpace = before.length > 0 && !/\s$/.test(before);
+                        const needsTrailingSpace = after.length > 0 && !/^\s/.test(after);
+
+                        const insertedText = `${needsLeadingSpace ? ' ' : ''}${spokenText}${needsTrailingSpace ? ' ' : ''}`;
+
+                        pendingCursorPositionRef.current = insertAt + (needsLeadingSpace ? 1 : 0) + spokenText.length;
+
+                        return `${before}${insertedText}${after}`;
                     });
 
-                    requestAnimationFrame(() => {
-                        const textarea = textareaRef.current;
-                        if (!textarea) return;
+                    withRemountedTextarea((textarea) => {
                         textarea.style.height = 'auto';
 
                         const minHeight = 28;
@@ -257,9 +281,15 @@ export default function Chat() {
                         textarea.style.height = `${nextHeight}px`;
                         textarea.focus();
 
-                        requestAnimationFrame(() => {
-                            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
-                        });
+                        const pos = pendingCursorPositionRef.current ?? textarea.value.length;
+                        textarea.setSelectionRange(pos, pos);
+                        pendingCursorPositionRef.current = null;
+                    });
+                } else {
+                    withRemountedTextarea((textarea) => {
+                        textarea.focus();
+                        const pos = Math.min(Math.max(cursorPositionRef.current, 0), textarea.value.length);
+                        textarea.setSelectionRange(pos, pos);
                     });
                 }
 
@@ -277,6 +307,18 @@ export default function Chat() {
             }
         };
     }, [listening, resetTranscript]);
+
+    useEffect(() => {
+        if (!listening && pendingCancelRef.current) {
+            pendingCancelRef.current = false;
+
+            withRemountedTextarea((textarea) => {
+                textarea.focus();
+                const pos = Math.min(Math.max(cursorPositionRef.current, 0), textarea.value.length);
+                textarea.setSelectionRange(pos, pos);
+            });
+        }
+    }, [listening]);
 
     useEffect(() => {
         return () => {
@@ -554,6 +596,7 @@ export default function Chat() {
     const cancelVoiceInput = async () => {
         shouldCommitTranscriptRef.current = false;
         transcriptRef.current = '';
+        pendingCancelRef.current = true;
 
         if (commitTranscriptTimeoutRef.current !== null) {
             window.clearTimeout(commitTranscriptTimeoutRef.current);
@@ -564,14 +607,11 @@ export default function Chat() {
             await SpeechRecognition.abortListening();
         } catch (error) {
             console.error('Unable to cancel speech recognition:', error);
+            pendingCancelRef.current = false;
         }
 
         resetTranscript();
         setMicError('');
-
-        requestAnimationFrame(() => {
-            textareaRef.current?.focus();
-        });
     };
 
     const handleMicToggle = async () => {
@@ -599,6 +639,9 @@ export default function Chat() {
             window.clearTimeout(commitTranscriptTimeoutRef.current);
             commitTranscriptTimeoutRef.current = null;
         }
+
+        const textarea = textareaRef.current;
+        cursorPositionRef.current = textarea ? (textarea.selectionStart ?? textarea.value.length) : input.length;
 
         setMicError('');
         shouldCommitTranscriptRef.current = false;
@@ -788,14 +831,7 @@ export default function Chat() {
                         className='pointer-events-none fixed inset-0 z-49 mix-blend-multiply brightness-50 contrast-125 saturate-200 dark:mix-blend-plus-lighter dark:brightness-100 dark:contrast-100 dark:saturate-100'
                     >
                         {GLOW_LAYERS.map((layer, index) => (
-                            <div
-                                key={index}
-                                className='absolute inset-0'
-                                style={{
-                                    filter: `blur(${layer.blur}px)`,
-                                    opacity: prefersReducedMotion ? layer.opacity.reduced : layer.opacity.full,
-                                }}
-                            >
+                            <div key={index} className='absolute inset-0' style={{ filter: `blur(${layer.blur}px)`, opacity: prefersReducedMotion ? layer.opacity.reduced : layer.opacity.full }}>
                                 <div
                                     className='absolute border-transparent'
                                     style={{
