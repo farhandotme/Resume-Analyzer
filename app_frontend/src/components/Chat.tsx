@@ -1297,7 +1297,7 @@ export default function Chat() {
                                                                                 }
                                                                             }}
                                                                             rows={1}
-                                                                            className='block max-h-27 min-h-13 w-full resize-none overflow-x-hidden rounded-[18px] rounded-br-md border border-zinc-700 bg-zinc-950 px-4.5 py-3 text-[15px] leading-7 tracking-[-0.005em] text-zinc-100 outline-none shadow-[0_8px_28px_-14px_rgba(0,0,0,0.8)] transition-colors duration-200 focus:border-zinc-600'
+                                                                            className='block max-h-27 min-h-13 w-full resize-none overflow-x-hidden rounded-[18px] rounded-br-md border border-zinc-200 bg-white px-4.5 py-3 text-[15px] leading-7 tracking-[-0.005em] text-zinc-900 outline-none shadow-[0_8px_28px_-14px_rgba(0,0,0,0.14)] transition-colors duration-200 focus:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:shadow-[0_8px_28px_-14px_rgba(0,0,0,0.8)] dark:focus:border-zinc-600'
                                                                             style={{ height: '52px', overflowY: 'hidden' }}
                                                                         />
 
@@ -1306,7 +1306,7 @@ export default function Chat() {
                                                                                 type='button'
                                                                                 onClick={cancelEdit}
                                                                                 disabled={isSending}
-                                                                                className='cursor-pointer rounded-lg border border-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200 disabled:cursor-not-allowed disabled:opacity-50'
+                                                                                className='cursor-pointer rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-transparent dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-200'
                                                                             >
                                                                                 Cancel
                                                                             </button>
@@ -1315,7 +1315,7 @@ export default function Chat() {
                                                                                 type='button'
                                                                                 onClick={() => void saveEditedMessage()}
                                                                                 disabled={!editingContent.trim() || isSending || editingContent === originalEditingContent}
-                                                                                className='cursor-pointer rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-black transition-colors hover:bg-zinc-200 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500'
+                                                                                className='cursor-pointer rounded-lg bg-zinc-950 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-400 dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500'
                                                                             >
                                                                                 {isSending ? 'Saving...' : 'Send'}
                                                                             </button>
