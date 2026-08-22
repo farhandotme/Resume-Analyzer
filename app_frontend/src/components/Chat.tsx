@@ -281,6 +281,21 @@ export default function Chat() {
     });
 
     useEffect(() => {
+        const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+            if (!selectedFile || messages.length === 0) return;
+
+            event.preventDefault();
+            event.returnValue = '';
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [selectedFile, messages.length]);
+
+    useEffect(() => {
         if (blocker.state === 'blocked') {
             setShowLeaveConfirmation(true);
         }
