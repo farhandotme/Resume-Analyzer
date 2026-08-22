@@ -1306,7 +1306,7 @@ export default function Chat() {
                                                                                 type='button'
                                                                                 onClick={cancelEdit}
                                                                                 disabled={isSending}
-                                                                                className='cursor-pointer rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-transparent dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-200'
+                                                                                className='cursor-pointer rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-transparent dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-200 select-none'
                                                                             >
                                                                                 Cancel
                                                                             </button>
@@ -1315,7 +1315,7 @@ export default function Chat() {
                                                                                 type='button'
                                                                                 onClick={() => void saveEditedMessage()}
                                                                                 disabled={!editingContent.trim() || isSending || editingContent === originalEditingContent}
-                                                                                className='cursor-pointer rounded-lg bg-zinc-950 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-400 dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500'
+                                                                                className='cursor-pointer rounded-lg bg-zinc-950 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-400 dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500 select-none'
                                                                             >
                                                                                 {isSending ? 'Saving...' : 'Send'}
                                                                             </button>
