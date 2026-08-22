@@ -1552,20 +1552,18 @@ export default function Chat() {
 
                                 <AnimatePresence>
                                     {showScrollToBottom && (
-                                        <Tooltip label='Scroll to latest message' position='top'>
-                                            <motion.button
-                                                type='button'
-                                                onClick={scrollToBottom}
-                                                aria-label='Scroll to latest message'
-                                                initial={{ opacity: 0, scale: 0.85, y: 8 }}
-                                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                                exit={{ opacity: 0, scale: 0.85, y: 8 }}
-                                                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                                                className='absolute bottom-full left-1/2 z-20 mb-2 flex h-9 w-9 -translate-x-1/2 cursor-pointer items-center justify-center rounded-full border border-zinc-200/80 bg-white/90 text-zinc-500 shadow-[0_6px_20px_-8px_rgba(0,0,0,0.25)] backdrop-blur-md transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-zinc-950/90 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
-                                            >
-                                                <ArrowDown className='h-4 w-4' strokeWidth={1.8} />
-                                            </motion.button>
-                                        </Tooltip>
+                                        <motion.button
+                                            type='button'
+                                            onClick={scrollToBottom}
+                                            aria-label='Scroll to latest message'
+                                            initial={{ opacity: 0, scale: 0.85, y: 8 }}
+                                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                                            exit={{ opacity: 0, scale: 0.85, y: 8 }}
+                                            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                                            className='absolute bottom-full left-1/2 z-20 mb-2 flex h-9 w-9 -translate-x-1/2 cursor-pointer items-center justify-center rounded-full border border-zinc-200/80 bg-white/90 text-zinc-500 shadow-[0_6px_20px_-8px_rgba(0,0,0,0.25)] backdrop-blur-md transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-zinc-950/90 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
+                                        >
+                                            <ArrowDown className='h-4 w-4' strokeWidth={1.8} />
+                                        </motion.button>
                                     )}
                                 </AnimatePresence>
                                 <div className='group/composer relative'>
