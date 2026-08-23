@@ -855,9 +855,9 @@ export default function Home() {
                 transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                 aria-hidden={isAnalyzing}
             >
-                <div className='relative mx-auto grid h-screen w-full max-w-7xl grid-cols-1 items-center gap-16 px-6 pt-20 lg:grid-cols-2 lg:gap-10 lg:px-8 lg:pt-0'>
-                    <div className='flex flex-col justify-center pb-10 lg:pb-0'>
-                        <h1 className='text-4xl font-semibold leading-[1.08] text-zinc-900 dark:text-white sm:text-5xl lg:text-[3.8rem]' style={{ fontFamily: 'Geist, sans-serif' }}>
+                <div className='relative mx-auto grid h-screen w-full max-w-7xl grid-cols-1 items-center gap-16 px-6 pt-20 lg:grid-cols-2 lg:gap-10 lg:px-8 lg:pt-0 max-[1310px]:gap-0 max-[1310px]:px-6 max-[1023px]:px-5'>
+                    <div className='flex flex-col justify-center pb-10 lg:pb-0 max-[1023px]:mx-auto max-[1023px]:w-full max-[1023px]:max-w-2xl max-[1023px]:text-center'>
+                        <h1 className='text-4xl font-semibold leading-[1.08] text-zinc-900 dark:text-white sm:text-5xl lg:text-[3.8rem] max-[1310px]:text-[3.2rem]' style={{ fontFamily: 'Geist, sans-serif' }}>
                             <span className='whitespace-nowrap'>
                                 Better{' '}
                                 <span className='relative inline-block h-[1.08em] min-w-[10ch] overflow-hidden align-bottom whitespace-nowrap'>
@@ -876,14 +876,14 @@ export default function Home() {
                                 </span>
                             </span>
                         </h1>
-                        <p className='mt-4 max-w-122.5 text-[17px] leading-7 text-zinc-500 dark:text-zinc-400'>Upload your resume to receive an ATS score, recruiter feedback, and AI-powered recommendations that help you stand out before you apply.</p>
+                        <p className='mt-4 max-w-122.5 text-[17px] leading-7 text-zinc-500 dark:text-zinc-400 max-[1310px]:text-[16px] max-[1310px]:leading-6'>Upload your resume to receive an ATS score, recruiter feedback, and AI-powered recommendations that help you stand out before you apply.</p>
                         <div
                             onClick={() => {
                                 if (!selectedFile) {
                                     fileInputRef.current?.click();
                                 }
                             }}
-                            className={`group relative mt-6 flex min-h-55 select-none flex-col items-center justify-center rounded-2xl border-2 border-dashed text-center transition-all duration-200 ${
+                            className={`group relative mt-6 flex min-h-55 select-none max-[1310px]:min-h-48 max-[1023px]:mx-auto max-[1023px]:w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed text-center transition-all duration-200 ${
                                 selectedFile
                                     ? 'cursor-default border-zinc-200 bg-white/50 dark:border-zinc-800 dark:bg-zinc-900/40'
                                     : isDragging
@@ -919,7 +919,9 @@ export default function Home() {
                                 </div>
                             )}
 
-                            <div className={`relative z-10 flex min-h-55 w-full flex-col items-center justify-center rounded-[calc(1rem-2px)] px-8 py-7 transition-colors duration-300 ${isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'}`}>
+                            <div
+                                className={`relative z-10 flex min-h-55 w-full flex-col max-[1310px]:min-h-48 items-center justify-center rounded-[calc(1rem-2px)] px-8 py-7 transition-colors max-[1310px]:px-6 max-[1310px]:py-6 duration-300 ${isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'}`}
+                            >
                                 <div
                                     aria-hidden='true'
                                     className={`pointer-events-none absolute inset-0 z-0 bg-size-[16px_16px] transition-opacity duration-500 ${isDragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} ${
@@ -938,11 +940,11 @@ export default function Home() {
                                     className='hidden'
                                 />
                                 <div
-                                    className={`relative z-20 flex h-14 w-14 shrink-0 items-center justify-center rounded-full transition-all duration-200 ${
+                                    className={`relative z-20 flex h-14 w-14 shrink-0 max-[1310px]:h-12 max-[1310px]:w-12 items-center justify-center rounded-full transition-all duration-200 ${
                                         selectedFile ? 'bg-zinc-100 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700' : isDragging ? 'bg-zinc-200 ring-2 ring-zinc-300 dark:bg-zinc-700 dark:ring-zinc-600' : 'bg-zinc-50 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700'
                                     }`}
                                 >
-                                    {selectedFile ? <FileText className='h-6 w-6 text-zinc-600 dark:text-zinc-300' /> : <UploadCloud className='h-6 w-6 text-zinc-600 dark:text-zinc-300 transition-transform duration-300' />}
+                                    {selectedFile ? <FileText className='h-6 w-6 text-zinc-600 max-[1310px]:h-5 max-[1310px]:w-5 dark:text-zinc-300' /> : <UploadCloud className='h-6 w-6 text-zinc-600 max-[1310px]:h-5 max-[1310px]:w-5 dark:text-zinc-300 transition-transform duration-300' />}
                                 </div>
                                 <div className='relative z-20 mt-3 w-full'>
                                     <h3 className='mx-auto max-w-[90%] truncate text-base font-semibold text-zinc-900 dark:text-zinc-100'>{selectedFile ? selectedFile.name : isDragging ? 'Drop your PDF here' : 'Upload your resume'}</h3>
@@ -977,7 +979,7 @@ export default function Home() {
                                                     event.stopPropagation();
                                                     fileInputRef.current?.click();
                                                 }}
-                                                className='inline-flex h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 text-sm font-medium text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
+                                                className='inline-flex h-12 shrink-0 cursor-pointer max-[1310px]:h-11 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 text-sm font-medium text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
                                             >
                                                 <UploadCloud className='h-3.5 w-3.5' />
                                                 <span>Change PDF</span>
@@ -991,7 +993,7 @@ export default function Home() {
                                                         event.stopPropagation();
                                                         handleAnalyze();
                                                     }}
-                                                    className={`group/btn inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl px-5 font-medium transition-all duration-200 focus:outline-none ${
+                                                    className={`group/btn inline-flex h-12 w-full items-center max-[1310px]:h-11 justify-center gap-2 rounded-xl px-5 font-medium transition-all duration-200 focus:outline-none ${
                                                         isRoleSelected ? 'cursor-pointer bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200' : 'cursor-not-allowed bg-zinc-200 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-600'
                                                     }`}
                                                 >
@@ -1014,7 +1016,7 @@ export default function Home() {
                                                 event.stopPropagation();
                                                 fileInputRef.current?.click();
                                             }}
-                                            className='group/btn mx-auto mt-6 inline-flex h-12 w-full max-w-60 cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-medium text-white transition-all duration-200 hover:bg-zinc-800 focus:outline-none focus:ring-0 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200'
+                                            className='group/btn mx-auto mt-6 inline-flex h-12 w-full max-w-60 max-[1310px]:h-11 max-[1310px]:max-w-52 cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-medium text-white transition-all duration-200 hover:bg-zinc-800 focus:outline-none focus:ring-0 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200'
                                         >
                                             <span>Select PDF</span>
                                             <ChevronRight className='h-4 w-4 transition-transform duration-300 ease-out group-hover/btn:translate-x-1.5' />
@@ -1023,28 +1025,28 @@ export default function Home() {
                                 </div>
                             </div>
                         </div>
-                        <div className='mt-6 pl-1 flex flex-wrap items-center gap-x-6 gap-y-3 text-[13px] font-medium text-zinc-600 dark:text-zinc-400'>
-                            <span className='flex items-center gap-2'>
-                                <ShieldCheck className='h-4 w-4 text-zinc-500 dark:text-zinc-400' />
+                        <div className='mt-6 pl-1 flex flex-nowrap items-center gap-x-3 max-[1150px]:gap-x-2 whitespace-nowrap text-[13px] font-medium text-zinc-600 dark:text-zinc-400'>
+                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[12px]'>
+                                <ShieldCheck className='h-4 w-4 max-[1150px]:h-3.5 max-[1150px]:w-3.5 text-zinc-500 dark:text-zinc-400' />
                                 Private by default
                             </span>
                             <span className='hidden h-4 w-px bg-zinc-200 dark:bg-zinc-800 sm:block' />
-                            <span className='flex items-center gap-2'>
-                                <Gauge className='h-4 w-4 text-zinc-500 dark:text-zinc-400' />
+                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[12px]'>
+                                <Gauge className='h-4 w-4 max-[1150px]:h-3.5 max-[1150px]:w-3.5 text-zinc-500 dark:text-zinc-400' />
                                 ATS-aware analysis
                             </span>
-                            <span className='hidden h-4 w-px bg-zinc-200 dark:bg-zinc-800 sm:block' />
-                            <span className='flex items-center gap-2'>
-                                <CheckCircle2 className='h-4 w-4 text-zinc-500 dark:text-zinc-400' />
+                            <span className='hidden h-4 w-px bg-zinc-200 dark:bg-zinc-800 sm:block max-[1169px]:hidden' />
+                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[12px]'>
+                                <CheckCircle2 className='h-4 w-4 max-[1150px]:h-3.5 max-[1150px]:w-3.5 text-zinc-500 dark:text-zinc-400' />
                                 Recruiter-focused feedback
                             </span>
                         </div>
                     </div>
-                    <div className='relative flex items-center justify-center lg:justify-end'>
-                        <div className='relative w-full max-w-md'>
+                    <div className='relative flex items-center justify-center lg:justify-end max-[1310px]:justify-center max-[1069px]:hidden'>
+                        <div className='relative w-full max-w-md max-[1310px]:max-w-105'>
                             <div className='absolute -inset-10 -z-10 rounded-full bg-zinc-100 dark:bg-zinc-800/30 blur-3xl' />
                             <div className='relative overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl shadow-zinc-200/60 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/50'>
-                                <div className='flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800/80 px-4 py-3'>
+                                <div className='flex items-center justify-between whitespace-nowrap border-b border-zinc-100 dark:border-zinc-800/80 px-4 py-3'>
                                     <div className='flex items-center gap-2'>
                                         <FileText className='h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500' />
                                         <span className='font-mono text-[11px] text-zinc-400 dark:text-zinc-500'>resume.pdf</span>
@@ -1057,11 +1059,11 @@ export default function Home() {
                                         analyzing
                                     </span>
                                 </div>
-                                <div className='relative h-144 overflow-hidden bg-zinc-50 dark:bg-zinc-900/50'>
+                                <div className='relative h-144 overflow-hidden max-[1310px]:h-135.25 bg-zinc-50 dark:bg-zinc-900/50'>
                                     <img src='/resume-preview.png' alt='Resume preview skeleton' className='absolute left-1/2 top-0 w-[calc(100%+2px)] -translate-x-1/2 -translate-y-px scale-[1.01] select-none opacity-90 dark:opacity-75 dark:invert' draggable={false} />
                                 </div>
                             </div>
-                            <div className='animate-float-a absolute -right-8 -top-6 w-40 rounded-xl border border-zinc-200 bg-white p-3.5 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
+                            <div className='animate-float-a absolute -right-7 -top-5 w-36 max-[1310px]:-right-5 max-[1310px]:-top-4 max-[1310px]:w-32 rounded-xl border border-zinc-200 bg-white p-3.5 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
                                 <div className='flex items-center justify-between'>
                                     <span className='font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>ATS Score</span>
                                     <Gauge className='h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500' />
@@ -1073,22 +1075,22 @@ export default function Home() {
                                     <div className='h-full w-[94%] rounded-full bg-zinc-900 dark:bg-zinc-100' />
                                 </div>
                             </div>
-                            <div className='animate-float-b absolute -left-10 top-[32%] w-40 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
+                            <div className='animate-float-b absolute -left-10 top-[32%] w-40 max-[1310px]:-left-7 max-[1310px]:w-32 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
                                 <div className='flex items-center justify-between'>
                                     <span className='font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>Hire Rate</span>
                                     <CheckCircle2 className='h-3.5 w-3.5 text-zinc-900 dark:text-zinc-100' />
                                 </div>
                                 <div className='mt-1 text-lg font-semibold text-zinc-900 dark:text-zinc-100'>Very High</div>
                             </div>
-                            <div className='animate-float-a absolute -left-6 bottom-18 w-36 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
+                            <div className='animate-float-a absolute -left-6 bottom-18 w-36 max-[1310px]:-left-4 max-[1310px]:bottom-14 max-[1310px]:w-32 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
                                 <div className='font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>Best Skill</div>
                                 <div className='mt-1 text-[13px] font-semibold text-zinc-900 dark:text-zinc-100'>React</div>
                             </div>
-                            <div className='animate-float-b absolute -bottom-6 right-0 w-40 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
+                            <div className='animate-float-b absolute -bottom-6 right-0 w-40 max-[1310px]:-bottom-5 max-[1310px]:w-32 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
                                 <div className='font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>Improve</div>
                                 <div className='mt-1 text-[13px] font-semibold text-zinc-900 dark:text-zinc-100'>Docker</div>
                             </div>
-                            <div className='animate-float-c absolute -right-10 top-[46%] w-44 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
+                            <div className='animate-float-c absolute -right-10 top-[46%] w-44 max-[1310px]:-right-7 max-[1310px]:w-36 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
                                 <div className='flex items-center justify-between'>
                                     <span className='font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>PDF Report</span>
                                     <FileText className='h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400' />
