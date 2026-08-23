@@ -576,7 +576,7 @@ export default function Home() {
         >
             <div aria-hidden='true' className={`pointer-events-none absolute inset-0 z-0 select-none overflow-hidden transition-opacity duration-300 ${isAnalyzing ? 'opacity-0' : 'opacity-100'}`}>
                 <div
-                    className='absolute inset-0 opacity-[0.05] dark:opacity-[0.08]'
+                    className='absolute inset-0 opacity-[0.08] dark:opacity-[0.08]'
                     style={{
                         backgroundImage: theme === 'dark' ? 'radial-gradient(circle at 1px 1px, rgba(255,255,255,1) 1px, transparent 0)' : 'radial-gradient(circle at 1px 1px, rgba(0,0,0,1) 1px, transparent 0)',
                         backgroundSize: '34px 34px',
@@ -585,14 +585,14 @@ export default function Home() {
                 <div
                     className='absolute left-1/2 top-[6%] h-125 w-125 -translate-x-1/2 rounded-full'
                     style={{
-                        background: theme === 'dark' ? 'radial-gradient(circle, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 35%, transparent 70%)' : 'radial-gradient(circle, rgba(0,0,0,0.035) 0%, rgba(0,0,0,0.014) 35%, transparent 70%)',
+                        background: theme === 'dark' ? 'radial-gradient(circle, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 35%, transparent 70%)' : 'radial-gradient(circle, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.022) 35%, transparent 70%)',
                         filter: 'blur(50px)',
                     }}
                 />
                 <div
                     className='absolute inset-0'
                     style={{
-                        background: theme === 'dark' ? 'radial-gradient(ellipse 90% 70% at 50% 0%, transparent 0%, rgba(0,0,0,0.45) 65%, rgba(0,0,0,0.92) 100%)' : 'radial-gradient(ellipse 90% 70% at 50% 0%, transparent 0%, rgba(255,255,255,0.35) 65%, rgba(255,255,255,0.9) 100%)',
+                        background: theme === 'dark' ? 'radial-gradient(ellipse 90% 70% at 50% 0%, transparent 0%, rgba(0,0,0,0.45) 65%, rgba(0,0,0,0.92) 100%)' : 'radial-gradient(ellipse 90% 70% at 50% 0%, transparent 0%, rgba(255,255,255,0.3) 65%, rgba(255,255,255,0.84) 100%)',
                     }}
                 />
                 <div
