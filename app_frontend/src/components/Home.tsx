@@ -568,7 +568,7 @@ export default function Home() {
                     >
                         <div data-gsap='status' className='absolute left-6 top-6 z-20 flex items-center gap-2'>
                             <span className='h-1.5 w-1.5 rounded-full bg-zinc-500 dark:bg-zinc-400' />
-                            <span className='font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400'>Resume Analysis</span>
+                            <span className='font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400'>Resume Intelligence</span>
                         </div>
 
                         <style>{`
@@ -682,11 +682,11 @@ export default function Home() {
 
                         <div data-gsap='footer' className='absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500'>
                             {isComplete ? (
-                                <span className='text-zinc-700 dark:text-zinc-200'>Analysis complete</span>
+                                <span className='text-zinc-700 dark:text-zinc-200'>analysis complete</span>
                             ) : (
                                 <>
                                     <Loader2 className='h-3.5 w-3.5 animate-spin text-zinc-400 dark:text-zinc-500' />
-                                    <span className='text-zinc-500 dark:text-zinc-400'>Analyzing · {elapsedSeconds}s</span>
+                                    <span className='text-zinc-500 dark:text-zinc-400'>analyzing · {elapsedSeconds}s</span>
                                 </>
                             )}
                         </div>
