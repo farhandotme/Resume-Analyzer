@@ -568,12 +568,44 @@ export default function Home() {
 
     return (
         <div
-            className='h-screen w-full overflow-hidden bg-white text-zinc-900 selection:bg-[#EAF5FF] selection:text-[#3999FF] dark:bg-black dark:text-zinc-100 dark:selection:bg-[#010B1B] dark:selection:text-[#3999FF] antialiased'
+            className='relative h-screen w-full overflow-hidden bg-white text-zinc-900 selection:bg-[#EAF5FF] selection:text-[#3999FF] dark:bg-black dark:text-zinc-100 dark:selection:bg-[#010B1B] dark:selection:text-[#3999FF] antialiased'
             onDragEnter={!selectedFile && !isAnalyzing ? handleDragEnter : undefined}
             onDragOver={!selectedFile && !isAnalyzing ? handleDragOver : undefined}
             onDragLeave={!selectedFile && !isAnalyzing ? handleDragLeave : undefined}
             onDrop={!selectedFile && !isAnalyzing ? handleDrop : undefined}
         >
+            <div aria-hidden='true' className={`pointer-events-none absolute inset-0 z-0 select-none overflow-hidden transition-opacity duration-300 ${isAnalyzing ? 'opacity-0' : 'opacity-100'}`}>
+                <div
+                    className='absolute inset-0 opacity-[0.05] dark:opacity-[0.08]'
+                    style={{
+                        backgroundImage: theme === 'dark' ? 'radial-gradient(circle at 1px 1px, rgba(255,255,255,1) 1px, transparent 0)' : 'radial-gradient(circle at 1px 1px, rgba(0,0,0,1) 1px, transparent 0)',
+                        backgroundSize: '34px 34px',
+                    }}
+                />
+                <div
+                    className='absolute left-1/2 top-[6%] h-125 w-125 -translate-x-1/2 rounded-full'
+                    style={{
+                        background: theme === 'dark' ? 'radial-gradient(circle, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 35%, transparent 70%)' : 'radial-gradient(circle, rgba(0,0,0,0.035) 0%, rgba(0,0,0,0.014) 35%, transparent 70%)',
+                        filter: 'blur(50px)',
+                    }}
+                />
+                <div
+                    className='absolute inset-0'
+                    style={{
+                        background: theme === 'dark' ? 'radial-gradient(ellipse 90% 70% at 50% 0%, transparent 0%, rgba(0,0,0,0.45) 65%, rgba(0,0,0,0.92) 100%)' : 'radial-gradient(ellipse 90% 70% at 50% 0%, transparent 0%, rgba(255,255,255,0.35) 65%, rgba(255,255,255,0.9) 100%)',
+                    }}
+                />
+                <div
+                    className='absolute inset-0'
+                    style={{
+                        backgroundImage:
+                            'url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27240%27%20height=%27240%27%20viewBox=%270%200%20240%20240%27%3E%3Cfilter%20id=%27n%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%270.9%27%20numOctaves=%272%27%20stitchTiles=%27stitch%27/%3E%3C/filter%3E%3Crect%20width=%27100%25%27%20height=%27100%25%27%20filter=%27url(%23n)%27/%3E%3C/svg%3E)',
+                        opacity: theme === 'dark' ? 0.045 : 0.025,
+                        mixBlendMode: 'overlay',
+                    }}
+                />
+            </div>
+
             <AnimatePresence mode='wait'>
                 {isAnalyzing && (
                     <motion.div
