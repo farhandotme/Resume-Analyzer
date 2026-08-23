@@ -105,6 +105,7 @@ export default function Home() {
     const [messageIndex, setMessageIndex] = useState(0);
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [headlineIndex, setHeadlineIndex] = useState(0);
+    const [mobileHeadlineText, setMobileHeadlineText] = useState('resume.');
     const navigate = useNavigate();
     const prefersReducedMotion = Boolean(useReducedMotion());
     const overlayRef = useRef<HTMLDivElement>(null);
@@ -168,6 +169,58 @@ export default function Home() {
         }, 3200);
 
         return () => window.clearInterval(interval);
+    }, []);
+
+    useEffect(() => {
+        const words = ['resume.', 'interviews.', 'career.'];
+        let wordIndex = 0;
+        let charIndex = 1;
+        let deleting = false;
+        let timeoutId: number | null = null;
+        let cancelled = false;
+
+        setMobileHeadlineText(words[0].slice(0, 1));
+
+        const tick = () => {
+            if (cancelled) return;
+
+            const word = words[wordIndex];
+
+            if (!deleting) {
+                if (charIndex < word.length) {
+                    charIndex += 1;
+                    setMobileHeadlineText(word.slice(0, charIndex));
+                    timeoutId = window.setTimeout(tick, 85);
+                    return;
+                }
+
+                deleting = true;
+                timeoutId = window.setTimeout(tick, 1500);
+                return;
+            }
+
+            if (charIndex > 1) {
+                charIndex -= 1;
+                setMobileHeadlineText(word.slice(0, charIndex));
+                timeoutId = window.setTimeout(tick, 85);
+                return;
+            }
+
+            wordIndex = (wordIndex + 1) % words.length;
+            charIndex = 1;
+            deleting = false;
+            setMobileHeadlineText(words[wordIndex].slice(0, 1));
+            timeoutId = window.setTimeout(tick, 120);
+        };
+
+        timeoutId = window.setTimeout(tick, 85);
+
+        return () => {
+            cancelled = true;
+            if (timeoutId !== null) {
+                window.clearTimeout(timeoutId);
+            }
+        };
     }, []);
 
     useEffect(() => {
@@ -855,9 +908,9 @@ export default function Home() {
                 transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                 aria-hidden={isAnalyzing}
             >
-                <div className='relative mx-auto grid h-screen w-full max-w-7xl grid-cols-1 items-center gap-16 px-6 pt-20 min-[1070px]:grid-cols-2 lg:gap-10 lg:px-8 lg:pt-0 max-[1310px]:gap-0 max-[1310px]:px-6 max-[1069.9px]:px-5'>
-                    <div className='flex flex-col justify-center pb-10 min-[1070px]:pb-0 max-[1069.9px]:mx-auto max-[1069.9px]:w-full max-[1069.9px]:max-w-2xl max-[1069.9px]:text-center'>
-                        <h1 className='text-4xl font-semibold leading-[1.08] text-zinc-900 dark:text-white sm:text-5xl lg:text-[3.8rem] max-[1310px]:text-[3.2rem]' style={{ fontFamily: 'Geist, sans-serif' }}>
+                <div className='relative mx-auto grid h-screen w-full max-w-7xl grid-cols-1 items-center gap-16 px-6 pt-20 min-[1070px]:grid-cols-2 min-[1070px]:gap-10 min-[1070px]:px-8 min-[1070px]:pt-0 max-[1310px]:gap-0 max-[1310px]:px-6 max-[1069.9px]:px-5 max-[1069.9px]:-translate-y-0'>
+                    <div className='flex flex-col justify-center pb-10 min-[1070px]:pb-0 max-[1069.9px]:mx-auto max-[1069.9px]:w-full max-[1069.9px]:max-w-2xl max-[1069.9px]:justify-self-center max-[1069.9px]:text-center'>
+                        <h1 className='hidden min-[1070px]:block text-4xl font-semibold leading-[1.08] text-zinc-900 dark:text-white sm:text-5xl lg:text-[3.8rem] max-[1310px]:text-[3.2rem]' style={{ fontFamily: 'Geist, sans-serif' }}>
                             <span className='whitespace-nowrap'>
                                 Better{' '}
                                 <span className='relative inline-block h-[1.08em] min-w-[10ch] overflow-hidden align-bottom whitespace-nowrap'>
@@ -876,7 +929,15 @@ export default function Home() {
                                 </span>
                             </span>
                         </h1>
-                        <p className='mt-4 max-w-122.5 text-[17px] leading-7 text-zinc-500 dark:text-zinc-400 max-[1310px]:text-[16px] max-[1310px]:leading-6'>Upload your resume to receive an ATS score, recruiter feedback, and AI-powered recommendations that help you stand out before you apply.</p>
+
+                        <h1 className='block text-center text-[3.7rem] font-semibold leading-[1.08] text-zinc-900 dark:text-white min-[1070px]:hidden' style={{ fontFamily: 'Geist, sans-serif' }}>
+                            <span className='block whitespace-nowrap'>
+                                Better <span className='text-zinc-400 italic dark:text-zinc-500'>{mobileHeadlineText}</span>
+                            </span>
+                        </h1>
+                        <p className='mt-4 max-w-122.5 text-[17px] leading-7 text-zinc-500 dark:text-zinc-400 max-[1310px]:text-[16px] max-[1310px]:leading-6 max-[1069.9px]:mx-auto max-[1069.9px]:max-w-[600px] max-[1069.9px]:text-[17px] max-[1069.9px]:leading-7 max-[1069.9px]:tracking-[0.01em] max-[1069.9px]:text-center'>
+                            Upload your resume to receive an ATS score, recruiter feedback, and AI-powered recommendations that help you stand out before you apply.
+                        </p>
                         <div
                             onClick={() => {
                                 if (!selectedFile) {
@@ -1025,18 +1086,18 @@ export default function Home() {
                                 </div>
                             </div>
                         </div>
-                        <div className='mt-6 pl-1 flex flex-nowrap items-center gap-x-3 max-[1150px]:gap-x-2 whitespace-nowrap text-[13px] font-medium text-zinc-600 dark:text-zinc-400'>
-                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[12px]'>
+                        <div className='mt-6 pl-1 flex flex-nowrap items-center justify-center gap-x-3 max-[1150px]:gap-x-2 max-[1069.9px]:gap-x-4 whitespace-nowrap text-[13px] font-medium text-zinc-600 dark:text-zinc-400 max-[1069.9px]:text-[14px]'>
+                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[12px] max-[1069.9px]:text-[14px]'>
                                 <ShieldCheck className='h-4 w-4 max-[1150px]:h-3.5 max-[1150px]:w-3.5 text-zinc-500 dark:text-zinc-400' />
                                 Private by default
                             </span>
                             <span className='hidden h-4 w-px bg-zinc-200 dark:bg-zinc-800 sm:block' />
-                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[12px]'>
+                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[12px] max-[1069.9px]:text-[14px]'>
                                 <Gauge className='h-4 w-4 max-[1150px]:h-3.5 max-[1150px]:w-3.5 text-zinc-500 dark:text-zinc-400' />
                                 ATS-aware analysis
                             </span>
                             <span className='hidden h-4 w-px bg-zinc-200 dark:bg-zinc-800 sm:block max-[1169px]:hidden' />
-                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[12px]'>
+                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[12px] max-[1069.9px]:text-[14px]'>
                                 <CheckCircle2 className='h-4 w-4 max-[1150px]:h-3.5 max-[1150px]:w-3.5 text-zinc-500 dark:text-zinc-400' />
                                 Recruiter-focused feedback
                             </span>
