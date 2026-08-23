@@ -1,4 +1,4 @@
-import { UploadCloud, CheckCircle2, FileText, Gauge, ChevronRight, SunMedium, Moon, ShieldCheck, Loader2, AlertCircle } from 'lucide-react';
+import { UploadCloud, CheckCircle2, FileText, Gauge, ChevronRight, SunMedium, Moon, ShieldCheck, Loader2, AlertCircle, Menu, Bot } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -106,6 +106,7 @@ export default function Home() {
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [headlineIndex, setHeadlineIndex] = useState(0);
     const [mobileHeadlineText, setMobileHeadlineText] = useState('resume.');
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const navigate = useNavigate();
     const prefersReducedMotion = Boolean(useReducedMotion());
     const overlayRef = useRef<HTMLDivElement>(null);
@@ -849,27 +850,29 @@ export default function Home() {
                 )}
             </AnimatePresence>
             <motion.header className={`fixed inset-x-0 top-0 z-50 ${isAnalyzing ? 'pointer-events-none' : ''}`} animate={{ opacity: isAnalyzing ? 0 : 1, scale: prefersReducedMotion ? 1 : isAnalyzing ? 0.98 : 1 }} transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }} aria-hidden={isAnalyzing}>
-                <div className='mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8'>
-                    <div className='inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/80 backdrop-blur-md px-3 py-1.5 dark:border-zinc-800 dark:bg-zinc-900/80 select-none'>
-                        <span className='h-1.5 w-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100' />
-                        <span className='font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-600 dark:text-zinc-400'>Resume Intelligence</span>
+                <div className='mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8 max-[649.9px]:px-2 max-[649.9px]:h-auto max-[649.9px]:py-1.5'>
+                    <div className='inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/80 backdrop-blur-md px-3 max-[549.9px]:py-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-900/80 select-none'>
+                        <span className='h-1.5 w-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100 max-[649.9px]:h-1 max-[649.9px]:w-1 max-[549.9px]:h-0.7 max-[549.9px]:w-0.7' />
+                        <span className='font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-600 dark:text-zinc-400 max-[649.9px]:text-[10px] max-[649.9px]:tracking-[0.14em] max-[549.9px]:text-[9px] max-[549.9px]:tracking-widest'>Resume Intelligence</span>
                     </div>
                     <div className='flex items-center gap-2'>
                         <button
                             type='button'
-                            aria-label="Let's chat with AI"
+                            aria-label='Chat with AI'
                             onClick={() => navigate('/chat')}
-                            className='group relative flex h-10 cursor-pointer items-center gap-2 overflow-hidden rounded-lg border border-zinc-200 bg-white px-3.5 text-sm font-medium text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-zinc-100'
+                            className='group relative flex h-10 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg border border-zinc-200 bg-white px-3.5 text-sm font-medium text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-zinc-100 max-[649.9px]:h-9 max-[649.9px]:w-9 max-[649.9px]:shrink-0 max-[649.9px]:px-0 max-[649.9px]:py-0 outline-none'
                         >
-                            <span className='relative z-10'>Let's chat</span>
+                            <span className='relative z-10 max-[649.9px]:hidden'>Let's chat</span>
 
-                            <span className='relative z-10 flex items-center'>
+                            <span className='relative z-10 flex items-center max-[649.9px]:hidden'>
                                 <span className='flex w-0 items-center overflow-hidden opacity-0 transition-all duration-300 ease-out group-hover:w-1.5 group-hover:opacity-100'>
                                     <span className='h-px w-1.5 bg-current' />
                                 </span>
 
                                 <ChevronRight className='h-4 w-4 shrink-0 -translate-x-0.5 transition-transform duration-300 ease-out group-hover:translate-x-0' strokeWidth={1.8} />
                             </span>
+
+                            <Bot className='hidden max-[649.9px]:block h-4 w-4' strokeWidth={1.8} aria-hidden='true' />
 
                             <span
                                 aria-hidden='true'
@@ -883,7 +886,7 @@ export default function Home() {
                             target='_blank'
                             rel='noopener noreferrer'
                             aria-label='GitHub Repository'
-                            className='flex h-10 w-10 items-center outline-none justify-center rounded-lg ring-1 ring-zinc-200 bg-white text-zinc-600 transition-all duration-200 hover:ring-zinc-300 hover:text-zinc-900 dark:ring-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:ring-zinc-700 dark:hover:text-zinc-100'
+                            className='flex h-10 w-10 items-center outline-none justify-center rounded-lg ring-1 ring-zinc-200 bg-white text-zinc-600 transition-all duration-200 hover:ring-zinc-300 hover:text-zinc-900 dark:ring-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:ring-zinc-700 dark:hover:text-zinc-100 max-[649.9px]:hidden'
                         >
                             <svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='translate-x-px'>
                                 <path d='M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4' />
@@ -895,10 +898,56 @@ export default function Home() {
                             type='button'
                             aria-label='Toggle Theme'
                             onClick={() => toggleTheme()}
-                            className='flex h-10 w-10 cursor-pointer outline-none items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-zinc-100'
+                            className='flex h-10 w-10 cursor-pointer outline-none items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-zinc-100 max-[649.9px]:hidden'
                         >
                             {theme === 'light' ? <Moon size={18} strokeWidth={1.8} /> : <SunMedium size={18} strokeWidth={1.8} />}
                         </button>
+
+                        <div className='hidden max-[649.9px]:relative max-[649.9px]:block'>
+                            <button
+                                type='button'
+                                aria-label='Open menu'
+                                aria-expanded={isMobileMenuOpen}
+                                onClick={() => setIsMobileMenuOpen((current) => !current)}
+                                className='inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 transition-all duration-200 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400'
+                            >
+                                <Menu className='h-4 w-4' strokeWidth={1.8} />
+                            </button>
+
+                            <AnimatePresence>
+                                {isMobileMenuOpen && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                                        transition={{ duration: 0.16, ease: 'easeOut' }}
+                                        className='absolute right-0 top-[calc(100%+0.5rem)] z-50 flex items-center gap-2 rounded-xl border border-zinc-200 bg-white/95 p-2 shadow-lg backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/95'
+                                    >
+                                        <a
+                                            href='https://github.com/faridhussain/Resume-Analyzer'
+                                            target='_blank'
+                                            rel='noopener noreferrer'
+                                            aria-label='GitHub Repository'
+                                            className='flex h-9 w-9 items-center justify-center rounded-lg text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
+                                        >
+                                            <svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+                                                <path d='M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4' />
+                                                <path d='M9 18c-4.51 2-5-2-7-2' />
+                                            </svg>
+                                        </a>
+
+                                        <button
+                                            type='button'
+                                            aria-label='Toggle Theme'
+                                            onClick={() => toggleTheme()}
+                                            className='flex h-9 w-9 items-center justify-center rounded-lg text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
+                                        >
+                                            {theme === 'light' ? <Moon size={18} strokeWidth={1.8} /> : <SunMedium size={18} strokeWidth={1.8} />}
+                                        </button>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     </div>
                 </div>
             </motion.header>
@@ -908,7 +957,7 @@ export default function Home() {
                 transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                 aria-hidden={isAnalyzing}
             >
-                <div className='relative mx-auto grid h-screen w-full max-w-7xl grid-cols-1 items-center gap-16 px-6 pt-20 min-[1070px]:grid-cols-2 min-[1070px]:gap-10 min-[1070px]:px-8 min-[1070px]:pt-0 max-[1310px]:gap-0 max-[1310px]:px-6 max-[1069.9px]:px-5 max-[1069.9px]:-translate-y-0'>
+                <div className='relative mx-auto grid h-screen w-full max-w-7xl grid-cols-1 items-center gap-16 px-6 pt-20 min-[1070px]:grid-cols-2 min-[1070px]:gap-10 min-[1070px]:px-8 min-[1070px]:pt-0 max-[1310px]:gap-0 max-[1310px]:px-6 max-[1069.9px]:px-5 max-[1069.9px]:translate-y-0'>
                     <div className='flex flex-col justify-center pb-10 min-[1070px]:pb-0 max-[1069.9px]:mx-auto max-[1069.9px]:w-full max-[1069.9px]:max-w-2xl max-[1069.9px]:justify-self-center max-[1069.9px]:text-center'>
                         <h1 className='hidden min-[1070px]:block text-4xl font-semibold leading-[1.08] text-zinc-900 dark:text-white sm:text-5xl lg:text-[3.8rem] max-[1310px]:text-[3.2rem]' style={{ fontFamily: 'Geist, sans-serif' }}>
                             <span className='whitespace-nowrap'>
@@ -930,12 +979,12 @@ export default function Home() {
                             </span>
                         </h1>
 
-                        <h1 className='block text-center text-[3.7rem] font-semibold leading-[1.08] text-zinc-900 dark:text-white min-[1070px]:hidden' style={{ fontFamily: 'Geist, sans-serif' }}>
+                        <h1 className='block text-center text-[3.7rem] font-semibold leading-[1.08] text-zinc-900 dark:text-white max-[649.9px]:text-[3.3rem] min-[1070px]:hidden' style={{ fontFamily: 'Geist, sans-serif' }}>
                             <span className='block whitespace-nowrap'>
                                 Better <span className='text-zinc-400 italic dark:text-zinc-500'>{mobileHeadlineText}</span>
                             </span>
                         </h1>
-                        <p className='mt-4 max-w-122.5 text-[17px] leading-7 text-zinc-500 dark:text-zinc-400 max-[1310px]:text-[16px] max-[1310px]:leading-6 max-[1069.9px]:mx-auto max-[1069.9px]:max-w-[600px] max-[1069.9px]:text-[17px] max-[1069.9px]:leading-7 max-[1069.9px]:tracking-[0.01em] max-[1069.9px]:text-center'>
+                        <p className='mt-4 max-w-122.5 text-[17px] leading-7 text-zinc-500 dark:text-zinc-400 max-[1310px]:text-[16px] max-[1310px]:leading-6 max-[1069.9px]:mx-auto max-[1069.9px]:max-w-150 max-[1069.9px]:text-[17px] max-[1069.9px]:leading-7 max-[1069.9px]:tracking-[0.01em] max-[1069.9px]:text-center max-[649.9px]:text-[15.5px]'>
                             Upload your resume to receive an ATS score, recruiter feedback, and AI-powered recommendations that help you stand out before you apply.
                         </p>
                         <div
@@ -1086,18 +1135,18 @@ export default function Home() {
                                 </div>
                             </div>
                         </div>
-                        <div className='mt-6 pl-1 flex flex-nowrap items-center justify-center gap-x-3 max-[1150px]:gap-x-2 max-[1069.9px]:gap-x-4 whitespace-nowrap text-[13px] font-medium text-zinc-600 dark:text-zinc-400 max-[1069.9px]:text-[14px]'>
-                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[12px] max-[1069.9px]:text-[14px]'>
+                        <div className='mt-6 pl-1 flex flex-nowrap items-center justify-center gap-x-3 max-[1150px]:gap-x-2 max-[1069.9px]:gap-x-4 whitespace-nowrap text-[13px] font-medium text-zinc-600 dark:text-zinc-400 max-[1069.9px]:text-[14px] max-[649.9px]:text-[12.5px]'>
+                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[12px] max-[1069.9px]:text-[14px] max-[649.9px]:text-[12.5px]'>
                                 <ShieldCheck className='h-4 w-4 max-[1150px]:h-3.5 max-[1150px]:w-3.5 text-zinc-500 dark:text-zinc-400' />
                                 Private by default
                             </span>
                             <span className='hidden h-4 w-px bg-zinc-200 dark:bg-zinc-800 sm:block' />
-                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[12px] max-[1069.9px]:text-[14px]'>
+                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[12px] max-[1069.9px]:text-[14px] max-[649.9px]:text-[12.5px]'>
                                 <Gauge className='h-4 w-4 max-[1150px]:h-3.5 max-[1150px]:w-3.5 text-zinc-500 dark:text-zinc-400' />
                                 ATS-aware analysis
                             </span>
                             <span className='hidden h-4 w-px bg-zinc-200 dark:bg-zinc-800 sm:block max-[1169px]:hidden' />
-                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[12px] max-[1069.9px]:text-[14px]'>
+                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[12px] max-[1069.9px]:text-[14px] max-[649.9px]:text-[12.5px]'>
                                 <CheckCircle2 className='h-4 w-4 max-[1150px]:h-3.5 max-[1150px]:w-3.5 text-zinc-500 dark:text-zinc-400' />
                                 Recruiter-focused feedback
                             </span>
