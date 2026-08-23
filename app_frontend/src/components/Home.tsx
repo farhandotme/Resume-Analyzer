@@ -855,8 +855,8 @@ export default function Home() {
                 transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                 aria-hidden={isAnalyzing}
             >
-                <div className='relative mx-auto grid h-screen w-full max-w-7xl grid-cols-1 items-center gap-16 px-6 pt-20 lg:grid-cols-2 lg:gap-10 lg:px-8 lg:pt-0 max-[1310px]:gap-0 max-[1310px]:px-6 max-[1023px]:px-5'>
-                    <div className='flex flex-col justify-center pb-10 lg:pb-0 max-[1023px]:mx-auto max-[1023px]:w-full max-[1023px]:max-w-2xl max-[1023px]:text-center'>
+                <div className='relative mx-auto grid h-screen w-full max-w-7xl grid-cols-1 items-center gap-16 px-6 pt-20 min-[1070px]:grid-cols-2 lg:gap-10 lg:px-8 lg:pt-0 max-[1310px]:gap-0 max-[1310px]:px-6 max-[1069.9px]:px-5'>
+                    <div className='flex flex-col justify-center pb-10 min-[1070px]:pb-0 max-[1069.9px]:mx-auto max-[1069.9px]:w-full max-[1069.9px]:max-w-2xl max-[1069.9px]:text-center'>
                         <h1 className='text-4xl font-semibold leading-[1.08] text-zinc-900 dark:text-white sm:text-5xl lg:text-[3.8rem] max-[1310px]:text-[3.2rem]' style={{ fontFamily: 'Geist, sans-serif' }}>
                             <span className='whitespace-nowrap'>
                                 Better{' '}
@@ -883,7 +883,7 @@ export default function Home() {
                                     fileInputRef.current?.click();
                                 }
                             }}
-                            className={`group relative mt-6 flex min-h-55 select-none max-[1310px]:min-h-48 max-[1023px]:mx-auto max-[1023px]:w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed text-center transition-all duration-200 ${
+                            className={`group relative mt-6 flex min-h-55 select-none max-[1310px]:min-h-48 max-[1069.9px]:mx-auto max-[1069.9px]:w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed text-center transition-all duration-200 ${
                                 selectedFile
                                     ? 'cursor-default border-zinc-200 bg-white/50 dark:border-zinc-800 dark:bg-zinc-900/40'
                                     : isDragging
@@ -1042,7 +1042,7 @@ export default function Home() {
                             </span>
                         </div>
                     </div>
-                    <div className='relative flex items-center justify-center lg:justify-end max-[1310px]:justify-center max-[1069px]:hidden'>
+                    <div className='relative flex items-center justify-center lg:justify-end max-[1310px]:justify-center max-[1069.9px]:hidden'>
                         <div className='relative w-full max-w-md max-[1310px]:max-w-105'>
                             <div className='absolute -inset-10 -z-10 rounded-full bg-zinc-100 dark:bg-zinc-800/30 blur-3xl' />
                             <div className='relative overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl shadow-zinc-200/60 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/50'>
