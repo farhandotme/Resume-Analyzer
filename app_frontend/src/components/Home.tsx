@@ -123,6 +123,7 @@ export default function Home() {
     const lensCloneRef = useRef<HTMLDivElement>(null);
     const finishFlashRef = useRef<HTMLDivElement>(null);
     const calloutRef = useRef<HTMLDivElement>(null);
+    const scanLineRef = useRef<HTMLDivElement>(null);
 
     const headlinePhrases = ['resume.', 'interviews.', 'career.'];
     const analysisSteps = ['Reading your resume', 'Understanding your experience', 'Matching your target role', 'Building your analysis'];
@@ -309,6 +310,7 @@ export default function Home() {
 
         let loopTl: gsap.core.Timeline | null = null;
         let breatheTween: gsap.core.Tween | null = null;
+        let scanTween: gsap.core.Timeline | null = null;
 
         if (analysisStep === 0) {
             const viewportRect = viewport.getBoundingClientRect();
@@ -342,12 +344,28 @@ export default function Home() {
             loopTl = gsap.timeline();
             loopTl.to(lens, { opacity: 0, scale: 0.85, duration: 0.5, ease: 'power2.in' });
             breatheTween = gsap.to(stage, { scale: 1.015, duration: 2.6, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: 0.5 });
+
+            if (scanLineRef.current) {
+                const viewportRect = viewport.getBoundingClientRect();
+                const scanHeight = viewportRect.height;
+                const glowHalf = 2;
+                const minTop = glowHalf;
+                const maxTop = Math.max(scanHeight - glowHalf, minTop);
+
+                gsap.set(scanLineRef.current, { top: minTop, opacity: 0 });
+
+                scanTween = gsap.timeline({ delay: 0.7, repeat: -1, repeatDelay: 0.6 });
+                scanTween.fromTo(scanLineRef.current, { top: minTop, opacity: 0 }, { opacity: 1, duration: 0.45, ease: 'power1.out' }, 0);
+                scanTween.to(scanLineRef.current, { top: maxTop, duration: 3.3, ease: 'sine.inOut' }, 0);
+                scanTween.to(scanLineRef.current, { opacity: 0, duration: 0.35, ease: 'power1.in' }, 3.15);
+            }
         }
 
         return () => {
             loopTl?.kill();
             breatheTween?.kill();
-            gsap.killTweensOf([lens, clone, stage, calloutRef.current]);
+            scanTween?.kill();
+            gsap.killTweensOf([lens, clone, stage, calloutRef.current, scanLineRef.current]);
         };
     }, [analysisStep, isAnalyzing, prefersReducedMotion]);
 
@@ -357,10 +375,13 @@ export default function Home() {
         const stage = resumeStageRef.current;
         const lens = lensRef.current;
         const flash = finishFlashRef.current;
+        const scanLine = scanLineRef.current;
         if (!stage || !flash) return;
 
         gsap.killTweensOf(stage);
+        gsap.killTweensOf(scanLine);
         if (lens) gsap.to(lens, { opacity: 0, duration: 0.3, ease: 'power2.out' });
+        if (scanLine) gsap.to(scanLine, { opacity: 0, duration: 0.3, ease: 'power2.out' });
         gsap.to(stage, { scale: 1.02, duration: 0.4, ease: 'power2.out', yoyo: true, repeat: 1 });
         gsap.fromTo(flash, { opacity: 0 }, { opacity: 1, duration: 0.35, ease: 'power2.out', yoyo: true, repeat: 1 });
     }, [isComplete, prefersReducedMotion]);
@@ -669,6 +690,14 @@ export default function Home() {
 
                                         <div ref={resumeStageRef} className='relative h-full w-full px-5 pb-8 pt-6 will-change-transform'>
                                             <ResumeDocument refs={{ nameRef, experienceBlockRef, experienceHeadingRef, projectsHeadingRef, educationHeadingRef, skillsHeadingRef }} />
+                                        </div>
+
+                                        <div ref={scanLineRef} className='pointer-events-none absolute inset-x-0 z-15 opacity-0' style={{ top: 0 }}>
+                                            <div
+                                                className={`h-px w-full -translate-y-1/2 bg-linear-to-r ${
+                                                    theme === 'dark' ? 'from-transparent via-zinc-300/75 to-transparent shadow-[0_0_6px_1px_rgba(161,161,170,0.4)]' : 'from-transparent via-zinc-500/75 to-transparent shadow-[0_0_5px_1px_rgba(113,113,122,0.3)]'
+                                                }`}
+                                            />
                                         </div>
 
                                         <div ref={finishFlashRef} className={`pointer-events-none absolute inset-0 z-25 opacity-0 ${theme === 'dark' ? 'bg-white/10' : 'bg-black/5'}`} />
