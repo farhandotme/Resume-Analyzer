@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
-import { AlertCircle, ArrowDown, ArrowLeft, ArrowUp, Check, Copy, Edit3, FileText, Mic, Moon, Sparkles, Square, SquarePen, SunMedium, Volume2, X } from 'lucide-react';
+import { AlertCircle, ArrowDown, ArrowLeft, ArrowUp, Check, Copy, Edit3, FileText, Mic, Moon, Square, SquarePen, SunMedium, Volume2, X } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useBlocker, useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme.ts';
@@ -71,12 +71,6 @@ type StoredChat = {
 
 const getStoredChat = (): StoredChat | null => {
     try {
-        if (sessionStorage.getItem('resume-analyzer-discard-on-return') === '1') {
-            sessionStorage.removeItem('resume-analyzer-discard-on-return');
-            sessionStorage.removeItem(CHAT_STORAGE_KEY);
-            return null;
-        }
-
         const stored = sessionStorage.getItem(CHAT_STORAGE_KEY);
         if (!stored) return null;
 
@@ -285,21 +279,6 @@ export default function Chat() {
         if (isLeavingChatRef.current) return false;
         return Boolean(selectedFile && messages.length > 0) && currentLocation.pathname !== nextLocation.pathname;
     });
-
-    useEffect(() => {
-        const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-            if (!selectedFile || messages.length === 0) return;
-            sessionStorage.setItem('resume-analyzer-discard-on-return', '1');
-            event.preventDefault();
-            event.returnValue = '';
-        };
-
-        window.addEventListener('beforeunload', handleBeforeUnload);
-
-        return () => {
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-        };
-    }, [selectedFile, messages.length]);
 
     useEffect(() => {
         if (blocker.state === 'blocked') {
@@ -806,11 +785,7 @@ export default function Chat() {
         const composerStyle = window.getComputedStyle(composer);
         const paddingLeft = Number.parseFloat(composerStyle.paddingLeft) || 0;
         const paddingRight = Number.parseFloat(composerStyle.paddingRight) || 0;
-        const actionButtons = Array.from(actions.querySelectorAll('button'));
-        const actionGap = Number.parseFloat(window.getComputedStyle(actions).gap) || 0;
-        const actionWidth = actionButtons.reduce((total, button) => total + button.getBoundingClientRect().width, 0) + Math.max(actionButtons.length - 1, 0) * actionGap;
-
-        const availableSingleLineWidth = Math.max(composer.clientWidth - paddingLeft - paddingRight - actionWidth - 8, 0);
+        const availableSingleLineWidth = Math.max(composer.clientWidth - actions.offsetWidth - paddingLeft - paddingRight - 8, 0);
 
         const hasExplicitLineBreak = textarea.value.includes('\n');
         const shouldStack = hasExplicitLineBreak || textWidth >= availableSingleLineWidth - 12;
@@ -1383,33 +1358,18 @@ export default function Chat() {
                                                 animate={prefersReducedMotion ? {} : { rotate: 360 }}
                                                 transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
                                                 className={`absolute -inset-full transition-opacity duration-500 ${isAnalyzingResume ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-                                                style={{
-                                                    background:
-                                                        theme === 'light'
-                                                            ? 'conic-gradient(from 0deg, transparent 72%, rgba(82,82,91,0.88) 84%, rgba(39,39,42,0.72) 87%, transparent 98%)'
-                                                            : 'conic-gradient(from 0deg, transparent 72%, rgba(161,161,170,0.9) 84%, rgba(113,113,122,0.72) 87%, transparent 98%)',
-                                                }}
+                                                style={{ background: 'conic-gradient(from 0deg, transparent 70%, rgba(161,161,170,0.9) 85%, transparent 100%)' }}
                                             />
 
                                             <motion.div
                                                 animate={prefersReducedMotion ? {} : { rotate: -360 }}
                                                 transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
                                                 className={`absolute -inset-full transition-opacity duration-500 ${isAnalyzingResume ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-                                                style={{
-                                                    background:
-                                                        theme === 'light'
-                                                            ? 'conic-gradient(from 0deg, transparent 40%, rgba(113,113,122,0.7) 50%, rgba(63,63,70,0.58) 53%, transparent 61%)'
-                                                            : 'conic-gradient(from 0deg, transparent 40%, rgba(228,228,231,0.62) 50%, rgba(161,161,170,0.5) 53%, transparent 61%)',
-                                                }}
+                                                style={{ background: 'conic-gradient(from 0deg, transparent 40%, rgba(228,228,231,0.6) 50%, transparent 60%)' }}
                                             />
 
                                             <div className={`relative flex min-h-55 flex-col items-center justify-center overflow-hidden rounded-[calc(1.5rem-1px)] px-5 py-6 transition-colors duration-300 sm:px-8 ${isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'}`}>
-                                                <div
-                                                    aria-hidden='true'
-                                                    className={`pointer-events-none absolute inset-0 bg-size-[16px_16px] transition-opacity duration-500 ${isAnalyzingResume || isDragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} ${
-                                                        theme === 'light' ? 'bg-[radial-gradient(rgba(0,0,0,0.045)_1px,transparent_1px)]' : 'bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)]'
-                                                    }`}
-                                                />
+                                                <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(0,0,0,0.04)_1px,transparent_1px)] bg-size-[16px_16px] opacity-0 transition-opacity duration-500 group-hover:opacity-100 dark:bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)]' />
 
                                                 <div className='relative z-20 flex flex-col items-center'>
                                                     <div className='relative flex items-center justify-center'>
@@ -1649,16 +1609,15 @@ export default function Chat() {
 
                                             {isSending && (
                                                 <div className='mt-8 flex justify-start'>
-                                                    <div className='flex items-start gap-4'>
-                                                        <div className='mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-200/60 bg-linear-to-b from-zinc-50 to-zinc-100 text-zinc-600 shadow-sm dark:border-zinc-800/60 dark:from-zinc-900 dark:to-zinc-950 dark:text-zinc-300'>
-                                                            <Sparkles className='h-4 w-4' strokeWidth={1.5} />
-                                                        </div>
-
-                                                        <div className='flex h-9.5 items-center gap-1.5 px-2 text-zinc-400 dark:text-zinc-600'>
-                                                            <span className='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 dark:bg-zinc-500' style={{ animationDelay: '0ms' }} />
-                                                            <span className='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 dark:bg-zinc-500' style={{ animationDelay: '150ms' }} />
-                                                            <span className='h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 dark:bg-zinc-500' style={{ animationDelay: '300ms' }} />
-                                                        </div>
+                                                    <div className='flex h-9.5 items-center gap-1.5 px-2'>
+                                                        {[0, 1, 2].map((index) => (
+                                                            <motion.span
+                                                                key={index}
+                                                                className='h-1.75 w-1.75 rounded-full bg-zinc-400 dark:bg-zinc-500'
+                                                                animate={{ y: [0, -2.5, 0], opacity: [0.45, 1, 0.45], scale: [0.9, 1.12, 0.9] }}
+                                                                transition={{ duration: 1.05, repeat: Infinity, ease: [0.4, 0, 0.2, 1], delay: index * 0.14 }}
+                                                            />
+                                                        ))}
                                                     </div>
                                                 </div>
                                             )}
@@ -1759,7 +1718,7 @@ export default function Chat() {
                                                     animate={{ opacity: 1, y: 0 }}
                                                     exit={{ opacity: 0, y: 4 }}
                                                     transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                                                    className={`relative flex min-h-7 items-center pl-1.5 ${isComposerMultiline ? 'w-full flex-none' : 'min-w-0 flex-1'}`}
+                                                    className={`relative flex min-h-7 items-center pl-3 ${isComposerMultiline ? 'w-full flex-none' : 'min-w-0 flex-1'}`}
                                                 >
                                                     <div className='relative w-full'>
                                                         {!input && messages.length === 1 && (
@@ -1776,7 +1735,7 @@ export default function Chat() {
                                                             onKeyDown={handleKeyDown}
                                                             rows={1}
                                                             placeholder={messages.length > 1 ? 'Ask anything about your resume...' : ''}
-                                                            className='chat-composer-scrollbar select-none relative z-10 block max-h-40 min-h-7 w-full translate-y-0.5 resize-none overflow-y-auto bg-transparent p-0 text-[16px] font-normal leading-5.75 text-zinc-900 outline-none placeholder:font-normal placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-600 disabled:cursor-not-allowed disabled:opacity-60'
+                                                            className='chat-composer-scrollbar relative z-10 block max-h-40 min-h-7 w-full translate-y-0.5 resize-none overflow-y-auto bg-transparent p-0 text-[16px] font-normal leading-5.75 text-zinc-900 outline-none placeholder:font-normal placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-600 disabled:cursor-not-allowed disabled:opacity-60'
                                                             disabled={editingMessageId !== null}
                                                         />
                                                     </div>
