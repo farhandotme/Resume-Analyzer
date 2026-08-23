@@ -13,7 +13,8 @@ const savedTheme = localStorage.getItem('theme');
 if (savedTheme === 'light' || savedTheme === 'dark') {
     document.documentElement.classList.add(savedTheme);
 } else {
-    document.documentElement.classList.add('light');
+    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.classList.add(systemTheme);
 }
 
 const router = createBrowserRouter([

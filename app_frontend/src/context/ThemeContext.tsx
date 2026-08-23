@@ -500,10 +500,12 @@ export const createAnimation = (variant: AnimationVariant, start: AnimationStart
 export function ThemeProvider({ children }: ThemeProviderProps) {
     const [theme, setTheme] = useState<Theme>(() => {
         const savedTheme = localStorage.getItem('theme');
+
         if (savedTheme === 'light' || savedTheme === 'dark') {
             return savedTheme;
         }
-        return 'light';
+
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     });
 
     const [animationVariant, setAnimationVariant] = useState<AnimationVariant>('circle-blur');
