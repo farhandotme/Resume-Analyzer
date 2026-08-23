@@ -105,6 +105,7 @@ export default function Home() {
     const [messageIndex, setMessageIndex] = useState(0);
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [headlineIndex, setHeadlineIndex] = useState(0);
+    const [mobileHeadlineText, setMobileHeadlineText] = useState('resume.');
     const navigate = useNavigate();
     const prefersReducedMotion = Boolean(useReducedMotion());
     const overlayRef = useRef<HTMLDivElement>(null);
@@ -123,6 +124,7 @@ export default function Home() {
     const lensCloneRef = useRef<HTMLDivElement>(null);
     const finishFlashRef = useRef<HTMLDivElement>(null);
     const calloutRef = useRef<HTMLDivElement>(null);
+    const scanLineRef = useRef<HTMLDivElement>(null);
 
     const headlinePhrases = ['resume.', 'interviews.', 'career.'];
     const analysisSteps = ['Reading your resume', 'Understanding your experience', 'Matching your target role', 'Building your analysis'];
@@ -167,6 +169,58 @@ export default function Home() {
         }, 3200);
 
         return () => window.clearInterval(interval);
+    }, []);
+
+    useEffect(() => {
+        const words = ['resume.', 'interviews.', 'career.'];
+        let wordIndex = 0;
+        let charIndex = 1;
+        let deleting = false;
+        let timeoutId: number | null = null;
+        let cancelled = false;
+
+        setMobileHeadlineText(words[0].slice(0, 1));
+
+        const tick = () => {
+            if (cancelled) return;
+
+            const word = words[wordIndex];
+
+            if (!deleting) {
+                if (charIndex < word.length) {
+                    charIndex += 1;
+                    setMobileHeadlineText(word.slice(0, charIndex));
+                    timeoutId = window.setTimeout(tick, 85);
+                    return;
+                }
+
+                deleting = true;
+                timeoutId = window.setTimeout(tick, 1500);
+                return;
+            }
+
+            if (charIndex > 1) {
+                charIndex -= 1;
+                setMobileHeadlineText(word.slice(0, charIndex));
+                timeoutId = window.setTimeout(tick, 85);
+                return;
+            }
+
+            wordIndex = (wordIndex + 1) % words.length;
+            charIndex = 1;
+            deleting = false;
+            setMobileHeadlineText(words[wordIndex].slice(0, 1));
+            timeoutId = window.setTimeout(tick, 120);
+        };
+
+        timeoutId = window.setTimeout(tick, 85);
+
+        return () => {
+            cancelled = true;
+            if (timeoutId !== null) {
+                window.clearTimeout(timeoutId);
+            }
+        };
     }, []);
 
     useEffect(() => {
@@ -309,6 +363,7 @@ export default function Home() {
 
         let loopTl: gsap.core.Timeline | null = null;
         let breatheTween: gsap.core.Tween | null = null;
+        let scanTween: gsap.core.Timeline | null = null;
 
         if (analysisStep === 0) {
             const viewportRect = viewport.getBoundingClientRect();
@@ -342,12 +397,28 @@ export default function Home() {
             loopTl = gsap.timeline();
             loopTl.to(lens, { opacity: 0, scale: 0.85, duration: 0.5, ease: 'power2.in' });
             breatheTween = gsap.to(stage, { scale: 1.015, duration: 2.6, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: 0.5 });
+
+            if (scanLineRef.current) {
+                const viewportRect = viewport.getBoundingClientRect();
+                const scanHeight = viewportRect.height;
+                const glowHalf = 2;
+                const minTop = glowHalf;
+                const maxTop = Math.max(scanHeight - glowHalf, minTop);
+
+                gsap.set(scanLineRef.current, { top: minTop, opacity: 0 });
+
+                scanTween = gsap.timeline({ delay: 0.7, repeat: -1, repeatDelay: 0.6 });
+                scanTween.fromTo(scanLineRef.current, { top: minTop, opacity: 0 }, { opacity: 1, duration: 0.45, ease: 'power1.out' }, 0);
+                scanTween.to(scanLineRef.current, { top: maxTop, duration: 3.3, ease: 'sine.inOut' }, 0);
+                scanTween.to(scanLineRef.current, { opacity: 0, duration: 0.35, ease: 'power1.in' }, 3.15);
+            }
         }
 
         return () => {
             loopTl?.kill();
             breatheTween?.kill();
-            gsap.killTweensOf([lens, clone, stage, calloutRef.current]);
+            scanTween?.kill();
+            gsap.killTweensOf([lens, clone, stage, calloutRef.current, scanLineRef.current]);
         };
     }, [analysisStep, isAnalyzing, prefersReducedMotion]);
 
@@ -357,10 +428,13 @@ export default function Home() {
         const stage = resumeStageRef.current;
         const lens = lensRef.current;
         const flash = finishFlashRef.current;
+        const scanLine = scanLineRef.current;
         if (!stage || !flash) return;
 
         gsap.killTweensOf(stage);
+        gsap.killTweensOf(scanLine);
         if (lens) gsap.to(lens, { opacity: 0, duration: 0.3, ease: 'power2.out' });
+        if (scanLine) gsap.to(scanLine, { opacity: 0, duration: 0.3, ease: 'power2.out' });
         gsap.to(stage, { scale: 1.02, duration: 0.4, ease: 'power2.out', yoyo: true, repeat: 1 });
         gsap.fromTo(flash, { opacity: 0 }, { opacity: 1, duration: 0.35, ease: 'power2.out', yoyo: true, repeat: 1 });
     }, [isComplete, prefersReducedMotion]);
@@ -547,12 +621,44 @@ export default function Home() {
 
     return (
         <div
-            className='h-screen w-full overflow-hidden bg-white text-zinc-900 selection:bg-[#EAF5FF] selection:text-[#3999FF] dark:bg-black dark:text-zinc-100 dark:selection:bg-[#010B1B] dark:selection:text-[#3999FF] antialiased'
+            className='relative h-screen w-full overflow-hidden bg-white text-zinc-900 selection:bg-[#EAF5FF] selection:text-[#3999FF] dark:bg-black dark:text-zinc-100 dark:selection:bg-[#010B1B] dark:selection:text-[#3999FF] antialiased'
             onDragEnter={!selectedFile && !isAnalyzing ? handleDragEnter : undefined}
             onDragOver={!selectedFile && !isAnalyzing ? handleDragOver : undefined}
             onDragLeave={!selectedFile && !isAnalyzing ? handleDragLeave : undefined}
             onDrop={!selectedFile && !isAnalyzing ? handleDrop : undefined}
         >
+            <div aria-hidden='true' className={`pointer-events-none absolute inset-0 z-0 select-none overflow-hidden transition-opacity duration-300 ${isAnalyzing ? 'opacity-0' : 'opacity-100'}`}>
+                <div
+                    className='absolute inset-0 opacity-[0.08] dark:opacity-[0.08]'
+                    style={{
+                        backgroundImage: theme === 'dark' ? 'radial-gradient(circle at 1px 1px, rgba(255,255,255,1) 1px, transparent 0)' : 'radial-gradient(circle at 1px 1px, rgba(0,0,0,1) 1px, transparent 0)',
+                        backgroundSize: '34px 34px',
+                    }}
+                />
+                <div
+                    className='absolute left-1/2 top-[6%] h-125 w-125 -translate-x-1/2 rounded-full'
+                    style={{
+                        background: theme === 'dark' ? 'radial-gradient(circle, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 35%, transparent 70%)' : 'radial-gradient(circle, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.022) 35%, transparent 70%)',
+                        filter: 'blur(50px)',
+                    }}
+                />
+                <div
+                    className='absolute inset-0'
+                    style={{
+                        background: theme === 'dark' ? 'radial-gradient(ellipse 90% 70% at 50% 0%, transparent 0%, rgba(0,0,0,0.45) 65%, rgba(0,0,0,0.92) 100%)' : 'radial-gradient(ellipse 90% 70% at 50% 0%, transparent 0%, rgba(255,255,255,0.3) 65%, rgba(255,255,255,0.84) 100%)',
+                    }}
+                />
+                <div
+                    className='absolute inset-0'
+                    style={{
+                        backgroundImage:
+                            'url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27240%27%20height=%27240%27%20viewBox=%270%200%20240%20240%27%3E%3Cfilter%20id=%27n%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%270.9%27%20numOctaves=%272%27%20stitchTiles=%27stitch%27/%3E%3C/filter%3E%3Crect%20width=%27100%25%27%20height=%27100%25%27%20filter=%27url(%23n)%27/%3E%3C/svg%3E)',
+                        opacity: theme === 'dark' ? 0.045 : 0.025,
+                        mixBlendMode: 'overlay',
+                    }}
+                />
+            </div>
+
             <AnimatePresence mode='wait'>
                 {isAnalyzing && (
                     <motion.div
@@ -568,13 +674,33 @@ export default function Home() {
                     >
                         <div data-gsap='status' className='absolute left-6 top-6 z-20 flex items-center gap-2'>
                             <span className='h-1.5 w-1.5 rounded-full bg-zinc-500 dark:bg-zinc-400' />
-                            <span className='font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400'>Resume Analysis</span>
+                            <span className='font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400'>Resume Intelligence</span>
                         </div>
 
                         <style>{`
                             @keyframes pedestal-glow {
                                 0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.55; }
                                 50%      { transform: translate(-50%, -50%) scale(1.12); opacity: 0.85; }
+                            }
+
+                            @keyframes analysis-ambient-glow {
+                                0%, 100% {
+                                    transform: translate(-50%, -50%) scale(0.94);
+                                    opacity: 0.42;
+                                }
+                                50% {
+                                    transform: translate(-50%, -50%) scale(1.06);
+                                    opacity: 0.72;
+                                }
+                            }
+
+                            @keyframes analysis-ambient-drift {
+                                0%, 100% {
+                                    transform: translate3d(-50%, -50%, 0) scale(1);
+                                }
+                                50% {
+                                    transform: translate3d(-48%, -52%, 0) scale(1.08);
+                                }
                             }
                         `}</style>
 
@@ -585,6 +711,27 @@ export default function Home() {
                                 style={{
                                     backgroundImage: theme === 'dark' ? 'radial-gradient(circle at 1px 1px, rgba(255,255,255,1) 1px, transparent 0)' : 'radial-gradient(circle at 1px 1px, rgba(0,0,0,1) 1px, transparent 0)',
                                     backgroundSize: '32px 32px',
+                                }}
+                            />
+
+                            <div
+                                aria-hidden='true'
+                                className='absolute left-1/2 top-[40%] h-150 w-150 rounded-full'
+                                style={{
+                                    background:
+                                        theme === 'dark' ? 'radial-gradient(circle, rgba(255,255,255,0.11) 0%, rgba(255,255,255,0.055) 24%, rgba(255,255,255,0.018) 46%, transparent 72%)' : 'radial-gradient(circle, rgba(0,0,0,0.055) 0%, rgba(0,0,0,0.028) 24%, rgba(0,0,0,0.01) 46%, transparent 72%)',
+                                    filter: 'blur(38px)',
+                                    animation: prefersReducedMotion ? undefined : 'analysis-ambient-glow 7s ease-in-out infinite',
+                                }}
+                            />
+
+                            <div
+                                aria-hidden='true'
+                                className='absolute left-[52%] top-[32%] h-100 w-175 rounded-full'
+                                style={{
+                                    background: theme === 'dark' ? 'radial-gradient(ellipse at center, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 38%, transparent 72%)' : 'radial-gradient(ellipse at center, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.012) 38%, transparent 72%)',
+                                    filter: 'blur(55px)',
+                                    animation: prefersReducedMotion ? undefined : 'analysis-ambient-drift 11s ease-in-out infinite',
                                 }}
                             />
 
@@ -628,6 +775,14 @@ export default function Home() {
 
                                         <div ref={resumeStageRef} className='relative h-full w-full px-5 pb-8 pt-6 will-change-transform'>
                                             <ResumeDocument refs={{ nameRef, experienceBlockRef, experienceHeadingRef, projectsHeadingRef, educationHeadingRef, skillsHeadingRef }} />
+                                        </div>
+
+                                        <div ref={scanLineRef} className='pointer-events-none absolute inset-x-0 z-15 opacity-0' style={{ top: 0 }}>
+                                            <div
+                                                className={`h-px w-full -translate-y-1/2 bg-linear-to-r ${
+                                                    theme === 'dark' ? 'from-transparent via-zinc-300/75 to-transparent shadow-[0_0_6px_1px_rgba(161,161,170,0.4)]' : 'from-transparent via-zinc-500/75 to-transparent shadow-[0_0_5px_1px_rgba(113,113,122,0.3)]'
+                                                }`}
+                                            />
                                         </div>
 
                                         <div ref={finishFlashRef} className={`pointer-events-none absolute inset-0 z-25 opacity-0 ${theme === 'dark' ? 'bg-white/10' : 'bg-black/5'}`} />
@@ -682,11 +837,11 @@ export default function Home() {
 
                         <div data-gsap='footer' className='absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-500'>
                             {isComplete ? (
-                                <span className='text-zinc-700 dark:text-zinc-200'>Analysis complete</span>
+                                <span className='text-zinc-700 dark:text-zinc-200'>analysis complete</span>
                             ) : (
                                 <>
                                     <Loader2 className='h-3.5 w-3.5 animate-spin text-zinc-400 dark:text-zinc-500' />
-                                    <span className='text-zinc-500 dark:text-zinc-400'>Analyzing · {elapsedSeconds}s</span>
+                                    <span className='text-zinc-500 dark:text-zinc-400'>analyzing · {elapsedSeconds}s</span>
                                 </>
                             )}
                         </div>
@@ -753,9 +908,9 @@ export default function Home() {
                 transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                 aria-hidden={isAnalyzing}
             >
-                <div className='relative mx-auto grid h-screen w-full max-w-7xl grid-cols-1 items-center gap-16 px-6 pt-20 lg:grid-cols-2 lg:gap-10 lg:px-8 lg:pt-0'>
-                    <div className='flex flex-col justify-center pb-10 lg:pb-0'>
-                        <h1 className='text-4xl font-semibold leading-[1.08] text-zinc-900 dark:text-white sm:text-5xl lg:text-[3.8rem]' style={{ fontFamily: 'Geist, sans-serif' }}>
+                <div className='relative mx-auto grid h-screen w-full max-w-7xl grid-cols-1 items-center gap-16 px-6 pt-20 min-[1070px]:grid-cols-2 min-[1070px]:gap-10 min-[1070px]:px-8 min-[1070px]:pt-0 max-[1310px]:gap-0 max-[1310px]:px-6 max-[1069.9px]:px-5 max-[1069.9px]:-translate-y-0'>
+                    <div className='flex flex-col justify-center pb-10 min-[1070px]:pb-0 max-[1069.9px]:mx-auto max-[1069.9px]:w-full max-[1069.9px]:max-w-2xl max-[1069.9px]:justify-self-center max-[1069.9px]:text-center'>
+                        <h1 className='hidden min-[1070px]:block text-4xl font-semibold leading-[1.08] text-zinc-900 dark:text-white sm:text-5xl lg:text-[3.8rem] max-[1310px]:text-[3.2rem]' style={{ fontFamily: 'Geist, sans-serif' }}>
                             <span className='whitespace-nowrap'>
                                 Better{' '}
                                 <span className='relative inline-block h-[1.08em] min-w-[10ch] overflow-hidden align-bottom whitespace-nowrap'>
@@ -774,14 +929,22 @@ export default function Home() {
                                 </span>
                             </span>
                         </h1>
-                        <p className='mt-4 max-w-122.5 text-[17px] leading-7 text-zinc-500 dark:text-zinc-400'>Upload your resume to receive an ATS score, recruiter feedback, and AI-powered recommendations that help you stand out before you apply.</p>
+
+                        <h1 className='block text-center text-[3.7rem] font-semibold leading-[1.08] text-zinc-900 dark:text-white min-[1070px]:hidden' style={{ fontFamily: 'Geist, sans-serif' }}>
+                            <span className='block whitespace-nowrap'>
+                                Better <span className='text-zinc-400 italic dark:text-zinc-500'>{mobileHeadlineText}</span>
+                            </span>
+                        </h1>
+                        <p className='mt-4 max-w-122.5 text-[17px] leading-7 text-zinc-500 dark:text-zinc-400 max-[1310px]:text-[16px] max-[1310px]:leading-6 max-[1069.9px]:mx-auto max-[1069.9px]:max-w-[600px] max-[1069.9px]:text-[17px] max-[1069.9px]:leading-7 max-[1069.9px]:tracking-[0.01em] max-[1069.9px]:text-center'>
+                            Upload your resume to receive an ATS score, recruiter feedback, and AI-powered recommendations that help you stand out before you apply.
+                        </p>
                         <div
                             onClick={() => {
                                 if (!selectedFile) {
                                     fileInputRef.current?.click();
                                 }
                             }}
-                            className={`group relative mt-6 flex min-h-55 select-none flex-col items-center justify-center rounded-2xl border-2 border-dashed text-center transition-all duration-200 ${
+                            className={`group relative mt-6 flex min-h-55 select-none max-[1310px]:min-h-48 max-[1069.9px]:mx-auto max-[1069.9px]:w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed text-center transition-all duration-200 ${
                                 selectedFile
                                     ? 'cursor-default border-zinc-200 bg-white/50 dark:border-zinc-800 dark:bg-zinc-900/40'
                                     : isDragging
@@ -817,7 +980,9 @@ export default function Home() {
                                 </div>
                             )}
 
-                            <div className={`relative z-10 flex min-h-55 w-full flex-col items-center justify-center rounded-[calc(1rem-2px)] px-8 py-7 transition-colors duration-300 ${isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'}`}>
+                            <div
+                                className={`relative z-10 flex min-h-55 w-full flex-col max-[1310px]:min-h-48 items-center justify-center rounded-[calc(1rem-2px)] px-8 py-7 transition-colors max-[1310px]:px-6 max-[1310px]:py-6 duration-300 ${isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'}`}
+                            >
                                 <div
                                     aria-hidden='true'
                                     className={`pointer-events-none absolute inset-0 z-0 bg-size-[16px_16px] transition-opacity duration-500 ${isDragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} ${
@@ -836,11 +1001,11 @@ export default function Home() {
                                     className='hidden'
                                 />
                                 <div
-                                    className={`relative z-20 flex h-14 w-14 shrink-0 items-center justify-center rounded-full transition-all duration-200 ${
+                                    className={`relative z-20 flex h-14 w-14 shrink-0 max-[1310px]:h-12 max-[1310px]:w-12 items-center justify-center rounded-full transition-all duration-200 ${
                                         selectedFile ? 'bg-zinc-100 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700' : isDragging ? 'bg-zinc-200 ring-2 ring-zinc-300 dark:bg-zinc-700 dark:ring-zinc-600' : 'bg-zinc-50 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700'
                                     }`}
                                 >
-                                    {selectedFile ? <FileText className='h-6 w-6 text-zinc-600 dark:text-zinc-300' /> : <UploadCloud className='h-6 w-6 text-zinc-600 dark:text-zinc-300 transition-transform duration-300' />}
+                                    {selectedFile ? <FileText className='h-6 w-6 text-zinc-600 max-[1310px]:h-5 max-[1310px]:w-5 dark:text-zinc-300' /> : <UploadCloud className='h-6 w-6 text-zinc-600 max-[1310px]:h-5 max-[1310px]:w-5 dark:text-zinc-300 transition-transform duration-300' />}
                                 </div>
                                 <div className='relative z-20 mt-3 w-full'>
                                     <h3 className='mx-auto max-w-[90%] truncate text-base font-semibold text-zinc-900 dark:text-zinc-100'>{selectedFile ? selectedFile.name : isDragging ? 'Drop your PDF here' : 'Upload your resume'}</h3>
@@ -875,7 +1040,7 @@ export default function Home() {
                                                     event.stopPropagation();
                                                     fileInputRef.current?.click();
                                                 }}
-                                                className='inline-flex h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 text-sm font-medium text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
+                                                className='inline-flex h-12 shrink-0 cursor-pointer max-[1310px]:h-11 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 text-sm font-medium text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
                                             >
                                                 <UploadCloud className='h-3.5 w-3.5' />
                                                 <span>Change PDF</span>
@@ -889,7 +1054,7 @@ export default function Home() {
                                                         event.stopPropagation();
                                                         handleAnalyze();
                                                     }}
-                                                    className={`group/btn inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl px-5 font-medium transition-all duration-200 focus:outline-none ${
+                                                    className={`group/btn inline-flex h-12 w-full items-center max-[1310px]:h-11 justify-center gap-2 rounded-xl px-5 font-medium transition-all duration-200 focus:outline-none ${
                                                         isRoleSelected ? 'cursor-pointer bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200' : 'cursor-not-allowed bg-zinc-200 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-600'
                                                     }`}
                                                 >
@@ -912,7 +1077,7 @@ export default function Home() {
                                                 event.stopPropagation();
                                                 fileInputRef.current?.click();
                                             }}
-                                            className='group/btn mx-auto mt-6 inline-flex h-12 w-full max-w-60 cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-medium text-white transition-all duration-200 hover:bg-zinc-800 focus:outline-none focus:ring-0 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200'
+                                            className='group/btn mx-auto mt-6 inline-flex h-12 w-full max-w-60 max-[1310px]:h-11 max-[1310px]:max-w-52 cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-medium text-white transition-all duration-200 hover:bg-zinc-800 focus:outline-none focus:ring-0 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200'
                                         >
                                             <span>Select PDF</span>
                                             <ChevronRight className='h-4 w-4 transition-transform duration-300 ease-out group-hover/btn:translate-x-1.5' />
@@ -921,28 +1086,28 @@ export default function Home() {
                                 </div>
                             </div>
                         </div>
-                        <div className='mt-6 pl-1 flex flex-wrap items-center gap-x-6 gap-y-3 text-[13px] font-medium text-zinc-600 dark:text-zinc-400'>
-                            <span className='flex items-center gap-2'>
-                                <ShieldCheck className='h-4 w-4 text-zinc-500 dark:text-zinc-400' />
+                        <div className='mt-6 pl-1 flex flex-nowrap items-center justify-center gap-x-3 max-[1150px]:gap-x-2 max-[1069.9px]:gap-x-4 whitespace-nowrap text-[13px] font-medium text-zinc-600 dark:text-zinc-400 max-[1069.9px]:text-[14px]'>
+                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[12px] max-[1069.9px]:text-[14px]'>
+                                <ShieldCheck className='h-4 w-4 max-[1150px]:h-3.5 max-[1150px]:w-3.5 text-zinc-500 dark:text-zinc-400' />
                                 Private by default
                             </span>
                             <span className='hidden h-4 w-px bg-zinc-200 dark:bg-zinc-800 sm:block' />
-                            <span className='flex items-center gap-2'>
-                                <Gauge className='h-4 w-4 text-zinc-500 dark:text-zinc-400' />
+                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[12px] max-[1069.9px]:text-[14px]'>
+                                <Gauge className='h-4 w-4 max-[1150px]:h-3.5 max-[1150px]:w-3.5 text-zinc-500 dark:text-zinc-400' />
                                 ATS-aware analysis
                             </span>
-                            <span className='hidden h-4 w-px bg-zinc-200 dark:bg-zinc-800 sm:block' />
-                            <span className='flex items-center gap-2'>
-                                <CheckCircle2 className='h-4 w-4 text-zinc-500 dark:text-zinc-400' />
+                            <span className='hidden h-4 w-px bg-zinc-200 dark:bg-zinc-800 sm:block max-[1169px]:hidden' />
+                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[12px] max-[1069.9px]:text-[14px]'>
+                                <CheckCircle2 className='h-4 w-4 max-[1150px]:h-3.5 max-[1150px]:w-3.5 text-zinc-500 dark:text-zinc-400' />
                                 Recruiter-focused feedback
                             </span>
                         </div>
                     </div>
-                    <div className='relative flex items-center justify-center lg:justify-end'>
-                        <div className='relative w-full max-w-md'>
+                    <div className='relative flex items-center justify-center lg:justify-end max-[1310px]:justify-center max-[1069.9px]:hidden'>
+                        <div className='relative w-full max-w-md max-[1310px]:max-w-105'>
                             <div className='absolute -inset-10 -z-10 rounded-full bg-zinc-100 dark:bg-zinc-800/30 blur-3xl' />
                             <div className='relative overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl shadow-zinc-200/60 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/50'>
-                                <div className='flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800/80 px-4 py-3'>
+                                <div className='flex items-center justify-between whitespace-nowrap border-b border-zinc-100 dark:border-zinc-800/80 px-4 py-3'>
                                     <div className='flex items-center gap-2'>
                                         <FileText className='h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500' />
                                         <span className='font-mono text-[11px] text-zinc-400 dark:text-zinc-500'>resume.pdf</span>
@@ -955,11 +1120,11 @@ export default function Home() {
                                         analyzing
                                     </span>
                                 </div>
-                                <div className='relative h-144 overflow-hidden bg-zinc-50 dark:bg-zinc-900/50'>
+                                <div className='relative h-144 overflow-hidden max-[1310px]:h-135.25 bg-zinc-50 dark:bg-zinc-900/50'>
                                     <img src='/resume-preview.png' alt='Resume preview skeleton' className='absolute left-1/2 top-0 w-[calc(100%+2px)] -translate-x-1/2 -translate-y-px scale-[1.01] select-none opacity-90 dark:opacity-75 dark:invert' draggable={false} />
                                 </div>
                             </div>
-                            <div className='animate-float-a absolute -right-8 -top-6 w-40 rounded-xl border border-zinc-200 bg-white p-3.5 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
+                            <div className='animate-float-a absolute -right-7 -top-5 w-36 max-[1310px]:-right-5 max-[1310px]:-top-4 max-[1310px]:w-32 rounded-xl border border-zinc-200 bg-white p-3.5 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
                                 <div className='flex items-center justify-between'>
                                     <span className='font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>ATS Score</span>
                                     <Gauge className='h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500' />
@@ -971,22 +1136,22 @@ export default function Home() {
                                     <div className='h-full w-[94%] rounded-full bg-zinc-900 dark:bg-zinc-100' />
                                 </div>
                             </div>
-                            <div className='animate-float-b absolute -left-10 top-[32%] w-40 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
+                            <div className='animate-float-b absolute -left-10 top-[32%] w-40 max-[1310px]:-left-7 max-[1310px]:w-32 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
                                 <div className='flex items-center justify-between'>
                                     <span className='font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>Hire Rate</span>
                                     <CheckCircle2 className='h-3.5 w-3.5 text-zinc-900 dark:text-zinc-100' />
                                 </div>
                                 <div className='mt-1 text-lg font-semibold text-zinc-900 dark:text-zinc-100'>Very High</div>
                             </div>
-                            <div className='animate-float-a absolute -left-6 bottom-18 w-36 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
+                            <div className='animate-float-a absolute -left-6 bottom-18 w-36 max-[1310px]:-left-4 max-[1310px]:bottom-14 max-[1310px]:w-32 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
                                 <div className='font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>Best Skill</div>
                                 <div className='mt-1 text-[13px] font-semibold text-zinc-900 dark:text-zinc-100'>React</div>
                             </div>
-                            <div className='animate-float-b absolute -bottom-6 right-0 w-40 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
+                            <div className='animate-float-b absolute -bottom-6 right-0 w-40 max-[1310px]:-bottom-5 max-[1310px]:w-32 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
                                 <div className='font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>Improve</div>
                                 <div className='mt-1 text-[13px] font-semibold text-zinc-900 dark:text-zinc-100'>Docker</div>
                             </div>
-                            <div className='animate-float-c absolute -right-10 top-[46%] w-44 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
+                            <div className='animate-float-c absolute -right-10 top-[46%] w-44 max-[1310px]:-right-7 max-[1310px]:w-36 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/40'>
                                 <div className='flex items-center justify-between'>
                                     <span className='font-mono text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>PDF Report</span>
                                     <FileText className='h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400' />
