@@ -576,6 +576,26 @@ export default function Home() {
                                 0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.55; }
                                 50%      { transform: translate(-50%, -50%) scale(1.12); opacity: 0.85; }
                             }
+
+                            @keyframes analysis-ambient-glow {
+                                0%, 100% {
+                                    transform: translate(-50%, -50%) scale(0.94);
+                                    opacity: 0.42;
+                                }
+                                50% {
+                                    transform: translate(-50%, -50%) scale(1.06);
+                                    opacity: 0.72;
+                                }
+                            }
+
+                            @keyframes analysis-ambient-drift {
+                                0%, 100% {
+                                    transform: translate3d(-50%, -50%, 0) scale(1);
+                                }
+                                50% {
+                                    transform: translate3d(-48%, -52%, 0) scale(1.08);
+                                }
+                            }
                         `}</style>
 
                         <div className={`pointer-events-none absolute inset-0 z-0 overflow-hidden select-none transition-colors duration-300 ${theme === 'dark' ? 'bg-black' : 'bg-white'}`}>
@@ -585,6 +605,27 @@ export default function Home() {
                                 style={{
                                     backgroundImage: theme === 'dark' ? 'radial-gradient(circle at 1px 1px, rgba(255,255,255,1) 1px, transparent 0)' : 'radial-gradient(circle at 1px 1px, rgba(0,0,0,1) 1px, transparent 0)',
                                     backgroundSize: '32px 32px',
+                                }}
+                            />
+
+                            <div
+                                aria-hidden='true'
+                                className='absolute left-1/2 top-[40%] h-150 w-150 rounded-full'
+                                style={{
+                                    background:
+                                        theme === 'dark' ? 'radial-gradient(circle, rgba(255,255,255,0.11) 0%, rgba(255,255,255,0.055) 24%, rgba(255,255,255,0.018) 46%, transparent 72%)' : 'radial-gradient(circle, rgba(0,0,0,0.055) 0%, rgba(0,0,0,0.028) 24%, rgba(0,0,0,0.01) 46%, transparent 72%)',
+                                    filter: 'blur(38px)',
+                                    animation: prefersReducedMotion ? undefined : 'analysis-ambient-glow 7s ease-in-out infinite',
+                                }}
+                            />
+
+                            <div
+                                aria-hidden='true'
+                                className='absolute left-[52%] top-[32%] h-100 w-175 rounded-full'
+                                style={{
+                                    background: theme === 'dark' ? 'radial-gradient(ellipse at center, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 38%, transparent 72%)' : 'radial-gradient(ellipse at center, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.012) 38%, transparent 72%)',
+                                    filter: 'blur(55px)',
+                                    animation: prefersReducedMotion ? undefined : 'analysis-ambient-drift 11s ease-in-out infinite',
                                 }}
                             />
 
