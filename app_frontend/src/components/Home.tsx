@@ -825,7 +825,7 @@ export default function Home() {
                                         <motion.div key={messageIndex} initial={{ opacity: 0, y: 12, filter: 'blur(4px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, y: -12, filter: 'blur(4px)' }} transition={{ duration: 0.4, ease: 'easeOut' }}>
                                             <h2 className='text-xl font-semibold tracking-tight text-zinc-900 dark:text-white'>{analysisMessages[messageIndex].title}</h2>
 
-                                            <p className='mt-2 text-sm text-zinc-500 dark:text-zinc-400'>{analysisMessages[messageIndex].subtitle}</p>
+                                            <p className='mt-2 text-sm text-zinc-500 dark:text-zinc-400 max-[549.9px]:text-[13px]'>{analysisMessages[messageIndex].subtitle}</p>
                                         </motion.div>
                                     </AnimatePresence>
                                 </div>
@@ -979,12 +979,12 @@ export default function Home() {
                             </span>
                         </h1>
 
-                        <h1 className='block text-center text-[3.7rem] font-semibold leading-[1.08] text-zinc-900 dark:text-white max-[649.9px]:text-[3.3rem] min-[1070px]:hidden' style={{ fontFamily: 'Geist, sans-serif' }}>
+                        <h1 className='block text-center text-[3.7rem] font-semibold leading-[1.08] text-zinc-900 dark:text-white max-[649.9px]:text-[3.3rem] max-[549.9px]:text-[2.9rem] min-[1070px]:hidden' style={{ fontFamily: 'Geist, sans-serif' }}>
                             <span className='block whitespace-nowrap'>
                                 Better <span className='text-zinc-400 italic dark:text-zinc-500'>{mobileHeadlineText}</span>
                             </span>
                         </h1>
-                        <p className='mt-4 max-w-122.5 text-[17px] leading-7 text-zinc-500 dark:text-zinc-400 max-[1310px]:text-[16px] max-[1310px]:leading-6 max-[1069.9px]:mx-auto max-[1069.9px]:max-w-150 max-[1069.9px]:text-[17px] max-[1069.9px]:leading-7 max-[1069.9px]:tracking-[0.01em] max-[1069.9px]:text-center max-[649.9px]:text-[15.5px]'>
+                        <p className='mt-4 max-w-122.5 text-[17px] leading-7 text-zinc-500 dark:text-zinc-400 max-[1310px]:text-[16px] max-[1310px]:leading-6 max-[1069.9px]:mx-auto max-[1069.9px]:max-w-150 max-[1069.9px]:text-[17px] max-[1069.9px]:leading-7 max-[1069.9px]:tracking-[0.01em] max-[1069.9px]:text-center max-[649.9px]:text-[15.5px] max-[549.9px]:text-[13.5px] max-[549.9px]:leading-6'>
                             Upload your resume to receive an ATS score, recruiter feedback, and AI-powered recommendations that help you stand out before you apply.
                         </p>
                         <div
@@ -993,7 +993,7 @@ export default function Home() {
                                     fileInputRef.current?.click();
                                 }
                             }}
-                            className={`group relative mt-6 flex min-h-55 select-none max-[1310px]:min-h-48 max-[1069.9px]:mx-auto max-[1069.9px]:w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed text-center transition-all duration-200 ${
+                            className={`group relative mt-6 flex min-h-55 select-none max-[1310px]:min-h-48 max-[1069.9px]:mx-auto max-[1069.9px]:w-full max-[549.9px]:mt-5 max-[549.9px]:min-h-44 flex-col items-center justify-center rounded-2xl border-2 border-dashed text-center transition-all duration-200 ${
                                 selectedFile
                                     ? 'cursor-default border-zinc-200 bg-white/50 dark:border-zinc-800 dark:bg-zinc-900/40'
                                     : isDragging
@@ -1030,7 +1030,7 @@ export default function Home() {
                             )}
 
                             <div
-                                className={`relative z-10 flex min-h-55 w-full flex-col max-[1310px]:min-h-48 items-center justify-center rounded-[calc(1rem-2px)] px-8 py-7 transition-colors max-[1310px]:px-6 max-[1310px]:py-6 duration-300 ${isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'}`}
+                                className={`relative z-10 flex min-h-55 w-full flex-col max-[1310px]:min-h-48 max-[549.9px]:min-h-44 items-center justify-center rounded-[calc(1rem-2px)] px-8 py-7 max-[1310px]:px-6 max-[1310px]:py-6 max-[549.9px]:px-5 max-[549.9px]:py-5 transition-colors duration-300 ${isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'}`}
                             >
                                 <div
                                     aria-hidden='true'
@@ -1050,14 +1050,18 @@ export default function Home() {
                                     className='hidden'
                                 />
                                 <div
-                                    className={`relative z-20 flex h-14 w-14 shrink-0 max-[1310px]:h-12 max-[1310px]:w-12 items-center justify-center rounded-full transition-all duration-200 ${
+                                    className={`relative z-20 flex h-14 w-14 shrink-0 max-[1310px]:h-12 max-[1310px]:w-12 max-[549.9px]:h-11 max-[549.9px]:w-11 items-center justify-center rounded-full transition-all duration-200 ${
                                         selectedFile ? 'bg-zinc-100 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700' : isDragging ? 'bg-zinc-200 ring-2 ring-zinc-300 dark:bg-zinc-700 dark:ring-zinc-600' : 'bg-zinc-50 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700'
                                     }`}
                                 >
-                                    {selectedFile ? <FileText className='h-6 w-6 text-zinc-600 max-[1310px]:h-5 max-[1310px]:w-5 dark:text-zinc-300' /> : <UploadCloud className='h-6 w-6 text-zinc-600 max-[1310px]:h-5 max-[1310px]:w-5 dark:text-zinc-300 transition-transform duration-300' />}
+                                    {selectedFile ? (
+                                        <FileText className='h-6 w-6 text-zinc-600 max-[1310px]:h-5 max-[1310px]:w-5 max-[549.9px]:h-4.75 max-[549.9px]:w-4.75 dark:text-zinc-300' />
+                                    ) : (
+                                        <UploadCloud className='h-6 w-6 text-zinc-600 max-[1310px]:h-5 max-[1310px]:w-5 dark:text-zinc-300 transition-transform duration-300' />
+                                    )}
                                 </div>
                                 <div className='relative z-20 mt-3 w-full'>
-                                    <h3 className='mx-auto max-w-[90%] truncate text-base font-semibold text-zinc-900 dark:text-zinc-100'>{selectedFile ? selectedFile.name : isDragging ? 'Drop your PDF here' : 'Upload your resume'}</h3>
+                                    <h3 className='mx-auto max-w-[90%] truncate text-base font-semibold text-zinc-900 dark:text-zinc-100 max-[549.9px]:text-[15px]'>{selectedFile ? selectedFile.name : isDragging ? 'Drop your PDF here' : 'Upload your resume'}</h3>
 
                                     <p className='mt-2 text-sm text-zinc-500 dark:text-zinc-400'>{selectedFile ? `Choose the role you're targeting — your analysis will be tailored to it.` : 'Drag and drop your PDF here, or click to browse.'}</p>
 
@@ -1126,7 +1130,7 @@ export default function Home() {
                                                 event.stopPropagation();
                                                 fileInputRef.current?.click();
                                             }}
-                                            className='group/btn mx-auto mt-6 inline-flex h-12 w-full max-w-60 max-[1310px]:h-11 max-[1310px]:max-w-52 cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-medium text-white transition-all duration-200 hover:bg-zinc-800 focus:outline-none focus:ring-0 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200'
+                                            className='group/btn mx-auto mt-6 inline-flex h-12 w-full max-w-60 max-[1310px]:h-11 max-[1310px]:max-w-52 max-[549.9px]:mt-5 max-[549.9px]:h-10 max-[549.9px]:max-w-52 max-[549.9px]:px-5 max-[549.9px]:text-[13px] cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-medium text-white transition-all duration-200 hover:bg-zinc-800 focus:outline-none focus:ring-0 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200'
                                         >
                                             <span>Select PDF</span>
                                             <ChevronRight className='h-4 w-4 transition-transform duration-300 ease-out group-hover/btn:translate-x-1.5' />
@@ -1135,7 +1139,7 @@ export default function Home() {
                                 </div>
                             </div>
                         </div>
-                        <div className='mt-6 pl-1 flex flex-nowrap items-center justify-center gap-x-3 max-[1150px]:gap-x-2 max-[1069.9px]:gap-x-4 whitespace-nowrap text-[13px] font-medium text-zinc-600 dark:text-zinc-400 max-[1069.9px]:text-[14px] max-[649.9px]:text-[12.5px]'>
+                        <div className='mt-6 pl-1 flex flex-nowrap items-center justify-center gap-x-3 max-[1150px]:gap-x-2 max-[1069.9px]:gap-x-4 whitespace-nowrap text-[13px] font-medium text-zinc-600 dark:text-zinc-400 max-[1069.9px]:text-[14px] max-[649.9px]:text-[12.5px] max-[549.9px]:hidden'>
                             <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[12px] max-[1069.9px]:text-[14px] max-[649.9px]:text-[12.5px]'>
                                 <ShieldCheck className='h-4 w-4 max-[1150px]:h-3.5 max-[1150px]:w-3.5 text-zinc-500 dark:text-zinc-400' />
                                 Private by default
