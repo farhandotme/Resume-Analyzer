@@ -823,9 +823,9 @@ export default function Home() {
                                 <div className='mt-8 text-center min-h-18'>
                                     <AnimatePresence mode='wait'>
                                         <motion.div key={messageIndex} initial={{ opacity: 0, y: 12, filter: 'blur(4px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, y: -12, filter: 'blur(4px)' }} transition={{ duration: 0.4, ease: 'easeOut' }}>
-                                            <h2 className='text-xl font-semibold tracking-tight text-zinc-900 dark:text-white'>{analysisMessages[messageIndex].title}</h2>
+                                            <h2 className='text-xl font-semibold tracking-tight text-zinc-900 dark:text-white max-[549.9px]:text-lg max-[449.9px]:text-base'>{analysisMessages[messageIndex].title}</h2>
 
-                                            <p className='mt-2 text-sm text-zinc-500 dark:text-zinc-400'>{analysisMessages[messageIndex].subtitle}</p>
+                                            <p className='mt-2 text-sm text-zinc-500 dark:text-zinc-400 max-[549.9px]:text-[13px] max-[449.9px]:text-[12px]'>{analysisMessages[messageIndex].subtitle}</p>
                                         </motion.div>
                                     </AnimatePresence>
                                 </div>
@@ -853,7 +853,9 @@ export default function Home() {
                 <div className='mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8 max-[649.9px]:px-2 max-[649.9px]:h-auto max-[649.9px]:py-1.5'>
                     <div className='inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white/80 backdrop-blur-md px-3 max-[549.9px]:py-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-900/80 select-none'>
                         <span className='h-1.5 w-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100 max-[649.9px]:h-1 max-[649.9px]:w-1 max-[549.9px]:h-0.7 max-[549.9px]:w-0.7' />
-                        <span className='font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-600 dark:text-zinc-400 max-[649.9px]:text-[10px] max-[649.9px]:tracking-[0.14em] max-[549.9px]:text-[9px] max-[549.9px]:tracking-widest'>Resume Intelligence</span>
+                        <span className='font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-600 dark:text-zinc-400 max-[649.9px]:text-[10px] max-[649.9px]:tracking-[0.14em] max-[549.9px]:text-[9px] max-[449.9px]:text-[8px] max-[549.9px]:tracking-widest'>
+                            Resume Intelligence
+                        </span>
                     </div>
                     <div className='flex items-center gap-2'>
                         <button
@@ -959,7 +961,7 @@ export default function Home() {
             >
                 <div className='relative mx-auto grid h-screen w-full max-w-7xl grid-cols-1 items-center gap-16 px-6 pt-20 min-[1070px]:grid-cols-2 min-[1070px]:gap-10 min-[1070px]:px-8 min-[1070px]:pt-0 max-[1310px]:gap-0 max-[1310px]:px-6 max-[1069.9px]:px-5 max-[1069.9px]:translate-y-0'>
                     <div className='flex flex-col justify-center pb-10 min-[1070px]:pb-0 max-[1069.9px]:mx-auto max-[1069.9px]:w-full max-[1069.9px]:max-w-2xl max-[1069.9px]:justify-self-center max-[1069.9px]:text-center'>
-                        <h1 className='hidden min-[1070px]:block text-4xl font-semibold leading-[1.08] text-zinc-900 dark:text-white sm:text-5xl lg:text-[3.8rem] max-[1310px]:text-[3.2rem]' style={{ fontFamily: 'Geist, sans-serif' }}>
+                        <h1 className='hidden min-[1070px]:block text-4xl font-normal leading-[1.08] text-zinc-900 dark:text-white sm:text-5xl lg:text-[3.8rem] max-[1310px]:text-[3.2rem]' style={{ fontFamily: 'Fraunces, serif' }}>
                             <span className='whitespace-nowrap'>
                                 Better{' '}
                                 <span className='relative inline-block h-[1.08em] min-w-[10ch] overflow-hidden align-bottom whitespace-nowrap'>
@@ -979,13 +981,14 @@ export default function Home() {
                             </span>
                         </h1>
 
-                        <h1 className='block text-center text-[3.7rem] font-semibold leading-[1.08] text-zinc-900 dark:text-white max-[649.9px]:text-[3.3rem] min-[1070px]:hidden' style={{ fontFamily: 'Geist, sans-serif' }}>
+                        <h1 className='block text-center text-[3.7rem] font-normal leading-[1.08] text-zinc-900 dark:text-white max-[649.9px]:text-[3.3rem] max-[549.9px]:text-[2.9rem] max-[449.9px]:text-[2.3rem] min-[1070px]:hidden' style={{ fontFamily: 'Fraunces, serif' }}>
                             <span className='block whitespace-nowrap'>
                                 Better <span className='text-zinc-400 italic dark:text-zinc-500'>{mobileHeadlineText}</span>
                             </span>
                         </h1>
-                        <p className='mt-4 max-w-122.5 text-[17px] leading-7 text-zinc-500 dark:text-zinc-400 max-[1310px]:text-[16px] max-[1310px]:leading-6 max-[1069.9px]:mx-auto max-[1069.9px]:max-w-150 max-[1069.9px]:text-[17px] max-[1069.9px]:leading-7 max-[1069.9px]:tracking-[0.01em] max-[1069.9px]:text-center max-[649.9px]:text-[15.5px]'>
-                            Upload your resume to receive an ATS score, recruiter feedback, and AI-powered recommendations that help you stand out before you apply.
+                        <p className='mt-4 max-w-122.5 text-[17px] leading-7 text-zinc-500 dark:text-zinc-400 max-[1310px]:text-[17px] max-[1069.9px]:mx-auto max-[1069.9px]:max-w-155 max-[1069.9px]:text-[17px] max-[1069.9px]:leading-7 max-[1069.9px]:tracking-[0.02em] max-[1069.9px]:text-center max-[649.9px]:text-[15.5px]'>
+                            <span className='max-[549.9px]:hidden'>Upload your resume to receive an ATS score, recruiter feedback, and AI-powered recommendations that help you stand out before you apply.</span>
+                            <span className='hidden max-[549.9px]:inline max-[449.9px]:inline-block max-[449.9px]:text-[14px] max-[399.9px]:text-[13px] max-[449.9px]:leading-6'>Upload your resume for an ATS score, recruiter feedback, and AI-powered recommendations.</span>
                         </p>
                         <div
                             onClick={() => {
@@ -993,12 +996,12 @@ export default function Home() {
                                     fileInputRef.current?.click();
                                 }
                             }}
-                            className={`group relative mt-6 flex min-h-55 select-none max-[1310px]:min-h-48 max-[1069.9px]:mx-auto max-[1069.9px]:w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed text-center transition-all duration-200 ${
+                            className={`group relative mt-6 flex min-h-55 select-none max-[1310px]:min-h-48 max-[1069.9px]:mx-auto max-[1069.9px]:w-full max-[449.9px]:w-[calc(100%+16px)] max-[449.9px]:left-1/2 max-[449.9px]:-translate-x-1/2 max-[549.9px]:mt-5 max-[549.9px]:min-h-44 max-[449.9px]:mt-4 flex-col items-center justify-center rounded-2xl border-2 border-dashed text-center transition-all duration-200 ${
                                 selectedFile
                                     ? 'cursor-default border-zinc-200 bg-white/50 dark:border-zinc-800 dark:bg-zinc-900/40'
                                     : isDragging
                                       ? 'cursor-copy border-zinc-500 dark:border-zinc-500'
-                                      : 'cursor-pointer border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-700'
+                                      : 'cursor-pointer border-zinc-300 hover:border-zinc-200 dark:border-zinc-700 dark:hover:border-zinc-600'
                             }`}
                         >
                             {!selectedFile && (
@@ -1007,7 +1010,7 @@ export default function Home() {
                                         aria-hidden='true'
                                         animate={prefersReducedMotion ? {} : { rotate: 360 }}
                                         transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-                                        className={`pointer-events-none absolute -inset-full z-0 transition-opacity duration-500 ${isDragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                        className='pointer-events-none absolute -inset-full z-0 transition-opacity duration-500'
                                         style={{
                                             background:
                                                 theme === 'light' ? 'conic-gradient(from 0deg, transparent 72%, rgba(82,82,91,0.88) 84%, rgba(39,39,42,0.72) 87%, transparent 98%)' : 'conic-gradient(from 0deg, transparent 72%, rgba(161,161,170,0.9) 84%, rgba(113,113,122,0.72) 87%, transparent 98%)',
@@ -1018,7 +1021,7 @@ export default function Home() {
                                         aria-hidden='true'
                                         animate={prefersReducedMotion ? {} : { rotate: -360 }}
                                         transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
-                                        className={`pointer-events-none absolute -inset-full z-0 transition-opacity duration-500 ${isDragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                        className='pointer-events-none absolute -inset-full z-0 transition-opacity duration-500'
                                         style={{
                                             background:
                                                 theme === 'light'
@@ -1030,11 +1033,11 @@ export default function Home() {
                             )}
 
                             <div
-                                className={`relative z-10 flex min-h-55 w-full flex-col max-[1310px]:min-h-48 items-center justify-center rounded-[calc(1rem-2px)] px-8 py-7 transition-colors max-[1310px]:px-6 max-[1310px]:py-6 duration-300 ${isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'}`}
+                                className={`relative z-10 flex min-h-55 w-full flex-col max-[1310px]:min-h-48 max-[549.9px]:min-h-44 items-center justify-center rounded-[calc(1rem-2px)] px-8 py-7 max-[1310px]:px-6 max-[1310px]:py-6 max-[549.9px]:px-5 max-[549.9px]:py-5 max-[449.9px]:px-4 max-[449.9px]:py-5 transition-colors duration-300 ${isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'}`}
                             >
                                 <div
                                     aria-hidden='true'
-                                    className={`pointer-events-none absolute inset-0 z-0 bg-size-[16px_16px] transition-opacity duration-500 ${isDragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} ${
+                                    className={`pointer-events-none absolute inset-0 z-0 bg-size-[16px_16px] transition-opacity duration-500 opacity-100 ${
                                         theme === 'light' ? 'bg-[radial-gradient(rgba(0,0,0,0.045)_1px,transparent_1px)]' : 'bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)]'
                                     }`}
                                 />
@@ -1050,16 +1053,29 @@ export default function Home() {
                                     className='hidden'
                                 />
                                 <div
-                                    className={`relative z-20 flex h-14 w-14 shrink-0 max-[1310px]:h-12 max-[1310px]:w-12 items-center justify-center rounded-full transition-all duration-200 ${
+                                    className={`relative z-20 flex h-14 w-14 shrink-0 max-[1310px]:h-12 max-[1310px]:w-12 max-[549.9px]:h-11 max-[549.9px]:w-11 items-center justify-center rounded-full transition-all duration-200 ${
                                         selectedFile ? 'bg-zinc-100 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700' : isDragging ? 'bg-zinc-200 ring-2 ring-zinc-300 dark:bg-zinc-700 dark:ring-zinc-600' : 'bg-zinc-50 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700'
                                     }`}
                                 >
-                                    {selectedFile ? <FileText className='h-6 w-6 text-zinc-600 max-[1310px]:h-5 max-[1310px]:w-5 dark:text-zinc-300' /> : <UploadCloud className='h-6 w-6 text-zinc-600 max-[1310px]:h-5 max-[1310px]:w-5 dark:text-zinc-300 transition-transform duration-300' />}
+                                    {selectedFile ? (
+                                        <FileText className='h-6 w-6 text-zinc-600 max-[1310px]:h-5 max-[1310px]:w-5 max-[549.9px]:h-4.75 max-[549.9px]:w-4.75 dark:text-zinc-300' />
+                                    ) : (
+                                        <UploadCloud className='h-6 w-6 text-zinc-600 max-[1310px]:h-5 max-[1310px]:w-5 dark:text-zinc-300 transition-transform duration-300' />
+                                    )}
                                 </div>
                                 <div className='relative z-20 mt-3 w-full'>
-                                    <h3 className='mx-auto max-w-[90%] truncate text-base font-semibold text-zinc-900 dark:text-zinc-100'>{selectedFile ? selectedFile.name : isDragging ? 'Drop your PDF here' : 'Upload your resume'}</h3>
+                                    <h3 className='mx-auto max-w-[90%] truncate text-[18px] font-semibold text-zinc-900 dark:text-zinc-100 max-[449.9px]:text-[16px]'>{selectedFile ? selectedFile.name : 'Upload your resume'}</h3>
 
-                                    <p className='mt-2 text-sm text-zinc-500 dark:text-zinc-400'>{selectedFile ? `Choose the role you're targeting — your analysis will be tailored to it.` : 'Drag and drop your PDF here, or click to browse.'}</p>
+                                    <p className='mt-1.5 text-sm text-zinc-500 dark:text-zinc-400 max-[549.9px]:text-[13px] max-[449.9px]:text-[12px] max-[449.9px]:leading-5'>
+                                        {selectedFile ? (
+                                            `Choose the role you're targeting — your analysis will be tailored to it.`
+                                        ) : (
+                                            <>
+                                                <span className='max-[449.9px]:hidden'>Drag and drop your PDF here, or click to browse.</span>
+                                                <span className='hidden max-[449.9px]:inline'>Click to select your PDF.</span>
+                                            </>
+                                        )}
+                                    </p>
 
                                     <AnimatePresence>
                                         {(showFileError || analysisError) && (
@@ -1126,7 +1142,7 @@ export default function Home() {
                                                 event.stopPropagation();
                                                 fileInputRef.current?.click();
                                             }}
-                                            className='group/btn mx-auto mt-6 inline-flex h-12 w-full max-w-60 max-[1310px]:h-11 max-[1310px]:max-w-52 cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-medium text-white transition-all duration-200 hover:bg-zinc-800 focus:outline-none focus:ring-0 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200'
+                                            className='group/btn mx-auto mt-6 inline-flex h-12 w-full max-w-60 max-[1310px]:h-11 max-[1310px]:max-w-52 max-[549.9px]:mt-5 max-[549.9px]:h-10 max-[549.9px]:max-w-52 max-[549.9px]:px-5 max-[549.9px]:text-[13px] max-[449.9px]:text-[12px] cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-bold text-white transition-all duration-200 hover:bg-zinc-800 focus:outline-none focus:ring-0 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200'
                                         >
                                             <span>Select PDF</span>
                                             <ChevronRight className='h-4 w-4 transition-transform duration-300 ease-out group-hover/btn:translate-x-1.5' />
@@ -1135,21 +1151,29 @@ export default function Home() {
                                 </div>
                             </div>
                         </div>
-                        <div className='mt-6 pl-1 flex flex-nowrap items-center justify-center gap-x-3 max-[1150px]:gap-x-2 max-[1069.9px]:gap-x-4 whitespace-nowrap text-[13px] font-medium text-zinc-600 dark:text-zinc-400 max-[1069.9px]:text-[14px] max-[649.9px]:text-[12.5px]'>
-                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[12px] max-[1069.9px]:text-[14px] max-[649.9px]:text-[12.5px]'>
+                        <div className='mt-6 pl-1 flex flex-nowrap items-center justify-center gap-x-3 max-[1150px]:gap-x-2 max-[1069.9px]:gap-x-4 whitespace-nowrap text-[13px] font-medium text-zinc-600 dark:text-zinc-400 max-[1069.9px]:text-[14px] max-[649.9px]:text-[12.5px] max-[549.9px]:hidden'>
+                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[13px] max-[1069.9px]:text-[14px] max-[649.9px]:text-[12.5px]'>
                                 <ShieldCheck className='h-4 w-4 max-[1150px]:h-3.5 max-[1150px]:w-3.5 text-zinc-500 dark:text-zinc-400' />
                                 Private by default
                             </span>
-                            <span className='hidden h-4 w-px bg-zinc-200 dark:bg-zinc-800 sm:block' />
-                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[12px] max-[1069.9px]:text-[14px] max-[649.9px]:text-[12.5px]'>
+                            <span className='h-4 w-px shrink-0 bg-zinc-200 dark:bg-zinc-800' />
+                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[13px] max-[1069.9px]:text-[14px] max-[649.9px]:text-[12.5px]'>
                                 <Gauge className='h-4 w-4 max-[1150px]:h-3.5 max-[1150px]:w-3.5 text-zinc-500 dark:text-zinc-400' />
                                 ATS-aware analysis
                             </span>
-                            <span className='hidden h-4 w-px bg-zinc-200 dark:bg-zinc-800 sm:block max-[1169px]:hidden' />
-                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[12px] max-[1069.9px]:text-[14px] max-[649.9px]:text-[12.5px]'>
+                            <span className='h-4 w-px shrink-0 bg-zinc-200 dark:bg-zinc-800' />
+                            <span className='flex items-center gap-2 max-[1150px]:gap-1.5 max-[1150px]:text-[13px] max-[1069.9px]:text-[14px] max-[649.9px]:text-[12.5px]'>
                                 <CheckCircle2 className='h-4 w-4 max-[1150px]:h-3.5 max-[1150px]:w-3.5 text-zinc-500 dark:text-zinc-400' />
                                 Recruiter-focused feedback
                             </span>
+                        </div>
+
+                        <div className='mt-4 max-[399.9px]:mt-3 hidden items-center justify-center whitespace-nowrap text-[12px] max-[399.9px]:text-[11px] font-thin text-zinc-600 dark:text-zinc-400 max-[549.9px]:text-[12.5px] max-[549.9px]:flex'>
+                            <span>Private by default</span>
+                            <span className='mx-2 text-zinc-500 dark:text-zinc-400'>·</span>
+                            <span>ATS-aware</span>
+                            <span className='mx-2 text-zinc-500 dark:text-zinc-400'>·</span>
+                            <span>Recruiter-focused</span>
                         </div>
                     </div>
                     <div className='relative flex items-center justify-center lg:justify-end max-[1310px]:justify-center max-[1069.9px]:hidden'>
