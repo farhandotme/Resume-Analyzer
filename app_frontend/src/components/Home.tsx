@@ -1,4 +1,4 @@
-import { UploadCloud, CheckCircle2, FileText, Gauge, ChevronRight, SunMedium, Moon, ShieldCheck, Loader2, AlertCircle, Menu, Bot } from 'lucide-react';
+import { UploadCloud, CheckCircle2, FileText, Gauge, ChevronRight, SunMedium, Moon, ShieldCheck, Loader2, AlertCircle, Bot } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -107,6 +107,7 @@ export default function Home() {
     const [headlineIndex, setHeadlineIndex] = useState(0);
     const [mobileHeadlineText, setMobileHeadlineText] = useState('resume.');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const mobileMenuRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
     const prefersReducedMotion = Boolean(useReducedMotion());
     const overlayRef = useRef<HTMLDivElement>(null);
@@ -163,6 +164,22 @@ export default function Home() {
             window.removeEventListener('keydown', handleKeyDown, true);
         };
     }, [isAnalyzing]);
+
+    useEffect(() => {
+        if (!isMobileMenuOpen) return;
+
+        const handleOutsideClick = (event: MouseEvent) => {
+            if (!mobileMenuRef.current?.contains(event.target as Node)) {
+                setIsMobileMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleOutsideClick);
+
+        return () => {
+            document.removeEventListener('mousedown', handleOutsideClick);
+        };
+    }, [isMobileMenuOpen]);
 
     useEffect(() => {
         const interval = window.setInterval(() => {
@@ -873,9 +890,7 @@ export default function Home() {
 
                                 <ChevronRight className='h-4 w-4 shrink-0 -translate-x-0.5 transition-transform duration-300 ease-out group-hover:translate-x-0' strokeWidth={1.8} />
                             </span>
-
-                            <Bot className='hidden max-[649.9px]:block h-4 w-4' strokeWidth={1.8} aria-hidden='true' />
-
+                            <Bot className='hidden max-[649.9px]:block h-5 w-5' strokeWidth={1.8} aria-hidden='true' />
                             <span
                                 aria-hidden='true'
                                 className='pointer-events-none absolute inset-y-0 -left-1/2 z-0 w-1/3 -skew-x-12 bg-linear-to-r from-transparent via-zinc-500/20 to-transparent opacity-0 dark:via-white/10'
@@ -905,47 +920,59 @@ export default function Home() {
                             {theme === 'light' ? <Moon size={18} strokeWidth={1.8} /> : <SunMedium size={18} strokeWidth={1.8} />}
                         </button>
 
-                        <div className='hidden max-[649.9px]:relative max-[649.9px]:block'>
+                        <div ref={mobileMenuRef} className='relative hidden max-[649.9px]:block'>
                             <button
                                 type='button'
-                                aria-label='Open menu'
+                                aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
                                 aria-expanded={isMobileMenuOpen}
                                 onClick={() => setIsMobileMenuOpen((current) => !current)}
-                                className='inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 transition-all duration-200 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400'
+                                className='group relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-transparent text-zinc-600 transition-all duration-200 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100'
                             >
-                                <Menu className='h-4 w-4' strokeWidth={1.8} />
+                                <div className='relative h-3.5 w-4'>
+                                    <span className={`absolute right-[-2.5px] top-0 h-0.5 rounded-full bg-current transition-all duration-300 ease-out ${isMobileMenuOpen ? 'left-1/2 right-auto w-5 -translate-x-1/2 translate-y-1.75 rotate-45' : 'w-2.5'}`} />
+                                    <span className={`absolute left-0 top-1.75 h-0.5 w-5 rounded-full bg-current transition-all duration-300 ease-out ${isMobileMenuOpen ? 'opacity-0' : 'opacity-100'}`} />
+                                    <span className={`absolute left-0 top-3.5 h-0.5 rounded-full bg-current transition-all duration-300 ease-out ${isMobileMenuOpen ? 'left-1/2 w-5 -translate-x-1/2 -translate-y-1.75 -rotate-45' : 'w-2.5'}`} />
+                                </div>
                             </button>
 
                             <AnimatePresence>
                                 {isMobileMenuOpen && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: -6, scale: 0.96 }}
-                                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                                        transition={{ duration: 0.16, ease: 'easeOut' }}
-                                        className='absolute right-0 top-[calc(100%+0.5rem)] z-50 flex items-center gap-2 rounded-xl border border-zinc-200 bg-white/95 p-2 shadow-lg backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/95'
-                                    >
-                                        <a
-                                            href='https://github.com/faridhussain/Resume-Analyzer'
-                                            target='_blank'
-                                            rel='noopener noreferrer'
-                                            aria-label='GitHub Repository'
-                                            className='flex h-9 w-9 items-center justify-center rounded-lg text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
-                                        >
-                                            <svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
-                                                <path d='M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4' />
-                                                <path d='M9 18c-4.51 2-5-2-7-2' />
-                                            </svg>
-                                        </a>
+                                    <motion.div initial={{ opacity: 0, y: -6, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6, scale: 0.9 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className='absolute right-0 top-[calc(100%+0.7rem)] z-50'>
+                                        <div className='relative flex items-center gap-1.5 rounded-2xl border border-zinc-200/80 bg-white/80 p-1.5 shadow-[0_18px_45px_rgba(0,0,0,0.12)] backdrop-blur-xl backdrop-saturate-150 dark:border-zinc-800/80 dark:bg-zinc-900/75 dark:shadow-[0_18px_45px_rgba(0,0,0,0.35)]'>
+                                            <motion.a
+                                                href='https://github.com/faridhussain/Resume-Analyzer'
+                                                target='_blank'
+                                                rel='noopener noreferrer'
+                                                aria-label='GitHub Repository'
+                                                onClick={() => setIsMobileMenuOpen(false)}
+                                                initial={{ opacity: 0, y: 3 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ duration: 0.18, delay: 0.04 }}
+                                                className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl text-zinc-600 transition-all duration-200 hover:bg-zinc-100 hover:text-zinc-900 active:scale-95 dark:text-zinc-400 dark:hover:bg-white/8 dark:hover:text-white'
+                                            >
+                                                <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round' className='h-4.5 w-4.5'>
+                                                    <path d='M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5-.28-1.15-.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4' />
+                                                    <path d='M9 18c-4.51 2-5-2-7-2' />
+                                                </svg>
+                                            </motion.a>
 
-                                        <button
-                                            type='button'
-                                            aria-label='Toggle Theme'
-                                            onClick={() => toggleTheme()}
-                                            className='flex h-9 w-9 items-center justify-center rounded-lg text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
-                                        >
-                                            {theme === 'light' ? <Moon size={18} strokeWidth={1.8} /> : <SunMedium size={18} strokeWidth={1.8} />}
-                                        </button>
+                                            <div className='h-5 w-px bg-zinc-200 dark:bg-white/10' />
+
+                                            <motion.button
+                                                type='button'
+                                                aria-label='Toggle Theme'
+                                                onClick={() => {
+                                                    toggleTheme();
+                                                    setIsMobileMenuOpen(false);
+                                                }}
+                                                initial={{ opacity: 0, y: 3 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ duration: 0.18, delay: 0.08 }}
+                                                className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl text-zinc-600 transition-all duration-200 hover:bg-zinc-100 hover:text-zinc-900 active:scale-95 dark:text-zinc-400 dark:hover:bg-white/8 dark:hover:text-white'
+                                            >
+                                                {theme === 'light' ? <Moon size={18} strokeWidth={1.8} /> : <SunMedium size={18} strokeWidth={1.8} />}
+                                            </motion.button>
+                                        </div>
                                     </motion.div>
                                 )}
                             </AnimatePresence>
@@ -1001,7 +1028,7 @@ export default function Home() {
                                     ? 'cursor-default border-zinc-200 bg-white/50 dark:border-zinc-800 dark:bg-zinc-900/40'
                                     : isDragging
                                       ? 'cursor-copy border-zinc-500 dark:border-zinc-500'
-                                      : 'cursor-pointer border-zinc-300 hover:border-zinc-200 dark:border-zinc-700 dark:hover:border-zinc-600'
+                                      : 'cursor-pointer border-zinc-300 hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-600'
                             }`}
                         >
                             {!selectedFile && (
