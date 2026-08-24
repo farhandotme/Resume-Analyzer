@@ -879,7 +879,7 @@ export default function Home() {
                             type='button'
                             aria-label='Chat with AI'
                             onClick={() => navigate('/chat')}
-                            className='group relative flex h-10 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg border border-zinc-200 bg-white px-3.5 text-sm font-medium text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-zinc-100 max-[649.9px]:h-9 max-[649.9px]:w-9 max-[649.9px]:shrink-0 max-[649.9px]:px-0 max-[649.9px]:py-0 outline-none'
+                            className='group relative flex h-10 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg border border-zinc-200 bg-white px-3.5 text-sm font-medium text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:text-zinc-900 active:scale-[0.97] active:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-zinc-100 dark:active:bg-zinc-800 max-[649.9px]:h-9 max-[649.9px]:w-9 max-[649.9px]:shrink-0 max-[649.9px]:px-0 max-[649.9px]:py-0 outline-none'
                         >
                             <span className='relative z-10 max-[649.9px]:hidden'>Let's chat</span>
 
@@ -903,7 +903,7 @@ export default function Home() {
                             target='_blank'
                             rel='noopener noreferrer'
                             aria-label='GitHub Repository'
-                            className='flex h-10 w-10 items-center outline-none justify-center rounded-lg ring-1 ring-zinc-200 bg-white text-zinc-600 transition-all duration-200 hover:ring-zinc-300 hover:text-zinc-900 dark:ring-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:ring-zinc-700 dark:hover:text-zinc-100 max-[649.9px]:hidden'
+                            className='flex h-10 w-10 cursor-pointer items-center outline-none justify-center rounded-lg ring-1 ring-zinc-200 bg-white text-zinc-600 transition-all duration-200 hover:ring-zinc-300 hover:text-zinc-900 active:scale-[0.97] active:bg-zinc-50 dark:ring-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:ring-zinc-700 dark:hover:text-zinc-100 dark:active:bg-zinc-800 max-[649.9px]:hidden'
                         >
                             <svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' className='translate-x-px'>
                                 <path d='M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4' />
@@ -915,7 +915,7 @@ export default function Home() {
                             type='button'
                             aria-label='Toggle Theme'
                             onClick={() => toggleTheme()}
-                            className='flex h-10 w-10 cursor-pointer outline-none items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-zinc-100 max-[649.9px]:hidden'
+                            className='flex h-10 w-10 cursor-pointer outline-none items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:text-zinc-900 active:scale-[0.97] active:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-zinc-100 dark:active:bg-zinc-800 max-[649.9px]:hidden'
                         >
                             {theme === 'light' ? <Moon size={18} strokeWidth={1.8} /> : <SunMedium size={18} strokeWidth={1.8} />}
                         </button>
@@ -926,7 +926,7 @@ export default function Home() {
                                 aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
                                 aria-expanded={isMobileMenuOpen}
                                 onClick={() => setIsMobileMenuOpen((current) => !current)}
-                                className='group relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-transparent text-zinc-600 transition-all duration-200 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100'
+                                className='group relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-transparent text-zinc-600 transition-all duration-200 hover:text-zinc-900 active:scale-[0.92] dark:text-zinc-400 dark:hover:text-zinc-100'
                             >
                                 <div className='relative h-3.5 w-4'>
                                     <span className={`absolute right-[-2.5px] top-0 h-0.5 rounded-full bg-current transition-all duration-300 ease-out ${isMobileMenuOpen ? 'left-1/2 right-auto w-5 -translate-x-1/2 translate-y-1.75 rotate-45' : 'w-2.5'}`} />
@@ -1028,7 +1028,7 @@ export default function Home() {
                                     ? 'cursor-default border-zinc-200 bg-white/50 dark:border-zinc-800 dark:bg-zinc-900/40'
                                     : isDragging
                                       ? 'cursor-copy border-zinc-500 dark:border-zinc-500'
-                                      : 'cursor-pointer border-zinc-300 hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-600'
+                                      : 'cursor-pointer border-zinc-300 hover:border-zinc-400 active:border-zinc-500 active:scale-[0.995] dark:border-zinc-700 dark:hover:border-zinc-600 dark:active:border-zinc-500'
                             }`}
                         >
                             {!selectedFile && (
@@ -1125,43 +1125,49 @@ export default function Home() {
                                 <div className='relative z-20 w-full'>
                                     {selectedFile && <TargetRoleSelector value={targetRole} onChange={setTargetRole} onSelectionChange={setIsRoleSelected} onEnter={handleAnalyze} isSelected={isRoleSelected} />}
                                     {selectedFile ? (
-                                        <div className='mt-3 flex w-full gap-2.5'>
-                                            <button
-                                                type='button'
-                                                onClick={(event) => {
-                                                    event.stopPropagation();
-                                                    fileInputRef.current?.click();
-                                                }}
-                                                className='inline-flex h-12 shrink-0 cursor-pointer max-[1310px]:h-11 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 text-sm font-medium text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
-                                            >
-                                                <UploadCloud className='h-3.5 w-3.5' />
-                                                <span>Change PDF</span>
-                                            </button>
-
-                                            <div className='group/analyze relative flex-1'>
+                                        <>
+                                            <div className='mt-3 flex w-full gap-2.5'>
                                                 <button
                                                     type='button'
-                                                    disabled={!isRoleSelected}
                                                     onClick={(event) => {
                                                         event.stopPropagation();
-                                                        handleAnalyze();
+                                                        fileInputRef.current?.click();
                                                     }}
-                                                    className={`group/btn inline-flex h-12 w-full items-center max-[1310px]:h-11 justify-center gap-2 rounded-xl px-5 font-medium transition-all duration-200 focus:outline-none ${
-                                                        isRoleSelected ? 'cursor-pointer bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200' : 'cursor-not-allowed bg-zinc-200 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-600'
-                                                    }`}
+                                                    className='inline-flex h-12 shrink-0 cursor-pointer max-[1310px]:h-11 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 text-sm font-medium text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 active:border-zinc-400 active:bg-zinc-100 active:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 dark:active:border-zinc-600 dark:active:bg-zinc-800 dark:active:text-zinc-100'
                                                 >
-                                                    <span>Analyze Resume</span>
-
-                                                    <ChevronRight className={`h-4 w-4 transition-transform duration-300 ease-out ${isRoleSelected ? 'group-hover/btn:translate-x-1.5' : ''}`} />
+                                                    <UploadCloud className='h-3.5 w-3.5' />
+                                                    <span>Change PDF</span>
                                                 </button>
 
-                                                {!isRoleSelected && (
-                                                    <div className='pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 translate-y-1 opacity-0 transition-all duration-150 group-hover/analyze:translate-y-0 group-hover/analyze:opacity-100'>
-                                                        <div className='whitespace-nowrap rounded-lg bg-zinc-900 px-3 py-2 text-xs font-medium text-white shadow-lg dark:bg-zinc-100 dark:text-zinc-900'>Select a target role to continue</div>
-                                                    </div>
-                                                )}
+                                                <div className='group/analyze relative flex-1'>
+                                                    <button
+                                                        type='button'
+                                                        disabled={!isRoleSelected}
+                                                        onClick={(event) => {
+                                                            event.stopPropagation();
+                                                            handleAnalyze();
+                                                        }}
+                                                        className={`group/btn inline-flex h-12 w-full items-center max-[1310px]:h-11 justify-center gap-2 rounded-xl px-5 font-medium transition-all duration-200 focus:outline-none ${
+                                                            isRoleSelected
+                                                                ? 'cursor-pointer bg-zinc-900 text-white hover:bg-zinc-800 active:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 dark:active:bg-zinc-300'
+                                                                : 'cursor-not-allowed bg-zinc-200 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-600'
+                                                        }`}
+                                                    >
+                                                        <span>Analyze Resume</span>
+
+                                                        <ChevronRight className={`h-4 w-4 transition-transform duration-300 ease-out ${isRoleSelected ? 'group-hover/btn:translate-x-1.5 group-active/btn:translate-x-1.5' : ''}`} />
+                                                    </button>
+
+                                                    {!isRoleSelected && (
+                                                        <div className='pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 translate-y-1 opacity-0 transition-all duration-150 group-hover/analyze:translate-y-0 group-hover/analyze:opacity-100'>
+                                                            <div className='whitespace-nowrap rounded-lg bg-zinc-900 px-3 py-2 text-xs font-medium text-white shadow-lg dark:bg-zinc-100 dark:text-zinc-900'>Select a target role to continue</div>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
+
+                                            {!isRoleSelected && <p className='mt-2 text-center text-[12px] font-medium text-zinc-400 max-[1069.9px]:block min-[1070px]:hidden dark:text-zinc-500'>Select a target role to continue</p>}
+                                        </>
                                     ) : (
                                         <button
                                             type='button'
@@ -1169,10 +1175,10 @@ export default function Home() {
                                                 event.stopPropagation();
                                                 fileInputRef.current?.click();
                                             }}
-                                            className='group/btn mx-auto mt-6 inline-flex h-12 w-full max-w-60 max-[1310px]:h-11 max-[1310px]:max-w-52 max-[549.9px]:mt-5 max-[549.9px]:h-10 max-[549.9px]:max-w-52 max-[549.9px]:px-5 max-[549.9px]:text-[13px] max-[449.9px]:text-[12px] cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-bold text-white transition-all duration-200 hover:bg-zinc-800 focus:outline-none focus:ring-0 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200'
+                                            className='group/btn mx-auto mt-6 inline-flex h-12 w-full max-w-60 max-[1310px]:h-11 max-[1310px]:max-w-52 max-[549.9px]:mt-5 max-[549.9px]:h-10 max-[549.9px]:max-w-52 max-[549.9px]:px-5 max-[549.9px]:text-[13px] max-[449.9px]:text-[12px] cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-bold text-white transition-all duration-200 hover:bg-zinc-800 active:bg-zinc-700 focus:outline-none focus:ring-0 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 dark:active:bg-zinc-300'
                                         >
                                             <span>Select PDF</span>
-                                            <ChevronRight className='h-4 w-4 transition-transform duration-300 ease-out group-hover/btn:translate-x-1.5' />
+                                            <ChevronRight className='h-4 w-4 transition-transform duration-300 ease-out group-hover/btn:translate-x-1.5 group-active/btn:translate-x-1.5' />
                                         </button>
                                     )}
                                 </div>
