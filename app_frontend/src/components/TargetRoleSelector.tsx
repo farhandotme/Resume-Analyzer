@@ -31,8 +31,12 @@ export default function TargetRoleSelector({ value, onChange, onSelectionChange,
                 setShowAllRoles(false);
             }
         }
+
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
     }, []);
 
     const trimmedQuery = query.trim();
@@ -43,6 +47,7 @@ export default function TargetRoleSelector({ value, onChange, onSelectionChange,
         }
 
         const q = trimmedQuery.toLowerCase();
+
         return ROLE_SUGGESTIONS.filter((role) => role.title.toLowerCase().includes(q)).slice(0, showAllRoles ? 100 : 7);
     }, [trimmedQuery, showAllRoles]);
 
@@ -62,6 +67,10 @@ export default function TargetRoleSelector({ value, onChange, onSelectionChange,
         onSelectionChange(true);
         setIsOpen(false);
         setShowAllRoles(false);
+
+        if (window.matchMedia('(max-width: 549.9px)').matches) {
+            (document.activeElement as HTMLElement)?.blur();
+        }
     };
 
     const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -114,12 +123,13 @@ export default function TargetRoleSelector({ value, onChange, onSelectionChange,
     const isMenuVisible = isOpen && results.length > 0;
 
     return (
-        <div ref={containerRef} className='relative mt-5 w-full' onClick={(event) => event.stopPropagation()}>
-            <label htmlFor='target-role-input' className='mb-2 flex items-center justify-center text-[13px] font-medium text-zinc-700 dark:text-zinc-300'>
+        <div ref={containerRef} className='relative mt-5 w-full max-[549.9px]:mt-4 max-[449.9px]:mt-3' onClick={(event) => event.stopPropagation()}>
+            <label htmlFor='target-role-input' className='mb-2 flex items-center justify-center text-[13px] font-medium text-zinc-700 dark:text-zinc-300 max-[549.9px]:mb-1.5 max-[549.9px]:text-[12px] max-[449.9px]:mb-1 max-[449.9px]:text-[11.5px] max-[399.9px]:text-[11px]'>
                 <span>Target role</span>
             </label>
+
             <div className='relative'>
-                <Search className='pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 dark:text-zinc-500' strokeWidth={1.8} />
+                <Search className='pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 max-[549.9px]:left-3 max-[549.9px]:h-3.5 max-[549.9px]:w-3.5 max-[449.9px]:left-2.5 max-[449.9px]:h-3.25 max-[449.9px]:w-3.25' strokeWidth={1.8} />
 
                 <input
                     id='target-role-input'
@@ -140,7 +150,7 @@ export default function TargetRoleSelector({ value, onChange, onSelectionChange,
                     }}
                     onFocus={() => setIsOpen(true)}
                     onKeyDown={handleKeyDown}
-                    className='h-11 w-full select-text rounded-xl border border-zinc-200 bg-white pl-10 pr-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none transition-all duration-200 focus:border-zinc-400 focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-600 dark:focus:ring-zinc-100/10'
+                    className='h-auto w-full select-text rounded-xl border border-zinc-200 bg-white py-2.5 pl-10 pr-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none transition-all duration-200 focus:border-zinc-400 focus:ring-2 focus:ring-zinc-900/10 max-[549.9px]:py-2 max-[549.9px]:pl-9 max-[549.9px]:pr-3 max-[549.9px]:text-[13px] max-[449.9px]:pl-8 max-[449.9px]:pr-2.5 max-[449.9px]:text-[12px] max-[399.9px]:text-[11px] dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-600 dark:focus:ring-zinc-100/10'
                 />
 
                 <div
@@ -151,8 +161,8 @@ export default function TargetRoleSelector({ value, onChange, onSelectionChange,
                     }`}
                 >
                     {!trimmedQuery && (
-                        <div className='flex items-center justify-between px-3.5 pb-1 pt-2.5'>
-                            <span className='font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500'>{showAllRoles ? 'All roles' : 'Popular roles'}</span>
+                        <div className='flex items-center justify-between px-3.5 pb-1 pt-2.5 max-[549.9px]:px-3 max-[549.9px]:pb-0.5 max-[549.9px]:pt-2 max-[449.9px]:pt-1.5 max-[449.9px]:pb-1.5 max-[449.9px]:px-2.5 max-[399.9px]:px-2'>
+                            <span className='font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500 max-[549.9px]:text-[9px] max-[449.9px]:text-[8.5px] max-[399.9px]:text-[8px]'>{showAllRoles ? 'All roles' : 'Popular roles'}</span>
 
                             {!showAllRoles && (
                                 <button
@@ -164,7 +174,7 @@ export default function TargetRoleSelector({ value, onChange, onSelectionChange,
                                         setShowAllRoles(true);
                                         setHighlightedIndex(0);
                                     }}
-                                    className='cursor-pointer text-[11px] font-medium text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100'
+                                    className='cursor-pointer text-[11px] font-medium text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 max-[549.9px]:text-[10px] max-[449.9px]:text-[9px] max-[399.9px]:text-[8.5px]'
                                 >
                                     Browse all roles →
                                 </button>
@@ -172,7 +182,7 @@ export default function TargetRoleSelector({ value, onChange, onSelectionChange,
                         </div>
                     )}
 
-                    <ul className='role-scrollbar max-h-64 overflow-y-auto py-1'>
+                    <ul className='role-scrollbar max-h-64 overflow-y-auto py-1 max-[549.9px]:max-h-[32vh] max-[549.9px]:py-0.5 max-[449.9px]:max-h-[25vh]'>
                         {showAllRoles && !trimmedQuery ? (
                             allRoles.map((role) => (
                                 <li
@@ -182,11 +192,10 @@ export default function TargetRoleSelector({ value, onChange, onSelectionChange,
                                         event.preventDefault();
                                         commitSelection(role.title);
                                     }}
-                                    className='flex cursor-pointer items-center justify-between gap-3 px-3.5 py-2 text-sm transition-colors duration-100 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                    className='flex cursor-pointer items-center justify-between gap-3 px-3.5 py-2 text-sm transition-colors duration-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 max-[549.9px]:px-3 max-[549.9px]:py-1.5 max-[549.9px]:text-[13px] max-[449.9px]:px-2.5 max-[449.9px]:py-1 max-[449.9px]:text-[12px] max-[399.9px]:px-2 max-[399.9px]:text-[11px]'
                                 >
                                     <span className='text-zinc-800 dark:text-zinc-200'>{role.title}</span>
-
-                                    <span className='shrink-0 font-mono text-[10.5px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>{role.category}</span>
+                                    <span className='shrink-0 font-mono text-[10.5px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500 max-[549.9px]:hidden'>{role.category}</span>
                                 </li>
                             ))
                         ) : (
@@ -202,11 +211,12 @@ export default function TargetRoleSelector({ value, onChange, onSelectionChange,
                                             commitSelection(role.title);
                                         }}
                                         onMouseEnter={() => setHighlightedIndex(index)}
-                                        className={`flex cursor-pointer items-center justify-between gap-3 px-3.5 py-2 text-sm transition-colors duration-100 ${highlightedIndex === index ? 'bg-zinc-100 dark:bg-zinc-800' : ''}`}
+                                        className={`flex cursor-pointer items-center justify-between gap-3 px-3.5 py-2 text-sm transition-colors duration-100 max-[549.9px]:px-3 max-[549.9px]:py-1.5 max-[549.9px]:text-[13px] max-[449.9px]:px-2.5 max-[449.9px]:py-1 max-[449.9px]:text-[12px] max-[399.9px]:px-2 max-[399.9px]:text-[11px] ${
+                                            highlightedIndex === index ? 'bg-zinc-100 dark:bg-zinc-800' : ''
+                                        }`}
                                     >
                                         <span className='text-zinc-800 dark:text-zinc-200'>{role.title}</span>
-
-                                        <span className='shrink-0 font-mono text-[10.5px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500'>{role.category}</span>
+                                        <span className='shrink-0 font-mono text-[10.5px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500 max-[549.9px]:hidden'>{role.category}</span>
                                     </li>
                                 ))}
                             </>
