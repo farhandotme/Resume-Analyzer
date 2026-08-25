@@ -1047,7 +1047,13 @@ export default function Chat() {
             ]);
         } finally {
             setIsSending(false);
+
             requestAnimationFrame(() => {
+                if (window.matchMedia('(max-width: 919.9px)').matches) {
+                    textareaRef.current?.blur();
+                    return;
+                }
+
                 textareaRef.current?.focus();
             });
         }
