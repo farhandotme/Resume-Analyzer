@@ -24,6 +24,8 @@ const suggestions = [
     'What skills should I highlight?',
 ];
 
+const suggestionLabels = ['Strongest skills?', 'Improve resume?', 'Job fit?', 'Make resume stronger?', 'Resume weaknesses?', 'ATS-friendly?', 'Improve experience?', 'Highlight skills?'];
+
 const inputPlaceholders = ['Ask anything about your resume...', 'What are my strongest skills?', 'How can I improve my resume?', 'What jobs am I a good fit for?', 'What should I highlight in your resume?'];
 const heroWords = ['resume', 'experience', 'skills', 'story'];
 const CHAT_ANALYSIS_ROLE = 'General Resume Review';
@@ -1706,16 +1708,19 @@ export default function Chat() {
                                     <div className='mb-4 text-center max-[549.9px]:mb-3 max-[449.9px]:mb-2.5'>
                                         <p className='mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500 max-[549.9px]:mb-2.5 max-[549.9px]:text-[9px] max-[449.9px]:text-[8px]'>Suggested questions</p>
 
-                                        <div className='mx-auto flex max-w-3xl flex-wrap justify-center gap-2 max-[549.9px]:gap-1.5 max-[449.9px]:gap-1.5'>
-                                            {suggestions.map((suggestion) => (
+                                        <div className='mx-auto flex max-w-3xl flex-wrap justify-center gap-2 max-[919.9px]:gap-1.5 max-[549.9px]:gap-1.5 max-[449.9px]:gap-1'>
+                                            {suggestions.map((suggestion, index) => (
                                                 <button
                                                     key={suggestion}
                                                     type='button'
                                                     onClick={() => handleSuggestion(suggestion)}
                                                     disabled={isSending}
-                                                    className='cursor-pointer select-none rounded-lg border border-zinc-200/80 bg-transparent px-3 py-1.5 text-left text-[12.5px] font-medium text-zinc-500 transition-colors duration-150 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800/80 dark:text-zinc-500 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/70 dark:hover:text-zinc-200 max-[549.9px]:px-2.5 max-[549.9px]:py-1 max-[549.9px]:text-[11.5px] max-[449.9px]:px-2 max-[449.9px]:text-[11px] max-[399.9px]:text-[10.5px]'
+                                                    aria-label={suggestion}
+                                                    title={suggestion}
+                                                    className='cursor-pointer select-none rounded-lg border border-zinc-200/80 bg-transparent px-3 py-1.5 text-left text-[12.5px] font-medium text-zinc-500 transition-colors duration-150 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800/80 dark:text-zinc-500 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/70 dark:hover:text-zinc-200 max-[919.9px]:px-2.5 max-[919.9px]:py-1.5 max-[919.9px]:text-[11.5px] max-[919.9px]:leading-4.5 max-[549.9px]:px-2.5 max-[549.9px]:py-1 max-[549.9px]:text-[11px] max-[549.9px]:leading-4 max-[399.9px]:text-[10px]'
                                                 >
-                                                    {suggestion}
+                                                    <span className='max-[549.9px]:hidden'>{suggestion}</span>
+                                                    <span className='hidden max-[549.9px]:inline'>{suggestionLabels[index]}</span>
                                                 </button>
                                             ))}
                                         </div>
