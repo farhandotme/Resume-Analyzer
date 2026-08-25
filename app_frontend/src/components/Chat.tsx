@@ -1544,7 +1544,7 @@ export default function Chat() {
                     ) : (
                         <motion.div key='chat' initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} className='flex h-full min-h-0 flex-col pt-16 max-[639.9px]:pt-12'>
                             <div ref={chatScrollRef} onScroll={handleChatScroll} className='chat-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto'>
-                                <div className='mx-auto flex h-full w-full max-w-4xl flex-col px-4 pt-6 pb-6 sm:px-6 translate-x-2 max-[919.9px]:translate-x-0 max-[549.9px]:px-3.5 max-[449.9px]:px-3 max-[399.9px]:px-2.5 max-[549.9px]:pt-5 max-[449.9px]:pt-4 max-[399.9px]:pt-3 max-[549.9px]:pb-5 max-[449.9px]:pb-4 max-[399.9px]:pb-3'>
+                                <div className='mx-auto flex h-full w-full max-w-4xl flex-col px-4 pt-6 pb-6 sm:px-6 max-[549.9px]:px-3.5 max-[449.9px]:px-3 max-[399.9px]:px-2.5 max-[549.9px]:pt-5 max-[449.9px]:pt-4 max-[399.9px]:pt-3 max-[549.9px]:pb-5 max-[449.9px]:pb-4 max-[399.9px]:pb-3'>
                                     {messages.length === 1 ? (
                                         <div className='flex flex-1 items-start justify-center pt-[18vh] sm:pt-[20vh] max-[649.9px]:pt-[15vh] max-[549.9px]:pt-[12vh] max-[449.9px]:pt-[10vh] max-[399.9px]:pt-[8vh]'>
                                             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }} className='w-full max-w-2xl px-4 text-center max-[549.9px]:px-3 max-[449.9px]:px-2'>
@@ -1557,11 +1557,11 @@ export default function Chat() {
                                         </div>
                                     ) : (
                                         <>
-                                            <div className='flex flex-col gap-3 translate-x-2 max-[919.9px]:translate-x-0'>
+                                            <div className='flex flex-col gap-3'>
                                                 {messages.map((message) => (
                                                     <motion.div key={message.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className={message.role === 'user' ? 'flex justify-end' : 'group flex justify-start'}>
                                                         {message.role === 'assistant' ? (
-                                                            <div className='max-w-[78%] max-[549.9px]:max-w-[88%] max-[449.9px]:max-w-[92%]'>
+                                                            <div className='ml-1 max-w-[78%] max-[549.9px]:max-w-[88%] max-[449.9px]:max-w-[92%]'>
                                                                 <div className='whitespace-pre-wrap wrap-break-word text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 dark:text-zinc-200 max-[549.9px]:text-[15px] max-[549.9px]:leading-6.5 max-[449.9px]:text-[14px] max-[449.9px]:leading-6 max-[399.9px]:text-[13px] max-[399.9px]:leading-5.5'>
                                                                     {message.content}
                                                                 </div>
