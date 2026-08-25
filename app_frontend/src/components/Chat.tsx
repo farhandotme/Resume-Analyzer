@@ -30,10 +30,6 @@ const CHAT_ANALYSIS_ROLE = 'General Resume Review';
 const CHAT_STORAGE_KEY = 'resume-analyzer-chat';
 
 const createSessionId = () => {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-        return crypto.randomUUID();
-    }
-
     if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
         const bytes = new Uint8Array(16);
         crypto.getRandomValues(bytes);
@@ -634,7 +630,7 @@ export default function Chat() {
             console.log('Resume uploaded successfully');
             console.log('Starting resume validation/analysis...');
 
-            const response = await fetch('http://localhost:3000/resume/analyze', {
+            const response = await fetch('http://192.168.29.100:3000/resume/analyze', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1438,11 +1434,11 @@ export default function Chat() {
                                                         </motion.div>
                                                     </div>
 
-                                                    <h3 className='mt-6 text-xl font-medium tracking-tight text-zinc-900 dark:text-zinc-100 max-[549.9px]:mt-5 max-[549.9px]:text-lg max-[449.9px]:mt-4 max-[449.9px]:text-base'>
+                                                    <h3 className='mt-6 text-xl font-medium tracking-tight text-zinc-900 dark:text-zinc-100 max-[549.9px]:mt-5 max-[549.9px]:text-lg max-[449.9px]:mt-4 max-[449.9px]:text-base max-[399.9px]:text-[15px]'>
                                                         {isAnalyzingResume ? 'Understanding your resume...' : isDragging ? 'Drop your resume to begin' : 'Upload your resume'}
                                                     </h3>
 
-                                                    <p className='mt-2 text-sm font-light text-zinc-500 dark:text-zinc-400 max-[549.9px]:text-[13px] max-[449.9px]:text-[12px] max-[449.9px]:leading-5'>
+                                                    <p className='mt-2 text-sm font-light text-zinc-500 dark:text-zinc-400 max-[549.9px]:text-[13px] max-[449.9px]:text-[12px] max-[449.9px]:leading-5 max-[399.9px]:text-[11px] max-[399.9px]:leading-4.5'>
                                                         {isAnalyzingResume ? (
                                                             'AI is checking your document before opening chat'
                                                         ) : (
@@ -1499,7 +1495,7 @@ export default function Chat() {
                                                     )}
 
                                                     {isAnalyzingResume && (
-                                                        <div className='mt-5 inline-flex select-none items-center gap-2.5 rounded-full border border-zinc-200 bg-white/50 px-5 py-2.5 text-sm font-medium text-zinc-600 shadow-sm backdrop-blur-md dark:border-zinc-800 dark:bg-black/50 dark:text-zinc-400'>
+                                                        <div className='mt-5 inline-flex select-none items-center gap-2.5 rounded-full border border-zinc-200 bg-white/50 px-5 py-2.5 text-sm font-medium text-zinc-600 shadow-sm backdrop-blur-md dark:border-zinc-800 dark:bg-black/50 dark:text-zinc-400 max-[549.9px]:px-4 max-[549.9px]:py-2 max-[549.9px]:text-[13px] max-[449.9px]:px-3.5 max-[449.9px]:py-1.5 max-[449.9px]:text-[12px] max-[399.9px]:text-[11px]'>
                                                             <motion.span
                                                                 animate={prefersReducedMotion ? {} : { rotate: 360 }}
                                                                 transition={{ duration: 0.9, repeat: Infinity, ease: 'linear' }}
