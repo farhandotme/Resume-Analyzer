@@ -29,6 +29,26 @@ const heroWords = ['resume', 'experience', 'skills', 'story'];
 const CHAT_ANALYSIS_ROLE = 'General Resume Review';
 const CHAT_STORAGE_KEY = 'resume-analyzer-chat';
 
+const createSessionId = () => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+        const bytes = new Uint8Array(16);
+        crypto.getRandomValues(bytes);
+
+        bytes[6] = (bytes[6] & 0x0f) | 0x40;
+        bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+        return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0'))
+            .join('')
+            .replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, '$1-$2-$3-$4-$5');
+    }
+
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+};
+
 const GLOW_LAYERS = [
     { inset: 0, radius: 0, borderWidth: 2, blur: 4, opacity: { full: 0.9, reduced: 0.3 } },
     { inset: -2, radius: 0, borderWidth: 12, blur: 16, opacity: { full: 0.6, reduced: 0.2 } },
@@ -102,7 +122,7 @@ export default function Chat() {
 
     const [sessionId, setSessionId] = useState(() => {
         const storedChat = getStoredChat();
-        return storedChat?.sessionId ?? crypto.randomUUID();
+        return storedChat?.sessionId ?? createSessionId();
     });
 
     const [hasIndexedResume, setHasIndexedResume] = useState(() => {
@@ -633,7 +653,7 @@ export default function Chat() {
 
             console.log('Resume validated successfully');
 
-            const nextSessionId = crypto.randomUUID();
+            const nextSessionId = createSessionId();
 
             setSessionId(nextSessionId);
             setHasIndexedResume(false);
@@ -655,7 +675,7 @@ export default function Chat() {
             setSelectedFile(null);
             setPdfUrl('');
             setHasIndexedResume(false);
-            setSessionId(crypto.randomUUID());
+            setSessionId(createSessionId());
             setMessages([]);
             setAnalysisError(message);
 
@@ -730,7 +750,7 @@ export default function Chat() {
         setSelectedFile(null);
         setPdfUrl('');
         setHasIndexedResume(false);
-        setSessionId(crypto.randomUUID());
+        setSessionId(createSessionId());
         setMessages([]);
         setInput('');
         setIsComposerMultiline(false);
@@ -1134,7 +1154,7 @@ export default function Chat() {
         setSelectedFile(null);
         setPdfUrl('');
         setHasIndexedResume(false);
-        setSessionId(crypto.randomUUID());
+        setSessionId(createSessionId());
         setMessages([]);
         setInput('');
         setIsComposerMultiline(false);
@@ -1238,10 +1258,10 @@ export default function Chat() {
             <header className='absolute inset-x-0 top-0 z-20'>
                 <div aria-hidden='true' className='pointer-events-none absolute inset-x-0 top-0 h-28 bg-linear-to-b from-white/85 via-white/35 to-transparent dark:from-black dark:via-black/70 dark:to-transparent' />
 
-                <div className='relative z-10 mx-auto grid h-16 w-full max-w-4xl -translate-x-1 sm:-translate-x-2 grid-cols-2 items-center px-4 sm:px-6'>
+                <div className='relative z-10 mx-auto grid h-16 max-[919.9px]:h-14 max-[639.9px]:h-12 w-full max-w-4xl max-[919.9px]:max-w-none grid-cols-2 items-center px-4 sm:px-6 max-[639.9px]:px-2 max-[639.9px]:pl-3.5'>
                     <div className='flex min-w-0 items-center gap-4'>
                         <button type='button' onClick={handleHomeClick} className='group inline-flex shrink-0 cursor-pointer items-center gap-1.5 text-sm font-medium text-zinc-500 transition-colors duration-200 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100'>
-                            <ArrowLeft className='h-4 w-4 -translate-x-0.5 transition-transform duration-300 group-hover:-translate-x-1' strokeWidth={1.8} />
+                            <ArrowLeft className='max-[639.9px]:h-3 max-[639.9px]:w-3 h-4 w-4 -translate-x-0.5 transition-transform duration-300 group-hover:-translate-x-1' strokeWidth={1.8} />
                             <span className='select-none'>Home</span>
                         </button>
 
@@ -1293,14 +1313,14 @@ export default function Chat() {
                             animate={{ opacity: 1 }}
                             exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -10 }}
                             transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-                            className='flex h-full items-center justify-center px-6'
+                            className='flex h-full items-center justify-center px-5 max-[649.9px]:px-4 max-[449.9px]:px-3'
                         >
                             <div className='w-full max-w-3xl text-center'>
                                 <motion.div
                                     initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                                    className='mx-auto mb-7 inline-flex select-none items-center gap-2 rounded-full border border-zinc-200 bg-white/70 px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-500 backdrop-blur-sm dark:border-zinc-800 dark:bg-black/50 dark:text-zinc-500'
+                                    className='mx-auto mb-7 inline-flex select-none items-center gap-2 rounded-full border border-zinc-200 bg-white/70 px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-500 backdrop-blur-sm dark:border-zinc-800 dark:bg-black/50 dark:text-zinc-500 max-[549.9px]:mb-5 max-[449.9px]:px-3 max-[449.9px]:py-1.5 max-[449.9px]:text-[9px] max-[449.9px]:tracking-[0.18em] max-[399.9px]:text-[8px]'
                                 >
                                     <span className='relative flex h-1.5 w-1.5'>
                                         <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-zinc-400 opacity-60 dark:bg-zinc-500' />
@@ -1310,11 +1330,14 @@ export default function Chat() {
                                 </motion.div>
 
                                 <motion.div initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}>
-                                    <h1 className='text-[3.4rem] font-light leading-[0.94] tracking-tight text-zinc-950 sm:text-[4.5rem] lg:text-[5.8rem] dark:text-white' style={{ fontFamily: 'Fraunces, serif', fontWeight: 300 }}>
+                                    <h1
+                                        className='text-[3.4rem] font-light leading-[0.94] tracking-tight text-zinc-950 sm:text-[4.5rem] lg:text-[5.8rem] dark:text-white max-[649.9px]:text-[3.6rem] max-[449.9px]:text-[2.7rem] max-[399.9px]:text-[2.4rem]'
+                                        style={{ fontFamily: 'Fraunces, serif', fontWeight: 300 }}
+                                    >
                                         Let's talk about
                                     </h1>
 
-                                    <div className='relative flex h-22 items-center justify-center overflow-hidden sm:h-28'>
+                                    <div className='relative flex h-22 items-center justify-center overflow-hidden sm:h-28 max-[649.9px]:h-19 max-[449.9px]:h-15'>
                                         <AnimatePresence mode='wait' initial={false}>
                                             <motion.h2
                                                 key={heroWords[wordIndex]}
@@ -1322,7 +1345,7 @@ export default function Chat() {
                                                 animate={{ opacity: 1, y: 0 }}
                                                 exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -36 }}
                                                 transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-                                                className='whitespace-nowrap bg-linear-to-b from-zinc-500 to-zinc-400 bg-clip-text px-3.5 py-2.5 text-center text-[3.4rem] font-light italic leading-none tracking-tighter text-transparent sm:text-[4.5rem] lg:text-[5.8rem] dark:from-zinc-300 dark:to-zinc-500'
+                                                className='whitespace-nowrap bg-linear-to-b from-zinc-500 to-zinc-400 bg-clip-text px-3.5 py-2.5 text-center text-[3.4rem] font-light italic leading-none tracking-tighter text-transparent sm:text-[4.5rem] lg:text-[5.8rem] dark:from-zinc-300 dark:to-zinc-500 max-[649.9px]:text-[3.5rem] max-[449.9px]:text-[2.6rem] max-[399.9px]:text-[2.5rem] max-[449.9px]:px-2 max-[449.9px]:py-2'
                                                 style={{ fontFamily: 'Fraunces, serif' }}
                                             >
                                                 your {heroWords[wordIndex]}
@@ -1335,12 +1358,12 @@ export default function Chat() {
                                     initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: 0.22 }}
-                                    className='mx-auto mt-7 max-w-2xl text-[15px] font-light leading-7 tracking-wide text-zinc-500 sm:text-[16px] sm:leading-7 dark:text-zinc-500'
+                                    className='mx-auto mt-7 w-full max-w-xl text-[15px] font-thin md:font-light leading-7 tracking-wide text-zinc-500 sm:text-[16px] sm:leading-7 dark:text-zinc-500 max-[649.9px]:mt-5 max-[649.9px]:max-w-xl max-[649.9px]:text-[14px] max-[649.9px]:leading-6 max-[449.9px]:text-[13px] max-[449.9px]:leading-4.5 max-[399.9px]:text-[12px]'
                                 >
                                     Upload your resume and let AI understand your experience, strengths, skills, and career direction before you start the conversation.
                                 </motion.p>
 
-                                <motion.div initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.36 }} className='mx-auto mt-6 w-full max-w-2xl'>
+                                <motion.div initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.36 }} className='mx-auto mt-6 w-full max-w-xl max-[649.9px]:mt-5'>
                                     <div className='relative flex w-full flex-col items-center'>
                                         <input ref={fileInputRef} type='file' accept='application/pdf,.pdf' onChange={handleFileChange} className='hidden' />
 
@@ -1350,26 +1373,45 @@ export default function Chat() {
                                                     fileInputRef.current?.click();
                                                 }
                                             }}
-                                            className={`group relative z-10 w-[85%] max-w-xl cursor-pointer select-none overflow-hidden rounded-3xl border border-dashed border-zinc-800/80 transition-all duration-300 dark:border-zinc-800 ${
+                                            className={`group relative z-10 mx-auto w-full max-w-xl cursor-pointer select-none overflow-hidden rounded-3xl border-2 border-dashed border-zinc-300 transition-all duration-300 hover:border-zinc-500 dark:border-zinc-800 dark:hover:border-zinc-600 ${
                                                 isDragging ? 'scale-[1.01] border-zinc-600 dark:border-zinc-600' : ''
                                             } ${isAnalyzingResume ? 'cursor-wait' : ''}`}
                                         >
                                             <motion.div
+                                                aria-hidden='true'
                                                 animate={prefersReducedMotion ? {} : { rotate: 360 }}
                                                 transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-                                                className={`absolute -inset-full transition-opacity duration-500 ${isAnalyzingResume ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-                                                style={{ background: 'conic-gradient(from 0deg, transparent 70%, rgba(161,161,170,0.9) 85%, transparent 100%)' }}
+                                                className='pointer-events-none absolute -inset-full z-0 transition-opacity duration-500'
+                                                style={{
+                                                    background:
+                                                        theme === 'light'
+                                                            ? 'conic-gradient(from 0deg, transparent 72%, rgba(82,82,91,0.88) 84%, rgba(39,39,42,0.72) 87%, transparent 98%)'
+                                                            : 'conic-gradient(from 0deg, transparent 72%, rgba(161,161,170,0.9) 84%, rgba(113,113,122,0.72) 87%, transparent 98%)',
+                                                }}
                                             />
 
                                             <motion.div
+                                                aria-hidden='true'
                                                 animate={prefersReducedMotion ? {} : { rotate: -360 }}
                                                 transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
-                                                className={`absolute -inset-full transition-opacity duration-500 ${isAnalyzingResume ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-                                                style={{ background: 'conic-gradient(from 0deg, transparent 40%, rgba(228,228,231,0.6) 50%, transparent 60%)' }}
+                                                className='pointer-events-none absolute -inset-full z-0 transition-opacity duration-500'
+                                                style={{
+                                                    background:
+                                                        theme === 'light'
+                                                            ? 'conic-gradient(from 0deg, transparent 40%, rgba(113,113,122,0.7) 50%, rgba(63,63,70,0.58) 53%, transparent 61%)'
+                                                            : 'conic-gradient(from 0deg, transparent 40%, rgba(228,228,231,0.62) 50%, rgba(161,161,170,0.5) 53%, transparent 61%)',
+                                                }}
                                             />
 
-                                            <div className={`relative flex min-h-55 flex-col items-center justify-center overflow-hidden rounded-[calc(1.5rem-1px)] px-5 py-6 transition-colors duration-300 sm:px-8 ${isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'}`}>
-                                                <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(0,0,0,0.04)_1px,transparent_1px)] bg-size-[16px_16px] opacity-0 transition-opacity duration-500 group-hover:opacity-100 dark:bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)]' />
+                                            <div
+                                                className={`relative flex min-h-55 flex-col items-center justify-center overflow-hidden rounded-[calc(1.5rem-1px)] px-5 py-6 transition-colors duration-300 sm:px-8 max-[649.9px]:min-h-50 max-[549.9px]:min-h-47 max-[449.9px]:min-h-44 max-[399.9px]:min-h-42 max-[449.9px]:px-4 max-[399.9px]:px-3 ${isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'}`}
+                                            >
+                                                <div
+                                                    aria-hidden='true'
+                                                    className={`pointer-events-none absolute inset-0 z-0 bg-size-[16px_16px] ${
+                                                        theme === 'light' ? 'bg-[radial-gradient(rgba(0,0,0,0.045)_1px,transparent_1px)] opacity-100' : 'bg-[radial-gradient(rgba(255,255,255,0.045)_1px,transparent_1px)] opacity-20 mix-blend-screen'
+                                                    }`}
+                                                />
 
                                                 <div className='relative z-20 flex flex-col items-center'>
                                                     <div className='relative flex items-center justify-center'>
@@ -1390,15 +1432,26 @@ export default function Chat() {
                                                         <motion.div
                                                             animate={isDragging ? { scale: 1.08, y: -3 } : { scale: 1, y: 0 }}
                                                             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                                                            className='relative flex h-12 w-12 items-center justify-center rounded-xl border border-zinc-200/80 bg-linear-to-br from-white to-zinc-50 text-zinc-600 shadow-sm transition-all duration-300 group-hover:border-zinc-300 group-hover:shadow-md dark:border-zinc-700/80 dark:from-zinc-800 dark:to-zinc-900 dark:text-zinc-300 dark:group-hover:border-zinc-600'
+                                                            className='relative flex h-12 w-12 items-center justify-center rounded-xl max-[549.9px]:h-11 max-[549.9px]:w-11 max-[449.9px]:h-10 max-[449.9px]:w-10 border border-zinc-200/80 bg-linear-to-br from-white to-zinc-50 text-zinc-600 shadow-sm transition-all duration-300 group-hover:border-zinc-300 group-hover:shadow-md dark:border-zinc-700/80 dark:from-zinc-800 dark:to-zinc-900 dark:text-zinc-300 dark:group-hover:border-zinc-600'
                                                         >
-                                                            <FileText className='h-6 w-6' strokeWidth={1.5} />
+                                                            <FileText className='h-6 w-6 max-[549.9px]:h-5.5 max-[549.9px]:w-5.5 max-[449.9px]:h-5 max-[449.9px]:w-5' strokeWidth={1.5} />
                                                         </motion.div>
                                                     </div>
 
-                                                    <h3 className='mt-6 text-xl font-medium tracking-tight text-zinc-900 dark:text-zinc-100'>{isAnalyzingResume ? 'Understanding your resume...' : isDragging ? 'Drop your resume to begin' : 'Upload your resume'}</h3>
+                                                    <h3 className='mt-6 text-xl font-medium tracking-tight text-zinc-900 dark:text-zinc-100 max-[549.9px]:mt-5 max-[549.9px]:text-lg max-[449.9px]:mt-4 max-[449.9px]:text-base'>
+                                                        {isAnalyzingResume ? 'Understanding your resume...' : isDragging ? 'Drop your resume to begin' : 'Upload your resume'}
+                                                    </h3>
 
-                                                    <p className='mt-2 text-sm font-light text-zinc-500 dark:text-zinc-400'>{isAnalyzingResume ? 'AI is checking your document before opening chat' : 'PDF only · drag and drop or click to browse'}</p>
+                                                    <p className='mt-2 text-sm font-light text-zinc-500 dark:text-zinc-400 max-[549.9px]:text-[13px] max-[449.9px]:text-[12px] max-[449.9px]:leading-5'>
+                                                        {isAnalyzingResume ? (
+                                                            'AI is checking your document before opening chat'
+                                                        ) : (
+                                                            <>
+                                                                <span className='max-[549.9px]:hidden'>PDF only · drag and drop or click to browse</span>
+                                                                <span className='hidden max-[549.9px]:inline'>Click to select your PDF</span>
+                                                            </>
+                                                        )}
+                                                    </p>
 
                                                     <AnimatePresence>
                                                         {showFileError && (
@@ -1439,7 +1492,7 @@ export default function Chat() {
                                                     </AnimatePresence>
 
                                                     {!isAnalyzingResume && (
-                                                        <div className='mt-5 inline-flex items-center gap-2.5 rounded-full border border-zinc-200 bg-white/50 px-5 py-2.5 text-sm font-medium text-zinc-600 shadow-sm backdrop-blur-md transition-all duration-300 group-hover:border-zinc-300 group-hover:bg-white group-hover:text-zinc-950 group-hover:shadow-md dark:border-zinc-800 dark:bg-black/50 dark:text-zinc-400 dark:group-hover:border-zinc-700 dark:group-hover:bg-zinc-900 dark:group-hover:text-zinc-100'>
+                                                        <div className='mt-5 self-center inline-flex items-center gap-2.5 rounded-full border border-zinc-200 bg-white/50 px-5 py-2.5 text-sm font-medium text-zinc-600 shadow-sm backdrop-blur-md transition-all duration-300 group-hover:border-zinc-300 group-hover:bg-white group-hover:text-zinc-950 group-hover:shadow-md dark:border-zinc-800 dark:bg-black/50 dark:text-zinc-400 dark:group-hover:border-zinc-700 dark:group-hover:bg-zinc-900 dark:group-hover:text-zinc-100 max-[549.9px]:px-4 max-[549.9px]:py-2 max-[549.9px]:text-[13px] max-[449.9px]:px-3.5 max-[449.9px]:text-[12px]'>
                                                             <span>Choose PDF</span>
                                                             <ArrowUp className='h-4 w-4 transition-transform duration-300 ease-out' strokeWidth={1.8} />
                                                         </div>
