@@ -639,7 +639,7 @@ export default function Home() {
 
     return (
         <div
-            className='relative h-screen w-full overflow-hidden bg-white text-zinc-900 selection:bg-[#EAF5FF] selection:text-[#3999FF] dark:bg-black dark:text-zinc-100 dark:selection:bg-[#010B1B] dark:selection:text-[#3999FF] antialiased'
+            className={`relative h-screen w-full overflow-hidden bg-white text-zinc-900 selection:bg-[#EAF5FF] selection:text-[#3999FF] dark:bg-black dark:text-zinc-100 dark:selection:bg-[#010B1B] dark:selection:text-[#3999FF] antialiased ${selectedFile ? 'max-[1069.9px]:overflow-x-hidden max-[1069.9px]:overflow-y-auto' : ''}`}
             onDragEnter={!selectedFile && !isAnalyzing ? handleDragEnter : undefined}
             onDragOver={!selectedFile && !isAnalyzing ? handleDragOver : undefined}
             onDragLeave={!selectedFile && !isAnalyzing ? handleDragLeave : undefined}
@@ -981,13 +981,15 @@ export default function Home() {
                 </div>
             </motion.header>
             <motion.section
-                className={`relative flex h-screen items-center overflow-hidden ${isAnalyzing ? 'pointer-events-none' : ''}`}
+                className={`relative flex h-screen items-center overflow-hidden ${selectedFile ? 'max-[1069.9px]:h-auto max-[1069.9px]:min-h-screen max-[549.9px]:items-start max-[1069.9px]:overflow-visible' : ''} ${isAnalyzing ? 'pointer-events-none' : ''}`}
                 animate={{ opacity: isAnalyzing ? 0 : 1, scale: prefersReducedMotion ? 1 : isAnalyzing ? 0.98 : 1 }}
                 transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                 aria-hidden={isAnalyzing}
             >
-                <div className='relative mx-auto grid h-screen w-full max-w-7xl grid-cols-1 items-center gap-16 px-6 pt-20 min-[1070px]:grid-cols-2 min-[1070px]:gap-10 min-[1070px]:px-8 min-[1070px]:pt-0 max-[1310px]:gap-0 max-[1310px]:px-6 max-[1069.9px]:px-5 max-[1069.9px]:translate-y-0'>
-                    <div className='flex flex-col justify-center pb-10 min-[1070px]:pb-0 max-[1069.9px]:mx-auto max-[1069.9px]:w-full max-[1069.9px]:max-w-2xl max-[1069.9px]:justify-self-center max-[1069.9px]:text-center'>
+                <div
+                    className={`relative mx-auto grid h-screen w-full max-w-7xl grid-cols-1 items-center gap-16 px-6 pt-20 min-[1070px]:grid-cols-2 min-[1070px]:gap-10 min-[1070px]:px-8 min-[1070px]:pt-0 max-[1310px]:gap-0 max-[1310px]:px-6 max-[1069.9px]:px-5 max-[1069.9px]:translate-y-0 max-[549.9px]:-translate-y-5 ${selectedFile ? 'max-[1069.9px]:h-auto max-[1069.9px]:min-h-screen max-[549.9px]:items-start max-[649.9px]:pt-24 max-[549.9px]:pt-28 max-[449.9px]:pt-35 max-[1069.9px]:pb-8' : ''}`}
+                >
+                    <div className={`flex flex-col justify-center pb-10 min-[1070px]:pb-0 max-[1069.9px]:mx-auto max-[1069.9px]:w-full max-[1069.9px]:max-w-2xl max-[1069.9px]:justify-self-center max-[1069.9px]:text-center ${selectedFile ? 'max-[549.9px]:pb-4' : ''}`}>
                         <h1 className='hidden min-[1070px]:block text-4xl font-normal leading-[1.08] text-zinc-900 dark:text-white sm:text-5xl lg:text-[3.8rem] max-[1310px]:text-[3.2rem]' style={{ fontFamily: 'Fraunces, serif' }}>
                             <span className='whitespace-nowrap'>
                                 Better{' '}
@@ -1008,12 +1010,17 @@ export default function Home() {
                             </span>
                         </h1>
 
-                        <h1 className='block text-center text-[3.7rem] font-normal leading-[1.08] text-zinc-900 dark:text-white max-[649.9px]:text-[3.3rem] max-[549.9px]:text-[2.9rem] max-[449.9px]:text-[2.3rem] min-[1070px]:hidden' style={{ fontFamily: 'Fraunces, serif' }}>
+                        <h1
+                            className={`block text-center text-[3.7rem] font-normal leading-[1.08] text-zinc-900 dark:text-white max-[649.9px]:text-[3.3rem] max-[549.9px]:text-[2.9rem] max-[449.9px]:text-[2.3rem] min-[1070px]:hidden ${selectedFile ? 'max-[549.9px]:text-[2.7rem] max-[449.9px]:text-[2.2rem]' : ''}`}
+                            style={{ fontFamily: 'Fraunces, serif' }}
+                        >
                             <span className='block whitespace-nowrap'>
                                 Better <span className='text-zinc-400 italic dark:text-zinc-500'>{mobileHeadlineText}</span>
                             </span>
                         </h1>
-                        <p className='mt-4 max-w-122.5 text-[17px] leading-7 text-zinc-500 dark:text-zinc-400 max-[1310px]:text-[17px] max-[1069.9px]:mx-auto max-[1069.9px]:max-w-155 max-[1069.9px]:text-[17px] max-[1069.9px]:leading-7 max-[1069.9px]:tracking-[0.02em] max-[1069.9px]:text-center max-[649.9px]:text-[15.5px]'>
+                        <p
+                            className={`mt-4 max-w-122.5 text-[17px] leading-7 text-zinc-500 dark:text-zinc-400 max-[1310px]:text-[17px] max-[1069.9px]:mx-auto max-[1069.9px]:max-w-155 max-[1069.9px]:text-[17px] max-[1069.9px]:leading-7 max-[1069.9px]:tracking-[0.02em] max-[1069.9px]:text-center max-[649.9px]:text-[15.5px] ${selectedFile ? 'max-[549.9px]:mt-3 max-[449.9px]:text-[13.5px] max-[449.9px]:leading-5.5' : ''}`}
+                        >
                             <span className='max-[549.9px]:hidden'>Upload your resume to receive an ATS score, recruiter feedback, and AI-powered recommendations that help you stand out before you apply.</span>
                             <span className='hidden max-[549.9px]:inline max-[449.9px]:inline-block max-[449.9px]:text-[14px] max-[399.9px]:text-[13px] max-[449.9px]:leading-6'>Upload your resume for an ATS score, recruiter feedback, and AI-powered recommendations.</span>
                         </p>
@@ -1023,7 +1030,7 @@ export default function Home() {
                                     fileInputRef.current?.click();
                                 }
                             }}
-                            className={`group relative mt-6 flex min-h-55 select-none max-[1310px]:min-h-48 max-[1069.9px]:mx-auto max-[1069.9px]:w-full max-[449.9px]:w-[calc(100%+16px)] max-[449.9px]:left-1/2 max-[449.9px]:-translate-x-1/2 max-[549.9px]:mt-5 max-[549.9px]:min-h-44 max-[449.9px]:mt-4 flex-col items-center justify-center rounded-2xl border-2 border-dashed text-center transition-all duration-200 ${
+                            className={`group relative mt-6 flex min-h-55 select-none max-[1310px]:min-h-48 max-[1069.9px]:mx-auto max-[1069.9px]:w-full max-[449.9px]:w-[calc(100%+16px)] max-[449.9px]:left-1/2 max-[449.9px]:-translate-x-1/2 max-[549.9px]:mt-5 max-[549.9px]:min-h-44 max-[449.9px]:mt-4 flex-col items-center justify-center rounded-2xl border-2 border-dashed text-center transition-all duration-200 ${selectedFile ? 'overflow-visible' : 'overflow-hidden'} ${
                                 selectedFile
                                     ? 'cursor-default border-zinc-200 bg-white/50 dark:border-zinc-800 dark:bg-zinc-900/40'
                                     : isDragging
@@ -1060,7 +1067,7 @@ export default function Home() {
                             )}
 
                             <div
-                                className={`relative z-10 flex min-h-55 w-full flex-col max-[1310px]:min-h-48 max-[549.9px]:min-h-44 items-center justify-center rounded-[calc(1rem-2px)] px-8 py-7 max-[1310px]:px-6 max-[1310px]:py-6 max-[549.9px]:px-5 max-[549.9px]:py-5 max-[449.9px]:px-4 max-[449.9px]:py-5 transition-colors duration-300 ${isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'}`}
+                                className={`relative z-10 flex min-h-55 w-full flex-col max-[1310px]:min-h-48 max-[549.9px]:min-h-44 items-center justify-center rounded-[calc(1rem-2px)] px-8 py-7 max-[1310px]:px-6 max-[1310px]:py-6 max-[549.9px]:px-5 max-[549.9px]:py-5 max-[449.9px]:px-4 max-[449.9px]:py-4 transition-colors duration-300 ${isDragging ? 'bg-zinc-50/90 dark:bg-zinc-900/90' : 'bg-white/80 dark:bg-black/80'}`}
                             >
                                 <div
                                     aria-hidden='true'
@@ -1080,22 +1087,25 @@ export default function Home() {
                                     className='hidden'
                                 />
                                 <div
-                                    className={`relative z-20 flex h-14 w-14 shrink-0 max-[1310px]:h-12 max-[1310px]:w-12 max-[549.9px]:h-11 max-[549.9px]:w-11 items-center justify-center rounded-full transition-all duration-200 ${
+                                    className={`relative z-20 flex h-14 w-14 shrink-0 max-[1310px]:h-12 max-[1310px]:w-12 max-[549.9px]:h-10 max-[549.9px]:w-10 max-[449.9px]:h-9 max-[449.9px]:w-9 items-center justify-center rounded-full transition-all duration-200 ${
                                         selectedFile ? 'bg-zinc-100 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700' : isDragging ? 'bg-zinc-200 ring-2 ring-zinc-300 dark:bg-zinc-700 dark:ring-zinc-600' : 'bg-zinc-50 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700'
                                     }`}
                                 >
                                     {selectedFile ? (
-                                        <FileText className='h-6 w-6 text-zinc-600 max-[1310px]:h-5 max-[1310px]:w-5 max-[549.9px]:h-4.75 max-[549.9px]:w-4.75 dark:text-zinc-300' />
+                                        <FileText className='h-6 w-6 text-zinc-600 max-[1310px]:h-5 max-[1310px]:w-5 max-[549.9px]:h-4.5 max-[549.9px]:w-4.5 max-[449.9px]:h-4 max-[449.9px]:w-4 dark:text-zinc-300' />
                                     ) : (
                                         <UploadCloud className='h-6 w-6 text-zinc-600 max-[1310px]:h-5 max-[1310px]:w-5 dark:text-zinc-300 transition-transform duration-300' />
                                     )}
                                 </div>
-                                <div className='relative z-20 mt-3 w-full'>
-                                    <h3 className='mx-auto max-w-[90%] truncate text-[18px] font-semibold text-zinc-900 dark:text-zinc-100 max-[449.9px]:text-[16px]'>{selectedFile ? selectedFile.name : 'Upload your resume'}</h3>
+                                <div className='relative z-20 mt-2.5 w-full'>
+                                    <h3 className='mx-auto max-w-[90%] truncate text-[18px] font-semibold text-zinc-900 dark:text-zinc-100 max-[549.9px]:text-[16px] max-[449.9px]:text-[14px] max-[399.9px]:text-[13px]'>{selectedFile ? selectedFile.name : 'Upload your resume'}</h3>
 
-                                    <p className='mt-1.5 text-sm text-zinc-500 dark:text-zinc-400 max-[549.9px]:text-[13px] max-[449.9px]:text-[12px] max-[449.9px]:leading-5'>
+                                    <p className='mx-auto mt-1.5 max-w-[95%] text-sm leading-5 text-zinc-500 dark:text-zinc-400 max-[549.9px]:text-[12.5px] max-[449.9px]:text-[11.5px] max-[449.9px]:leading-4.5 max-[399.9px]:text-[11px]'>
                                         {selectedFile ? (
-                                            `Choose the role you're targeting — your analysis will be tailored to it.`
+                                            <>
+                                                <span className='hidden max-[549.9px]:inline'>Choose your target role — your analysis will be tailored to it.</span>
+                                                <span className='max-[549.9px]:hidden'>Choose the role you're targeting — your analysis will be tailored to it.</span>
+                                            </>
                                         ) : (
                                             <>
                                                 <span className='max-[449.9px]:hidden'>Drag and drop your PDF here, or click to browse.</span>
@@ -1122,24 +1132,28 @@ export default function Home() {
                                         )}
                                     </AnimatePresence>
                                 </div>
-                                <div className='relative z-20 w-full'>
-                                    {selectedFile && <TargetRoleSelector value={targetRole} onChange={setTargetRole} onSelectionChange={setIsRoleSelected} onEnter={handleAnalyze} isSelected={isRoleSelected} />}
+                                <div className='relative z-20 mt-1 w-full'>
+                                    {selectedFile && (
+                                        <div className='w-full max-w-full *:w-full [&_input::placeholder]:text-[14px] max-[549.9px]:[&_input::placeholder]:text-[13.5px] max-[449.9px]:[&_input::placeholder]:text-[13px] max-[399.9px]:[&_input::placeholder]:text-[12px]'>
+                                            <TargetRoleSelector value={targetRole} onChange={setTargetRole} onSelectionChange={setIsRoleSelected} onEnter={handleAnalyze} isSelected={isRoleSelected} />
+                                        </div>
+                                    )}
                                     {selectedFile ? (
                                         <>
-                                            <div className='mt-3 flex w-full gap-2.5'>
+                                            <div className='mt-2.5 flex w-full min-w-0 gap-2.5 max-[549.9px]:gap-1.5'>
                                                 <button
                                                     type='button'
                                                     onClick={(event) => {
                                                         event.stopPropagation();
                                                         fileInputRef.current?.click();
                                                     }}
-                                                    className='inline-flex h-12 shrink-0 cursor-pointer max-[1310px]:h-11 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 text-sm font-medium text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 active:border-zinc-400 active:bg-zinc-100 active:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 dark:active:border-zinc-600 dark:active:bg-zinc-800 dark:active:text-zinc-100'
+                                                    className='inline-flex h-12 min-w-0 shrink-0 cursor-pointer max-[1310px]:h-11 max-[549.9px]:h-9 max-[549.9px]:w-10 max-[549.9px]:flex-none max-[549.9px]:px-0 max-[549.9px]:text-[12.5px] items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 text-sm font-medium text-zinc-600 transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 active:border-zinc-400 active:bg-zinc-100 active:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 dark:active:border-zinc-600 dark:active:bg-zinc-800 dark:active:text-zinc-100'
                                                 >
                                                     <UploadCloud className='h-3.5 w-3.5' />
-                                                    <span>Change PDF</span>
+                                                    <span className='max-[549.9px]:hidden'>Change PDF</span>
                                                 </button>
 
-                                                <div className='group/analyze relative flex-1'>
+                                                <div className='group/analyze relative min-w-0 flex-1'>
                                                     <button
                                                         type='button'
                                                         disabled={!isRoleSelected}
@@ -1147,7 +1161,7 @@ export default function Home() {
                                                             event.stopPropagation();
                                                             handleAnalyze();
                                                         }}
-                                                        className={`group/btn inline-flex h-12 w-full items-center max-[1310px]:h-11 justify-center gap-2 rounded-xl px-5 font-medium transition-all duration-200 focus:outline-none ${
+                                                        className={`group/btn inline-flex h-12 w-full items-center max-[1310px]:h-11 max-[549.9px]:h-9 max-[549.9px]:px-4 max-[549.9px]:text-[12.5px] max-[449.9px]:text-[12px] justify-center gap-2 rounded-xl px-5 font-medium transition-all duration-200 focus:outline-none min-w-0 ${
                                                             isRoleSelected
                                                                 ? 'cursor-pointer bg-zinc-900 text-white hover:bg-zinc-800 active:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 dark:active:bg-zinc-300'
                                                                 : 'cursor-not-allowed bg-zinc-200 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-600'
@@ -1166,7 +1180,7 @@ export default function Home() {
                                                 </div>
                                             </div>
 
-                                            {!isRoleSelected && <p className='mt-2 text-center text-[12px] font-medium text-zinc-400 max-[1069.9px]:block min-[1070px]:hidden dark:text-zinc-500'>Select a target role to continue</p>}
+                                            {!isRoleSelected && <p className='mt-1.5 text-center text-[12px] font-medium text-zinc-400 max-[1069.9px]:block min-[1070px]:hidden max-[449.9px]:text-[10.5px] dark:text-zinc-500'>Select a target role to continue</p>}
                                         </>
                                     ) : (
                                         <button
@@ -1175,7 +1189,7 @@ export default function Home() {
                                                 event.stopPropagation();
                                                 fileInputRef.current?.click();
                                             }}
-                                            className='group/btn mx-auto mt-6 inline-flex h-12 w-full max-w-60 max-[1310px]:h-11 max-[1310px]:max-w-52 max-[549.9px]:mt-5 max-[549.9px]:h-10 max-[549.9px]:max-w-52 max-[549.9px]:px-5 max-[549.9px]:text-[13px] max-[449.9px]:text-[12px] cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-bold text-white transition-all duration-200 hover:bg-zinc-800 active:bg-zinc-700 focus:outline-none focus:ring-0 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 dark:active:bg-zinc-300'
+                                            className='group/btn mx-auto mt-4 inline-flex h-12 w-full max-w-60 max-[1310px]:h-11 max-[1310px]:max-w-52 max-[549.9px]:mt-3 max-[549.9px]:h-10 max-[549.9px]:max-w-42 max-[549.9px]:px-5 max-[549.9px]:text-[13px] max-[449.9px]:text-[12px] cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-bold text-white transition-all duration-200 hover:bg-zinc-800 active:bg-zinc-700 focus:outline-none focus:ring-0 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 dark:active:bg-zinc-300'
                                         >
                                             <span>Select PDF</span>
                                             <ChevronRight className='h-4 w-4 transition-transform duration-300 ease-out group-hover/btn:translate-x-1.5 group-active/btn:translate-x-1.5' />
@@ -1201,7 +1215,7 @@ export default function Home() {
                             </span>
                         </div>
 
-                        <div className='mt-4 max-[399.9px]:mt-3 hidden items-center justify-center whitespace-nowrap text-[12px] max-[399.9px]:text-[11px] font-thin text-zinc-600 dark:text-zinc-400 max-[549.9px]:text-[12.5px] max-[549.9px]:flex'>
+                        <div className='mt-4 max-[399.9px]:mt-3 hidden w-fit mx-auto items-center justify-center whitespace-nowrap text-[12px] max-[399.9px]:text-[11px] font-thin text-zinc-600 dark:text-zinc-400 max-[549.9px]:text-[12.5px] max-[549.9px]:flex'>
                             <span>Private by default</span>
                             <span className='mx-2 text-zinc-500 dark:text-zinc-400'>·</span>
                             <span>ATS-aware</span>
