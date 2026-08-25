@@ -1,7 +1,7 @@
 import { supabase } from '../utils/supabase';
 
 export async function uploadResume(file: File): Promise<string> {
-    const filePath = `resumes/${crypto.randomUUID()}.pdf`;
+    const filePath = `resumes/${Date.now()}-${Math.random().toString(36).slice(2)}.pdf`;
 
     const { data, error } = await supabase.storage.from('resume').upload(filePath, file, {
         contentType: 'application/pdf',
