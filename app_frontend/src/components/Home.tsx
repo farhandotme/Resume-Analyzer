@@ -548,8 +548,13 @@ export default function Home() {
 
     const handleAnalyze = async (roleOverride?: string) => {
         const trimmedRole = (roleOverride ?? targetRole).trim();
-
+        
         if (!selectedFile || !isRoleSelected) return;
+        const activeElement = document.activeElement;
+        
+        if (activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement) {
+            activeElement.blur();
+        }
 
         setIsAnalyzing(true);
         setIsComplete(false);
@@ -569,7 +574,7 @@ export default function Home() {
             console.log('Resume uploaded successfully\nPDF URL:', pdfUrl);
             console.log('Starting resume analysis...');
 
-            const response = await fetch('http://localhost:3000/resume/analyze', {
+            const response = await fetch('http://192.168.29.100:3000/resume/analyze', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
