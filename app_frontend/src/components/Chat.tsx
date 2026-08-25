@@ -1537,7 +1537,7 @@ export default function Chat() {
                                                 {messages.map((message) => (
                                                     <motion.div key={message.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className={message.role === 'user' ? 'flex justify-end' : 'group flex justify-start'}>
                                                         {message.role === 'assistant' ? (
-                                                            <div className='max-w-[78%] max-[549.9px]:max-w-[88%] max-[449.9px]:max-w-[92%]'>
+                                                            <div className='max-w-[78%] translate-x-2 max-[919.9px]:translate-x-0 max-[549.9px]:max-w-[88%] max-[449.9px]:max-w-[92%]'>
                                                                 <div className='whitespace-pre-wrap wrap-break-word text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 dark:text-zinc-200 max-[549.9px]:text-[15px] max-[549.9px]:leading-6.5 max-[449.9px]:text-[14px] max-[449.9px]:leading-6 max-[399.9px]:text-[13px] max-[399.9px]:leading-5.5'>
                                                                     {message.content}
                                                                 </div>
