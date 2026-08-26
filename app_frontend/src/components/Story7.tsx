@@ -355,7 +355,7 @@ export default function Story7() {
     }, [hasStarted, targetScore]);
 
     return (
-        <section className='fixed inset-0 flex h-dvh w-screen items-center justify-center overflow-hidden overscroll-none bg-white transition-colors duration-300 dark:bg-black'>
+        <section className='fixed inset-0 flex h-dvh w-full items-center justify-center overflow-x-hidden overflow-y-auto overscroll-y-contain bg-white px-3 py-6 transition-colors duration-300 dark:bg-black sm:px-6 sm:py-8'>
             <div className='pointer-events-none fixed left-[-10000px] top-0' aria-hidden='true'>
                 <ReportDocument analysisResult={analysisResult} theme={theme} />
             </div>
@@ -377,21 +377,19 @@ export default function Story7() {
 
             <ConfettiField active={showConfetti} />
 
-            <div className='relative z-20 w-full max-w-xl px-6'>
+            <div className='relative z-20 my-auto w-full max-w-xl pt-8 min-[550px]:pt-0'>
                 <motion.div
                     initial={{ opacity: 0, y: 46, scale: 0.95 }}
                     animate={hasStarted ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 46, scale: 0.95 }}
                     transition={{ duration: 0.75, ease: EASE }}
-                    className='relative overflow-visible rounded-4xl border border-zinc-200 bg-white shadow-[0_30px_80px_rgba(0,0,0,.07)] transition-colors duration-300 dark:border-white/8 dark:bg-zinc-950 dark:shadow-[0_30px_80px_rgba(0,0,0,.5)]'
-                    style={{ padding: 'clamp(1.5rem,3vh,2.25rem) clamp(1.25rem,3vw,2.5rem)' }}
+                    className='relative overflow-visible rounded-3xl border border-zinc-200 bg-white shadow-[0_30px_80px_rgba(0,0,0,.07)] transition-colors duration-300 sm:rounded-4xl dark:border-white/8 dark:bg-zinc-950 dark:shadow-[0_30px_80px_rgba(0,0,0,.5)]'
+                    style={{ padding: 'clamp(1.25rem, 3vh, 2.25rem) clamp(1rem, 4vw, 2.5rem)' }}
                 >
-                    <div className='pointer-events-none absolute inset-0 overflow-hidden rounded-4xl'>
+                    <div className='pointer-events-none absolute inset-0 overflow-hidden rounded-3xl sm:rounded-4xl'>
                         <motion.div
                             aria-hidden='true'
                             className='absolute inset-y-0 w-[45%] dark:opacity-60'
-                            style={{
-                                background: theme === 'dark' ? 'linear-gradient(75deg, transparent 0%, rgba(255,255,255,0.08) 45%, transparent 100%)' : 'linear-gradient(75deg, transparent 0%, rgba(0,0,0,0.035) 45%, transparent 100%)',
-                            }}
+                            style={{ background: theme === 'dark' ? 'linear-gradient(75deg, transparent 0%, rgba(255,255,255,0.08) 45%, transparent 100%)' : 'linear-gradient(75deg, transparent 0%, rgba(0,0,0,0.035) 45%, transparent 100%)' }}
                             initial={{ left: '-55%' }}
                             animate={hasStarted ? { left: '110%' } : { left: '-55%' }}
                             transition={{ duration: 0.6, delay: 3.8, ease: 'easeInOut' }}
@@ -402,7 +400,7 @@ export default function Story7() {
                         <motion.span
                             key={corner}
                             aria-hidden='true'
-                            className={`pointer-events-none absolute top-6 h-6 w-6 ${corner === 'left' ? 'left-6' : 'right-6'}`}
+                            className={`pointer-events-none absolute top-4 h-6 w-6 sm:top-6 ${corner === 'left' ? 'left-4 sm:left-6' : 'right-4 sm:right-6'}`}
                             style={{ background: 'radial-gradient(circle, rgba(0,0,0,0.10) 0%, transparent 70%)' }}
                             initial={{ opacity: 0, scale: 0.4 }}
                             animate={hasStarted ? { opacity: [0, 1, 0], scale: [0.4, 1.3, 1.6] } : { opacity: 0, scale: 0.4 }}
@@ -411,39 +409,45 @@ export default function Story7() {
                     ))}
 
                     <div className='text-center'>
-                        <p className='text-[12px] uppercase tracking-[0.4em] text-zinc-500'>Final Report</p>
+                        <p className='text-[10px] uppercase tracking-[0.35em] text-zinc-500 sm:text-[12px] sm:tracking-[0.4em]'>Final Report</p>
 
-                        <h1 className='mt-2 font-semibold tracking-[-0.06em] text-zinc-900 dark:text-white' style={{ fontSize: 'clamp(2rem, 4.2vh, 2.75rem)', fontFamily: '"Fraunces", ui-serif, Georgia, serif' }}>
+                        <h1 className='mt-1.5 font-semibold tracking-[-0.06em] text-zinc-900 sm:mt-2 dark:text-white' style={{ fontSize: 'clamp(1.75rem, 4vh, 2.75rem)', fontFamily: '"Fraunces", ui-serif, Georgia, serif' }}>
                             Resume Ready
                         </h1>
                     </div>
 
-                    <div className='mt-[clamp(1.25rem,2.5vh,1.75rem)] text-center'>
-                        <p className='text-[13px] uppercase tracking-[0.35em] text-zinc-400 dark:text-zinc-500'>ATS Score</p>
+                    <div className='mt-[clamp(1rem,2.2vh,1.75rem)] text-center'>
+                        <p className='text-[11px] uppercase tracking-[0.3em] text-zinc-400 sm:text-[13px] sm:tracking-[0.35em] dark:text-zinc-500'>ATS Score</p>
 
-                        <motion.div className='mt-2 leading-none tracking-[-0.07em] text-zinc-900 dark:text-white' style={{ fontSize: 'clamp(4.5rem, 11vh, 6.75rem)', fontWeight: 600 }} animate={bounce ? { scale: [1, 1.1, 1] } : {}} transition={{ duration: 0.5, ease: EASE }}>
+                        <motion.div className='mt-1 leading-none tracking-[-0.07em] text-zinc-900 sm:mt-2 dark:text-white' style={{ fontSize: 'clamp(3.75rem, 9.5vh, 6.75rem)', fontWeight: 600 }} animate={bounce ? { scale: [1, 1.1, 1] } : {}} transition={{ duration: 0.5, ease: EASE }}>
                             {score}
                         </motion.div>
                     </div>
 
-                    <div className='mt-[clamp(1.25rem,2.8vh,2rem)] flex justify-center'>
-                        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={hasStarted ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }} transition={{ delay: 2.0, duration: 0.45, ease: EASE }} className='rounded-full bg-zinc-100 px-5 py-2.5 dark:bg-white/6'>
-                            <span className='text-[12px] font-semibold uppercase tracking-[0.16em] text-zinc-700 dark:text-zinc-300'>{verdict}</span>
+                    <div className='mt-[clamp(1rem,2.2vh,2rem)] flex justify-center'>
+                        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={hasStarted ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }} transition={{ delay: 2.0, duration: 0.45, ease: EASE }} className='rounded-full bg-zinc-100 px-4 py-2 sm:px-5 sm:py-2.5 dark:bg-white/6'>
+                            <span className='text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-700 sm:text-[12px] sm:tracking-[0.16em] dark:text-zinc-300'>{verdict}</span>
                         </motion.div>
                     </div>
 
-                    <div className='mt-[clamp(2.25rem,2.5vh,1.75rem)] grid grid-cols-2 justify-items-center gap-x-5 gap-y-3.5'>
+                    <div className='mt-[clamp(1.25rem,2.5vh,2rem)] grid grid-cols-1 gap-2 min-[480px]:grid-cols-2 min-[480px]:gap-x-4 min-[480px]:gap-y-3.5'>
                         {finalStrengths.map((item, index) => (
-                            <motion.div key={`${item}-${index}`} initial={{ opacity: 0, x: -14 }} animate={hasStarted ? { opacity: 1, x: 0 } : { opacity: 0, x: -14 }} transition={{ delay: 2.5 + index * 0.15, duration: 0.4, ease: EASE }} className='flex items-center justify-start gap-2.5 text-left'>
-                                <div className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-[11px] text-white dark:bg-white dark:text-black'>✓</div>
+                            <motion.div
+                                key={`${item}-${index}`}
+                                initial={{ opacity: 0, x: -14 }}
+                                animate={hasStarted ? { opacity: 1, x: 0 } : { opacity: 0, x: -14 }}
+                                transition={{ delay: 2.5 + index * 0.15, duration: 0.4, ease: EASE }}
+                                className='flex items-start min-[480px]:items-center justify-start gap-2 text-left'
+                            >
+                                <div className='mt-0.5 flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-[9.5px] text-white min-[480px]:mt-0 min-[550px]:h-6 min-[550px]:w-6 min-[550px]:text-[11px] dark:bg-white dark:text-black'>✓</div>
 
-                                <p className='text-[14px] leading-[1.4] text-zinc-700 dark:text-zinc-300'>{item}</p>
+                                <p className='text-[11.5px] leading-[1.35] text-zinc-700 min-[550px]:text-[14px] min-[550px]:leading-[1.4] dark:text-zinc-300'>{item}</p>
                             </motion.div>
                         ))}
                     </div>
 
-                    <div className='mt-[clamp(3.25rem,2.5vh,1.75rem)] flex justify-center gap-3'>
-                        <div className='relative'>
+                    <div className='mt-[clamp(1.75rem,2.8vh,2.5rem)] flex flex-col min-[450px]:flex-row items-center justify-center gap-2.5 sm:gap-3'>
+                        <div className='relative w-full min-[450px]:w-auto'>
                             <motion.button
                                 type='button'
                                 disabled={isDownloading}
@@ -460,7 +464,7 @@ export default function Story7() {
                                 transition={{ delay: 4.3, duration: 0.45, ease: EASE }}
                                 whileHover={isDownloading ? {} : { y: -2 }}
                                 whileTap={isDownloading ? {} : { scale: 0.97 }}
-                                className='inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-zinc-900 px-7 py-3.5 text-[14px] font-medium text-white transition-colors duration-200 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-white dark:text-black dark:hover:bg-zinc-200'
+                                className='inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-zinc-900 px-6 py-3 text-[13px] font-medium text-white transition-colors duration-200 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-70 sm:px-7 sm:py-3.5 sm:text-[14px] dark:bg-white dark:text-black dark:hover:bg-zinc-200'
                             >
                                 <span>{isDownloading ? 'Preparing...' : 'Download Report'}</span>
 
@@ -474,7 +478,7 @@ export default function Story7() {
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                         exit={{ opacity: 0, y: -6, scale: 0.96 }}
                                         transition={{ duration: 0.2, ease: EASE }}
-                                        className='absolute left-1/2 top-full z-20 mt-2 w-48 -translate-x-1/2 overflow-hidden rounded-xl border border-zinc-200 bg-white p-1.5 shadow-xl shadow-zinc-200/40 dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-black/40'
+                                        className='absolute left-1/2 top-full z-30 mt-2 w-48 -translate-x-1/2 overflow-hidden rounded-xl border border-zinc-200 bg-white p-1.5 shadow-xl shadow-zinc-200/40 dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-black/40'
                                     >
                                         <button
                                             type='button'
@@ -520,7 +524,7 @@ export default function Story7() {
                             transition={{ delay: 4.45, duration: 0.45, ease: EASE }}
                             whileHover={{ scale: 1.03 }}
                             whileTap={{ scale: 0.97 }}
-                            className='cursor-pointer rounded-full border border-zinc-300 px-7 py-3.5 text-[14px] font-medium text-zinc-900 transition-colors duration-300 dark:border-white/[0.14] dark:text-white'
+                            className='w-full cursor-pointer rounded-full border border-zinc-300 px-6 py-3 text-[13px] font-medium text-zinc-900 transition-colors duration-300 min-[450px]:w-auto sm:px-7 sm:py-3.5 sm:text-[14px] dark:border-white/[0.14] dark:text-white'
                         >
                             Analyze Again
                         </motion.button>
