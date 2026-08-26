@@ -74,7 +74,11 @@ function FaultGlyph({ phase, still = false }: FaultGlyphProps) {
                             ? { duration: 0 }
                             : isLanded
                               ? { duration: 0 }
-                              : { rotate: { duration: 1.05, ease: EASE_DRAW, delay: SEG_AT + i * SEG_STAGGER, times: [0, 0.72, 1] }, opacity: { duration: 0.4, delay: SEG_AT + i * SEG_STAGGER }, scale: { duration: 0.65, ease: EASE, delay: SEG_AT + i * SEG_STAGGER } }
+                              : {
+                                    rotate: { duration: 1.05, ease: EASE_DRAW, delay: SEG_AT + i * SEG_STAGGER, times: [0, 0.72, 1] },
+                                    opacity: { duration: 0.4, delay: SEG_AT + i * SEG_STAGGER },
+                                    scale: { duration: 0.65, ease: EASE, delay: SEG_AT + i * SEG_STAGGER },
+                                }
                     }
                     style={{ transformOrigin: ringOrigin }}
                 />
@@ -90,7 +94,17 @@ function FaultGlyph({ phase, still = false }: FaultGlyphProps) {
                 strokeLinecap='round'
                 initial={still ? { scaleY: 1, opacity: 1, filter: 'blur(0px)' } : { scaleY: 0, opacity: 0, filter: 'blur(6px)' }}
                 animate={still ? { scaleY: 1, opacity: 1, filter: 'blur(0px)' } : !formationStarted ? { scaleY: 0, opacity: 0, filter: 'blur(6px)' } : { scaleY: 1, opacity: 1, filter: 'blur(0px)' }}
-                transition={still ? { duration: 0 } : isLanded ? { duration: 0 } : { scaleY: { duration: 0.5, ease: EASE_DRAW, delay: BAR_AT }, opacity: { duration: 0.3, delay: BAR_AT }, filter: { duration: 0.45, delay: BAR_AT } }}
+                transition={
+                    still
+                        ? { duration: 0 }
+                        : isLanded
+                          ? { duration: 0 }
+                          : {
+                                scaleY: { duration: 0.5, ease: EASE_DRAW, delay: BAR_AT },
+                                opacity: { duration: 0.3, delay: BAR_AT },
+                                filter: { duration: 0.45, delay: BAR_AT },
+                            }
+                }
                 style={{ transformOrigin: barOrigin }}
             />
 
@@ -427,21 +441,26 @@ export default function Story5() {
                 {hasStarted && <FaultGlyph phase={phase} still={!!reduceMotion} className='h-full w-full' />}
             </motion.div>
 
-            <div className='relative z-10 mx-auto flex h-full w-full max-w-4xl flex-col items-center justify-center px-6 text-center sm:px-10'>
+            <div className='relative z-10 mx-auto flex h-full w-full max-w-4xl flex-col items-center justify-center px-2 text-center sm:px-10'>
                 <span ref={anchorRef} className='block shrink-0' style={{ width: anchorSize, height: anchorSize }} />
 
-                <motion.div className='mt-5 flex flex-wrap items-center justify-center gap-3' initial={{ opacity: 0, y: 8 }} animate={contentVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }} transition={{ duration: 0.7, ease: EASE, delay: contentVisible ? 0.05 : 0 }}>
-                    <span className='font-mono text-[10px] uppercase tracking-[0.45em] text-zinc-600 dark:text-zinc-500'>Primary weakness</span>
+                <motion.div
+                    className='mt-4 flex w-full max-w-[92vw] flex-wrap items-center justify-center gap-2 sm:mt-5 sm:gap-3'
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={contentVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+                    transition={{ duration: 0.7, ease: EASE, delay: contentVisible ? 0.05 : 0 }}
+                >
+                    <span className='font-mono text-[9px] uppercase tracking-[0.3em] text-zinc-600 sm:text-[10px] sm:tracking-[0.45em] dark:text-zinc-500'>Primary weakness</span>
 
                     {primaryTag && (
-                        <span className='rounded-full border px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.2em] text-zinc-700 dark:text-zinc-300' style={{ borderColor: 'rgba(var(--story5-accent-rgb), 0.25)' }}>
+                        <span className='rounded-full border px-2 py-0.5 font-mono text-[8px] uppercase tracking-[0.16em] text-zinc-700 sm:px-2.5 sm:py-0.5 sm:text-[9px] sm:tracking-[0.2em] dark:text-zinc-300' style={{ borderColor: 'rgba(var(--story5-accent-rgb), 0.25)' }}>
                             {primaryTag}
                         </span>
                     )}
                 </motion.div>
 
                 <motion.h1
-                    className={`mt-5 max-w-187.5 wrap-break-word font-light leading-[0.98] tracking-[-0.02em] text-zinc-900 dark:text-zinc-100 ${isLongPrimary ? 'text-[clamp(1.55rem,3.4vw,2.8rem)]' : 'text-[clamp(1.9rem,4.4vw,3.6rem)]'}`}
+                    className={`mt-4 w-full max-w-none wrap-break-word font-light leading-[1.02] tracking-[-0.02em] text-zinc-900 sm:mt-5 sm:max-w-187.5 dark:text-zinc-100 ${isLongPrimary ? 'text-[clamp(1.45rem,5.2vw,2.8rem)]' : 'text-[clamp(1.7rem,6vw,3.6rem)]'}`}
                     style={{ fontFamily: 'Fraunces, Georgia, serif' }}
                     initial={{ opacity: 0, y: 14, filter: 'blur(8px)' }}
                     animate={contentVisible ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 14, filter: 'blur(8px)' }}
@@ -451,22 +470,27 @@ export default function Story5() {
                 </motion.h1>
 
                 {primaryDescription && (
-                    <motion.p className='mt-5 max-w-md text-[0.8rem] leading-relaxed text-zinc-500 dark:text-zinc-500' initial={{ opacity: 0 }} animate={contentVisible ? { opacity: 1 } : { opacity: 0 }} transition={{ duration: 1, ease: EASE, delay: contentVisible ? 0.45 : 0 }}>
+                    <motion.p
+                        className='mt-4 max-w-[90vw] text-[0.75rem] leading-relaxed text-zinc-500 sm:mt-5 sm:max-w-md sm:text-[0.8rem] dark:text-zinc-500'
+                        initial={{ opacity: 0 }}
+                        animate={contentVisible ? { opacity: 1 } : { opacity: 0 }}
+                        transition={{ duration: 1, ease: EASE, delay: contentVisible ? 0.45 : 0 }}
+                    >
                         {primaryDescription}
                     </motion.p>
                 )}
 
                 {supportingIssues.length > 0 && (
-                    <div className='mt-8 w-full max-w-2xl sm:mt-10'>
+                    <div className='mt-6 w-full max-w-none sm:mt-10 sm:max-w-2xl'>
                         <motion.div
-                            className='mx-auto mb-4 h-7 w-px origin-top bg-linear-to-b from-zinc-400/40 to-transparent dark:from-white/25'
+                            className='mx-auto mb-3 h-6 w-px origin-top bg-linear-to-b from-zinc-400/40 to-transparent sm:mb-4 sm:h-7 dark:from-white/25'
                             initial={{ scaleY: 0 }}
                             animate={contentVisible ? { scaleY: 1 } : { scaleY: 0 }}
                             transition={{ duration: 0.6, ease: EASE, delay: contentVisible ? 0.55 : 0 }}
                         />
 
                         <motion.div className='flex items-baseline justify-between border-b border-zinc-200 pb-2.5 dark:border-white/10' initial={{ opacity: 0 }} animate={contentVisible ? { opacity: 1 } : { opacity: 0 }} transition={{ duration: 0.6, ease: EASE, delay: contentVisible ? 0.7 : 0 }}>
-                            <span className='font-mono text-[9px] uppercase tracking-[0.4em] text-zinc-500 dark:text-zinc-600'>Other weaknesses</span>
+                            <span className='font-mono text-[8px] uppercase tracking-[0.3em] text-zinc-500 sm:text-[9px] sm:tracking-[0.4em] dark:text-zinc-600'>Other weaknesses</span>
                         </motion.div>
 
                         <div className='relative'>
@@ -487,12 +511,12 @@ export default function Story5() {
                                         )}
 
                                         <motion.div
-                                            className='flex items-start gap-4 py-3.5 text-left sm:gap-5'
+                                            className='flex items-start gap-3 py-3 text-left sm:gap-5 sm:py-3.5'
                                             initial={reduceMotion ? { opacity: 0 } : { clipPath: 'inset(0 100% 0 0)', opacity: 1 }}
                                             animate={contentVisible ? { clipPath: 'inset(0 0% 0 0)', opacity: 1 } : { clipPath: 'inset(0 100% 0 0)', opacity: 0 }}
                                             transition={{ duration: reduceMotion ? 0.5 : 0.85, ease: [0.7, 0, 0.3, 1], delay: rowDelay }}
                                         >
-                                            <span className='relative mt-1.25 flex h-2.75 w-2.75 shrink-0 items-center justify-center'>
+                                            <span className='relative mt-1.25 flex h-2.5 w-2.5 shrink-0 items-center justify-center sm:h-2.75 sm:w-2.75'>
                                                 {!reduceMotion && (
                                                     <motion.span
                                                         aria-hidden
@@ -502,29 +526,23 @@ export default function Story5() {
                                                         transition={{ duration: 2.6, ease: 'easeInOut', repeat: Infinity, delay: rowDelay + 0.6 + i * 0.55 }}
                                                     />
                                                 )}
-
-                                                <span
-                                                    className='relative inline-flex h-1.25 w-1.25 rounded-full'
-                                                    style={{
-                                                        background: 'var(--story5-accent)',
-                                                    }}
-                                                />
+                                                <span className='relative inline-flex h-1.25 w-1.25 rounded-full' style={{ background: 'var(--story5-accent)' }} />
                                             </span>
 
                                             <div className='min-w-0 flex-1'>
-                                                <div className='flex w-full items-center justify-between gap-8'>
-                                                    <h2 className='min-w-0 flex-1 text-balance text-[clamp(0.95rem,2vw,1.15rem)] font-light leading-snug tracking-[-0.01em] text-zinc-800 dark:text-zinc-100'>{issue.title}</h2>
+                                                <div className='flex w-full flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-8'>
+                                                    <h2 className='min-w-0 text-balance max-[639.9px]:text-wrap text-[clamp(0.9rem,3.5vw,1.15rem)] font-light leading-snug tracking-[-0.01em] text-zinc-800 sm:text-balance dark:text-zinc-100'>{issue.title}</h2>
 
                                                     {issue.tag && (
-                                                        <span className='min-w-27.5 shrink-0 text-right'>
-                                                            <span className='inline-flex min-w-25 items-center justify-center rounded-full border border-zinc-200/80 bg-zinc-50/40 px-3 py-1 font-mono text-[8px] font-medium uppercase tracking-[0.18em] text-zinc-500 dark:border-white/10 dark:bg-white/2.5 dark:text-zinc-400'>
+                                                        <span className='hidden shrink-0 min-[640px]:block'>
+                                                            <span className='inline-flex min-w-20 items-center justify-center rounded-full border border-zinc-200/80 bg-zinc-50/40 px-2.5 py-1 font-mono text-[7px] font-medium uppercase tracking-[0.15em] text-zinc-500 sm:min-w-25 sm:px-3 sm:text-[8px] sm:tracking-[0.18em] dark:border-white/10 dark:bg-white/2.5 dark:text-zinc-400'>
                                                                 {issue.tag}
                                                             </span>
                                                         </span>
                                                     )}
                                                 </div>
 
-                                                {issue.description && <p className='mt-1.5 max-w-[52ch] text-[0.72rem] leading-relaxed text-zinc-500'>{issue.description}</p>}
+                                                {issue.description && <p className='mt-1.5 max-w-[90vw] text-[0.68rem] leading-relaxed text-zinc-500 sm:max-w-[52ch] sm:text-[0.72rem]'>{issue.description}</p>}
                                             </div>
                                         </motion.div>
                                     </div>

@@ -143,22 +143,30 @@ const Story2 = () => {
 
     return (
         <section className='fixed inset-0 flex h-dvh w-screen items-center justify-center overflow-hidden overscroll-none bg-white transition-colors duration-300 dark:bg-black'>
-            <div className='pointer-events-none absolute inset-0 z-0 dark:hidden' style={{ background: 'radial-gradient(ellipse 60% 50% at 50% 45%, rgba(0,0,0,0.04) 0%, rgba(255,255,255,0) 60%), radial-gradient(ellipse 100% 100% at 50% 50%, transparent 60%, rgba(0,0,0,0.04) 100%)' }} />
+            <div
+                className='pointer-events-none absolute inset-0 z-0 dark:hidden'
+                style={{
+                    background: 'radial-gradient(ellipse 60% 50% at 50% 45%, rgba(0,0,0,0.04) 0%, rgba(255,255,255,0) 60%), radial-gradient(ellipse 100% 100% at 50% 50%, transparent 60%, rgba(0,0,0,0.04) 100%)',
+                }}
+            />
 
             {!reduceMotion && <FilmGrain />}
 
             {!reduceMotion && <ShutterFlash />}
 
-            <div className='relative z-10 mx-auto flex h-full w-full max-w-xl -translate-y-4 flex-col items-center justify-center overflow-hidden px-6 text-center'>
+            <div className='relative z-10 mx-auto flex h-full w-full max-w-xl -translate-y-4 flex-col items-center justify-center overflow-hidden px-4 max-[449.9px]:-translate-y-2 max-[449.9px]:px-3 sm:px-6 text-center'>
                 <motion.div
                     initial={reduceMotion ? { scale: 1, opacity: 1 } : { scale: 0.88, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={reduceMotion ? { duration: 0 } : { delay: 0.18, duration: 0.7, ease: [0.34, 1.56, 0.64, 1] }}
-                    className='relative flex h-64 w-64 items-center justify-center sm:h-72 sm:w-72'
+                    className='relative flex h-64 w-64 items-center justify-center max-[649.9px]:h-56 max-[649.9px]:w-56 max-[449.9px]:h-48 max-[449.9px]:w-48 sm:h-72 sm:w-72'
                 >
                     <IrisRing progress={rawScore} complete={!reduceMotion} />
 
-                    <motion.h1 style={{ y: scoreY, opacity: scoreOpacity, fontFamily: '"Fraunces", ui-serif, Georgia, serif' }} className='select-none text-[110px] font-medium leading-none tracking-[-0.02em] tabular-nums text-zinc-900 dark:text-zinc-100 sm:text-[136px]'>
+                    <motion.h1
+                        style={{ y: scoreY, opacity: scoreOpacity, fontFamily: '"Fraunces", ui-serif, Georgia, serif' }}
+                        className='select-none text-[110px] font-medium leading-none tracking-[-0.02em] tabular-nums text-zinc-900 max-[649.9px]:text-[94px] max-[449.9px]:text-[78px] sm:text-[136px] dark:text-zinc-100'
+                    >
                         {roundedScore}
                     </motion.h1>
                 </motion.div>
@@ -167,7 +175,7 @@ const Story2 = () => {
                     initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                     animate={hasStarted ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                     transition={reduceMotion ? { duration: 0 } : { delay: 1.65, duration: 0.5, ease: EASE_CINE }}
-                    className='mt-5 text-[12px] font-semibold uppercase tracking-[0.4em] text-zinc-500 dark:text-zinc-400 sm:text-[13px]'
+                    className='mt-5 text-[12px] font-semibold uppercase tracking-[0.4em] text-zinc-500 max-[649.9px]:mt-4 max-[649.9px]:text-[11px] max-[649.9px]:tracking-[0.3em] max-[449.9px]:mt-3 max-[449.9px]:text-[10px] max-[449.9px]:tracking-[0.25em] sm:text-[13px] dark:text-zinc-400'
                 >
                     ATS Score
                 </motion.p>
@@ -177,7 +185,7 @@ const Story2 = () => {
                         initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                         animate={hasStarted ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                         transition={reduceMotion ? { duration: 0 } : { delay: 1.9, duration: 0.55, ease: EASE_CINE }}
-                        className='mt-6 max-w-md text-[16px] leading-relaxed text-zinc-600 dark:text-zinc-300 sm:text-[18px]'
+                        className='mt-6 max-w-md text-[16px] leading-relaxed text-zinc-600 max-[649.9px]:mt-5 max-[649.9px]:max-w-[88vw] max-[649.9px]:text-[15px] max-[449.9px]:mt-4 max-[449.9px]:max-w-[90vw] max-[449.9px]:text-[13px] sm:text-[18px] dark:text-zinc-300'
                     >
                         {ONE_LINER}
                     </motion.p>
@@ -187,20 +195,18 @@ const Story2 = () => {
                     initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                     animate={hasStarted ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                     transition={reduceMotion ? { duration: 0 } : { delay: 2.2, duration: 0.5, ease: EASE_CINE }}
-                    className='mt-8 flex items-center justify-center gap-8 sm:gap-12'
+                    className='mt-8 grid w-65 grid-cols-[1fr_auto_1fr] items-center'
                 >
                     <div className='text-center'>
                         <p className='text-base font-semibold text-zinc-900 dark:text-zinc-100 sm:text-lg'>{VERDICT}</p>
-
                         <p className='mt-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400 dark:text-zinc-500'>Verdict</p>
                     </div>
 
                     <div className='h-8 w-px bg-zinc-200 dark:bg-zinc-800' />
 
-                    <div className='text-center'>
+                    <div className='px-3 text-center'>
                         <p className='text-base font-semibold text-zinc-900 dark:text-zinc-100 sm:text-lg'>{HIRE_PROBABILITY}</p>
-
-                        <p className='mt-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400 dark:text-zinc-500'>Hire Probability</p>
+                        <p className='mt-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-400 dark:text-zinc-500'>Hire Chance</p>
                     </div>
                 </motion.div>
             </div>

@@ -38,6 +38,7 @@ const getWords = (value: unknown) =>
 const getRelevanceScore = (fix: ResumeFix, action: ActionPlanItem) => {
     const fixWords = unique([...getWords(fix.section), ...getWords(fix.fix), ...getWords(fix.why)]);
     const actionWords = new Set([...getWords(action.action), ...getWords(action.timeline)]);
+
     return fixWords.reduce((score, word) => score + (actionWords.has(word) ? 1 : 0), 0);
 };
 
@@ -117,7 +118,9 @@ const PremiumCard = ({ improvement, index, reduceMotion, hasStarted }: { improve
 
     const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
         if (!cardRef.current) return;
+
         const rect = cardRef.current.getBoundingClientRect();
+
         tiltX.set((e.clientX - rect.left) / rect.width - 0.5);
         tiltY.set((e.clientY - rect.top) / rect.height - 0.5);
         mouseX.set(e.clientX - rect.left);
@@ -170,7 +173,7 @@ const PremiumCard = ({ improvement, index, reduceMotion, hasStarted }: { improve
                     />
                 </div>
 
-                <div className='relative z-10 flex h-full flex-col overflow-hidden rounded-[23px] bg-white p-6 text-left dark:bg-[#030303]'>
+                <div className='relative z-10 flex h-full flex-col overflow-hidden rounded-[23px] bg-white p-4 text-left dark:bg-[#030303] min-[768px]:p-6'>
                     <div
                         className='pointer-events-none absolute inset-0 opacity-[0.015] mix-blend-overlay'
                         style={{
@@ -192,10 +195,11 @@ const PremiumCard = ({ improvement, index, reduceMotion, hasStarted }: { improve
                             `,
                         }}
                     />
-                    <div className='relative z-10 flex h-full flex-col'>
-                        <div className='flex items-center justify-between border-b border-zinc-200 pb-3 dark:border-zinc-800/80' style={{ transform: 'translateZ(20px)' }}>
+
+                    <div className='relative z-10 flex flex-col'>
+                        <div className='hidden items-center justify-between border-b border-zinc-200 pb-2.5 min-[768px]:flex dark:border-zinc-800/80 sm:pb-3' style={{ transform: 'translateZ(20px)' }}>
                             <motion.span
-                                className='font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-500'
+                                className='hidden font-mono text-[8px] uppercase tracking-[0.24em] text-zinc-500 min-[768px]:block sm:text-[10px] sm:tracking-[0.3em] dark:text-zinc-500'
                                 initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -12, filter: 'blur(4px)' }}
                                 animate={hasStarted ? { opacity: 1, x: 0, filter: 'blur(0px)' } : { opacity: 0, x: -12, filter: 'blur(4px)' }}
                                 transition={{ duration: 0.55, delay: delay + 0.12, ease: [0.22, 1, 0.36, 1] }}
@@ -204,7 +208,7 @@ const PremiumCard = ({ improvement, index, reduceMotion, hasStarted }: { improve
                             </motion.span>
 
                             <motion.span
-                                className='relative inline-flex items-center justify-center font-mono text-[11px] font-medium tracking-[0.25em] text-zinc-700 dark:text-zinc-300'
+                                className='relative hidden items-center justify-center font-mono text-[10px] font-medium tracking-[0.2em] text-zinc-700 min-[768px]:inline-flex sm:text-[11px] sm:tracking-[0.25em] dark:text-zinc-300'
                                 initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: 14 }}
                                 animate={hasStarted ? { opacity: 1, x: 0 } : { opacity: 0, x: 14 }}
                                 transition={{ duration: 0.5, delay: delay + 0.22, ease: [0.22, 1, 0.36, 1] }}
@@ -213,26 +217,41 @@ const PremiumCard = ({ improvement, index, reduceMotion, hasStarted }: { improve
                             </motion.span>
                         </div>
 
-                        <motion.h2 className='mt-7 text-[clamp(1.25rem,2vw,1.5rem)] font-light leading-tight tracking-tight text-zinc-900 dark:text-zinc-100' style={{ fontFamily: '"Fraunces", ui-serif, Georgia, serif', transform: 'translateZ(30px)' }}>
-                            <AnimatedWords text={improvement.title} delay={delay + 0.38} reduceMotion={reduceMotion} />
-                        </motion.h2>
+                        <div className='flex w-full items-center gap-3 min-[650px]:block'>
+                            <motion.h2
+                                className='mt-0 shrink-0 text-[1rem] min-[550px]:text-[clamp(1.15rem,4vw,1.5rem)] font-light leading-tight tracking-tight text-zinc-900 min-[768px]:mt-7 min-[768px]:text-[clamp(1.25rem,2vw,1.5rem)] dark:text-zinc-100'
+                                style={{ fontFamily: '"Fraunces", ui-serif, Georgia, serif', transform: 'translateZ(30px)' }}
+                            >
+                                <AnimatedWords text={improvement.title} delay={delay + 0.38} reduceMotion={reduceMotion} />
+                            </motion.h2>
 
-                        <motion.div className='mt-5 grow' style={{ transform: 'translateZ(20px)' }} initial={reduceMotion ? { opacity: 1 } : { opacity: 0 }} animate={hasStarted ? { opacity: 1 } : { opacity: 0 }} transition={{ duration: 0.5, delay: delay + 0.58 }}>
-                            <motion.div className='mb-3 flex items-center gap-2' initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -8 }} animate={hasStarted ? { opacity: 1, x: 0 } : { opacity: 0, x: -8 }} transition={{ duration: 0.45, delay: delay + 0.62, ease: [0.22, 1, 0.36, 1] }}>
-                                <span className='h-px w-4 bg-zinc-300 dark:bg-zinc-700' />
+                            <motion.div
+                                initial={{ scaleX: 0, opacity: 0 }}
+                                animate={hasStarted ? { scaleX: 1, opacity: 1 } : { scaleX: 0, opacity: 0 }}
+                                transition={{ duration: 0.45, delay: delay + 0.62, ease: [0.22, 1, 0.36, 1] }}
+                                className='h-px min-w-0 flex-1 origin-left bg-zinc-300 min-[650px]:hidden dark:bg-zinc-700'
+                            />
+                        </div>
+
+                        <motion.div className='mt-4 grow sm:mt-5' style={{ transform: 'translateZ(20px)' }} initial={reduceMotion ? { opacity: 1 } : { opacity: 0 }} animate={hasStarted ? { opacity: 1 } : { opacity: 0 }} transition={{ duration: 0.5, delay: delay + 0.58 }}>
+                            <motion.div
+                                className='mb-2 hidden items-center gap-2 min-[650px]:flex sm:mb-3'
+                                initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -8 }}
+                                animate={hasStarted ? { opacity: 1, x: 0 } : { opacity: 0, x: -8 }}
+                                transition={{ duration: 0.45, delay: delay + 0.62, ease: [0.22, 1, 0.36, 1] }}
+                            >
+                                <span className='h-px w-3 bg-zinc-300 sm:w-4 dark:bg-zinc-700' />
                             </motion.div>
 
-                            <p className='line-clamp-7 overflow-hidden text-[0.82rem] leading-[1.75] text-zinc-600 dark:text-zinc-400'>
+                            <p className='line-clamp-7 overflow-hidden text-[0.65rem] min-[550px]:text-[0.74rem] leading-[1.65] text-zinc-600 sm:text-[0.82rem] sm:leading-[1.75] dark:text-zinc-400'>
                                 <AnimatedWords text={improvement.description} delay={delay + 0.68} reduceMotion={reduceMotion} />
                             </p>
                         </motion.div>
 
                         {(improvement.action || improvement.why) && (
                             <motion.div
-                                className='relative mt-6 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 p-5 backdrop-blur-sm dark:border-zinc-800/70 dark:bg-zinc-900/25'
-                                style={{
-                                    transform: 'translateZ(35px)',
-                                }}
+                                className='relative mt-4 hidden overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 p-3.5 backdrop-blur-sm min-[768px]:block sm:mt-6 sm:p-5 dark:border-zinc-800/70 dark:bg-zinc-900/25'
+                                style={{ transform: 'translateZ(35px)' }}
                                 initial={reduceMotion ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 16, scale: 0.97 }}
                                 animate={hasStarted ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 16, scale: 0.97 }}
                                 transition={{ duration: 0.65, delay: delay + 1, ease: [0.22, 1, 0.36, 1] }}
@@ -248,7 +267,7 @@ const PremiumCard = ({ improvement, index, reduceMotion, hasStarted }: { improve
                                 )}
 
                                 <motion.p
-                                    className='mb-2 flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.15em] text-zinc-500'
+                                    className='mb-1.5 flex items-center justify-between font-mono text-[8px] uppercase tracking-[0.12em] text-zinc-500 sm:mb-2 sm:text-[9px] sm:tracking-[0.15em]'
                                     initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: -8 }}
                                     animate={hasStarted ? { opacity: 1, x: 0 } : { opacity: 0, x: -8 }}
                                     transition={{ duration: 0.45, delay: delay + 1.12 }}
@@ -256,7 +275,7 @@ const PremiumCard = ({ improvement, index, reduceMotion, hasStarted }: { improve
                                     <span>{improvement.action ? 'Suggested action' : 'Why it matters'}</span>
                                 </motion.p>
 
-                                <p className='text-[0.75rem] font-medium leading-relaxed text-zinc-800 dark:text-zinc-200'>
+                                <p className='text-[0.68rem] font-medium leading-relaxed text-zinc-800 sm:text-[0.75rem] dark:text-zinc-200'>
                                     <AnimatedWords text={improvement.action || improvement.why || ''} delay={delay + 1.18} reduceMotion={reduceMotion} />
                                 </p>
                             </motion.div>
@@ -345,11 +364,8 @@ export default function Story6() {
     }, []);
 
     const data = analysisResult?.data?.data as Record<string, any> | undefined;
-
     const resumeFixes: ResumeFix[] = Array.isArray(data?.resume_fixes) ? data.resume_fixes : [];
-
     const actionPlan: ActionPlanItem[] = Array.isArray(data?.action_plan) ? data.action_plan : [];
-
     const usedActions = new Set<number>();
 
     const improvements: Improvement[] = resumeFixes
@@ -359,7 +375,9 @@ export default function Story6() {
             const section = clean(fix.section);
             const fixText = clean(fix.fix);
             const why = clean(fix.why);
+
             const description = [fixText, why ? `— ${why}` : ''].filter(Boolean).join(' ');
+
             const action = findActionForFix(fix, actionPlan, usedActions);
 
             return {
@@ -386,11 +404,11 @@ export default function Story6() {
         <section className='fixed inset-0 h-dvh w-screen overflow-hidden overscroll-none bg-white text-zinc-900 dark:bg-black dark:text-white'>
             <AmbientBackground reduceMotion={reduceMotion} />
 
-            <div className='relative z-10 mx-auto flex h-full w-full max-w-7xl flex-col items-center justify-center px-6 sm:px-10 lg:px-16'>
+            <div className='relative z-10 mx-auto flex h-full w-full max-w-7xl flex-col items-center justify-center pt-8 max-[1200px]:px-3 px-16 min-[550px]:pt-0'>
                 <div className='flex flex-col items-center text-center'>
-                    <motion.div className='mb-2 overflow-hidden' initial={{ opacity: 1 }}>
+                    <motion.div className='mb-1 overflow-hidden sm:mb-2' initial={{ opacity: 1 }}>
                         <motion.p
-                            className='font-mono text-[10px] font-medium uppercase tracking-[0.45em] text-zinc-500'
+                            className='font-mono text-[8px] font-medium uppercase tracking-[0.3em] text-zinc-500 sm:text-[10px] sm:tracking-[0.45em]'
                             initial={reduceMotion ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: '100%', filter: 'blur(4px)' }}
                             animate={hasStarted ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: '100%', filter: 'blur(4px)' }}
                             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
@@ -399,9 +417,12 @@ export default function Story6() {
                         </motion.p>
                     </motion.div>
 
-                    <h1 className='flex flex-wrap justify-center gap-[0.25em] text-center text-[clamp(2.5rem,5.5vw,4.8rem)] font-light leading-[1.1] tracking-[-0.045em] text-zinc-900 dark:text-white' style={{ fontFamily: '"Fraunces", ui-serif, Georgia, serif' }}>
+                    <h1
+                        className='flex max-w-[92vw] flex-wrap justify-center gap-[0.2em] text-center text-[clamp(1.6rem,7.5vw,2rem)] font-light leading-[1.08] tracking-[-0.045em] text-zinc-900 min-[550px]:text-[clamp(2rem,9vw,4.8rem)] sm:max-w-none sm:gap-[0.25em] sm:text-[clamp(2.5rem,5.5vw,4.8rem)] dark:text-white'
+                        style={{ fontFamily: '"Fraunces", ui-serif, Georgia, serif' }}
+                    >
                         {headingText.map((word, i) => (
-                            <span key={`${word}-${i}`} className='overflow-hidden pb-2 pt-1'>
+                            <span key={`${word}-${i}`} className='overflow-hidden pb-1 pt-1 sm:pb-2'>
                                 <motion.span
                                     className='inline-block'
                                     initial={reduceMotion ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: '110%', filter: 'blur(8px)' }}
@@ -415,7 +436,7 @@ export default function Story6() {
                     </h1>
 
                     <motion.p
-                        className='mt-4 max-w-lg text-center text-[0.85rem] leading-relaxed text-zinc-500 dark:text-zinc-400'
+                        className='mt-3 hidden max-w-[90vw] text-center text-[0.72rem] leading-relaxed text-zinc-500 min-[768px]:block sm:mt-4 sm:max-w-lg sm:text-[0.85rem] dark:text-zinc-400'
                         initial={reduceMotion ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 15, filter: 'blur(4px)' }}
                         animate={hasStarted ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 15, filter: 'blur(4px)' }}
                         transition={{ duration: 0.8, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
@@ -424,10 +445,12 @@ export default function Story6() {
                     </motion.p>
                 </div>
 
-                <div className='mt-15 grid w-full grid-cols-1 gap-6 perspective-[1000px] md:grid-cols-3 xl:gap-8'>
-                    {improvements.map((improvement, index) => (
-                        <PremiumCard key={improvement.number} improvement={improvement} index={index} reduceMotion={reduceMotion} hasStarted={hasStarted} />
-                    ))}
+                <div className='mt-3 min-[550px]:mt-7 w-full px-1 pb-2 sm:mt-15 sm:px-0 sm:pb-0'>
+                    <div className='grid w-full grid-cols-1 max-[1200px]:gap-2 perspective-[1000px] md:grid-cols-3 gap-8'>
+                        {improvements.map((improvement, index) => (
+                            <PremiumCard key={improvement.number} improvement={improvement} index={index} reduceMotion={reduceMotion} hasStarted={hasStarted} />
+                        ))}
+                    </div>
                 </div>
             </div>
         </section>
