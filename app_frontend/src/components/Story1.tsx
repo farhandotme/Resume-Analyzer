@@ -6,20 +6,26 @@ import { useStory } from './StoryContext';
 
 const EASE_CINE = [0.16, 1, 0.3, 1] as const;
 
-const CreditsText = ({ text, delayStart = 0, className = '', skipAnimation = false }: { text: string; delayStart?: number; className?: string; skipAnimation?: boolean }) => (
+const CreditsText = ({ text, delayStart = 0, className = '', skipAnimation = false, keepWordsTogether = false }: { text: string; delayStart?: number; className?: string; skipAnimation?: boolean; keepWordsTogether?: boolean }) => (
     <>
-        {text.split('').map((char, i) => (
-            <motion.span
-                key={`${char}-${i}`}
-                initial={skipAnimation ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 24, filter: 'blur(6px)' }}
-                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                transition={skipAnimation ? { duration: 0 } : { duration: 0.6, delay: delayStart + i * 0.035, ease: EASE_CINE }}
-                style={{ display: 'inline-block' }}
-                aria-hidden='true'
-                className={className}
-            >
-                {char === ' ' ? '\u00A0' : char}
-            </motion.span>
+        {(keepWordsTogether ? text.split(' ') : [text]).map((word, wordIndex) => (
+            <span key={`${word}-${wordIndex}`} className={keepWordsTogether ? 'inline-block whitespace-nowrap' : ''}>
+                {word.split('').map((char, i) => (
+                    <motion.span
+                        key={`${char}-${i}`}
+                        initial={skipAnimation ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 24, filter: 'blur(6px)' }}
+                        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                        transition={skipAnimation ? { duration: 0 } : { duration: 0.6, delay: delayStart + (keepWordsTogether ? wordIndex * 0.035 + i * 0.035 : i * 0.035), ease: EASE_CINE }}
+                        style={{ display: 'inline-block' }}
+                        aria-hidden='true'
+                        className={className}
+                    >
+                        {char === ' ' ? '\u00A0' : char}
+                    </motion.span>
+                ))}
+
+                {keepWordsTogether && wordIndex < text.split(' ').length - 1 ? '\u00A0' : ''}
+            </span>
         ))}
     </>
 );
@@ -38,9 +44,12 @@ const FilmGrain = () => (
 
 const Story1 = () => {
     const { analysisResult } = useStory();
+
     const NAME = analysisResult?.data?.data?.hero?.name ?? 'Your Resume';
     const ROLE = analysisResult?.data?.data?.meta?.job_title ?? 'Your Role';
+
     const reduceMotion = useReducedMotion();
+
     const [step, setStep] = useState(0);
     const [flickerKey, setFlickerKey] = useState(0);
 
@@ -62,6 +71,7 @@ const Story1 = () => {
         return () => {
             html.style.overflow = previousHtmlOverflow;
             body.style.overflow = previousBodyOverflow;
+
             html.style.overscrollBehavior = previousHtmlOverscroll;
             body.style.overscrollBehavior = previousBodyOverscroll;
         };
@@ -88,7 +98,12 @@ const Story1 = () => {
 
     return (
         <div className='fixed inset-0 h-dvh w-screen overflow-hidden overscroll-none bg-white transition-colors duration-300 dark:bg-black'>
-            <div className='pointer-events-none absolute inset-0 z-10' style={{ background: 'radial-gradient(ellipse 60% 50% at 50% 45%, rgba(0,0,0,0.04) 0%, rgba(255,255,255,0) 60%), radial-gradient(ellipse 100% 100% at 50% 50%, transparent 60%, rgba(0,0,0,0.04) 100%)' }} />
+            <div
+                className='pointer-events-none absolute inset-0 z-10'
+                style={{
+                    background: 'radial-gradient(ellipse 60% 50% at 50% 45%, rgba(0,0,0,0.04) 0%, rgba(255,255,255,0) 60%), radial-gradient(ellipse 100% 100% at 50% 50%, transparent 60%, rgba(0,0,0,0.04) 100%)',
+                }}
+            />
 
             {!reduceMotion && <FilmGrain />}
 
@@ -102,35 +117,57 @@ const Story1 = () => {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.5, ease: EASE_CINE }}
-                        className='relative z-10 flex h-full w-full -translate-y-6 flex-col items-center justify-center gap-4 overflow-hidden px-6 text-center'
+                        className='relative z-10 flex h-full w-full -translate-y-6 flex-col items-center justify-center gap-4 overflow-hidden px-4 text-center sm:px-6'
                     >
-                        <motion.p initial={{ opacity: 0, scale: 1.06 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7, delay: 0.15, ease: EASE_CINE }} className='text-center text-[45px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-100'>
+                        <motion.p
+                            initial={{ opacity: 0, scale: 1.06 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.7, delay: 0.15, ease: EASE_CINE }}
+                            className='max-w-[92vw] text-center text-[28px font-medium tracking-tight text-zinc-900 max-[449.9px]:text-[24px] sm:text-[42px] md:text-[48px] lg:text-[54px] dark:text-zinc-100'
+                        >
                             Resume received.
                         </motion.p>
                     </motion.div>
                 )}
 
                 {step === 1 && (
-                    <motion.div key='intro' initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.8, ease: EASE_CINE }} className='relative z-10 flex h-full w-full -translate-y-6 items-center justify-center overflow-hidden px-6 text-center'>
-                        <p className='text-[40px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-[54px]'>
+                    <motion.div key='intro' initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.8, ease: EASE_CINE }} className='relative z-10 flex h-full w-full -translate-y-6 items-center justify-center overflow-hidden px-4 text-center sm:px-6'>
+                        <p className='max-w-[92vw] text-[28px] font-medium tracking-tight text-zinc-900 max-[449.9px]:text-[24px] sm:text-[42px] md:text-[48px] lg:text-[54px] dark:text-zinc-100'>
                             <CreditsText text="Let's get to know you." />
                         </p>
                     </motion.div>
                 )}
 
                 {step === 2 && (
-                    <motion.div key='meet' initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.9, ease: EASE_CINE }} className='relative z-10 flex h-full w-full -translate-y-6 flex-col items-center justify-center overflow-hidden text-center'>
-                        <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.6, ease: EASE_CINE }} className='text-[13px] font-medium uppercase tracking-[0.4em] text-zinc-500 dark:text-zinc-400'>
+                    <motion.div
+                        key='meet'
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.9, ease: EASE_CINE }}
+                        className='relative z-10 flex h-full w-full -translate-y-6 flex-col items-center justify-center overflow-hidden px-4 text-center sm:px-6'
+                    >
+                        <motion.p
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2, duration: 0.6, ease: EASE_CINE }}
+                            className='text-[10px] font-medium uppercase tracking-[0.28em] text-zinc-500 sm:text-[11px] sm:tracking-[0.3em] md:text-[12px] md:tracking-[0.35em] lg:text-[13px] lg:tracking-[0.4em] dark:text-zinc-400'
+                        >
                             Meet
                         </motion.p>
 
-                        <h1 className='font-display mt-4 text-[40px] font-medium tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-[60px]'>
-                            <CreditsText text={NAME} delayStart={0.5} />
+                        <h1 className='font-display mt-3 max-w-[92vw] wrap-break-word text-[39px] leading-[1.08] tracking-tight text-zinc-900 sm:mt-3 sm:text-[46px] md:mt-4 md:text-[54px] lg:text-[60px] dark:text-zinc-100'>
+                            <CreditsText text={NAME} delayStart={0.5} keepWordsTogether />
                         </h1>
 
-                        <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 56, opacity: 1 }} transition={{ delay: 1.3, duration: 0.6, ease: EASE_CINE }} className='mt-3 h-0.5 bg-zinc-900 dark:bg-zinc-100' />
+                        <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 56, opacity: 1 }} transition={{ delay: 1.3, duration: 0.6, ease: EASE_CINE }} className='mt-2 h-0.5 bg-zinc-900 sm:mt-3 dark:bg-zinc-100' />
 
-                        <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.5, duration: 0.6, ease: EASE_CINE }} className='mt-7 text-[20px] font-normal text-zinc-500 dark:text-zinc-400 sm:text-[24px]'>
+                        <motion.p
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 1.5, duration: 0.6, ease: EASE_CINE }}
+                            className='mt-4 max-w-[92vw] wrap-break-word text-[16px] font-normal leading-snug text-zinc-500 sm:mt-5 sm:text-[18px] md:mt-6 md:text-[21px] lg:mt-7 lg:text-[24px] dark:text-zinc-400'
+                        >
                             {ROLE}
                         </motion.p>
                     </motion.div>
