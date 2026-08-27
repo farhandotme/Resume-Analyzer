@@ -110,6 +110,24 @@ export default function Home() {
     const prefersReducedMotion = Boolean(useReducedMotion());
     const overlayRef = useRef<HTMLDivElement>(null);
 
+    useEffect(() => {
+        const handleGlobalUploadShortcut = (event: KeyboardEvent) => {
+            if (!event.metaKey || event.key.toLowerCase() !== 'u' || event.repeat || isAnalyzing) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+            fileInputRef.current?.click();
+        };
+
+        window.addEventListener('keydown', handleGlobalUploadShortcut);
+
+        return () => {
+            window.removeEventListener('keydown', handleGlobalUploadShortcut);
+        };
+    }, [isAnalyzing]);
+
     const resumeViewportRef = useRef<HTMLDivElement>(null);
     const resumeStageRef = useRef<HTMLDivElement>(null);
     const nameRef = useRef<HTMLDivElement>(null);
@@ -399,9 +417,7 @@ export default function Home() {
                 height: viewportRect.height,
             });
 
-            const isMobile = window.innerWidth < 1050;
-
-            const startX = isMobile ? viewportRect.width / 2 : viewportRect.width + halfX + 24;
+            const startX = viewportRect.width + halfX + 24;
             const startY = Math.min(140, viewportRect.height / 2);
 
             gsap.set(lens, {
@@ -556,7 +572,6 @@ export default function Home() {
 
         const file = event.dataTransfer.files?.[0];
         if (!file) return;
-
         handleFile(file);
     };
 
@@ -564,11 +579,12 @@ export default function Home() {
         const trimmedRole = (roleOverride ?? targetRole).trim();
 
         if (!selectedFile || !isRoleSelected) return;
-
         const activeElement = document.activeElement;
-        if (activeElement instanceof HTMLElement) {
+
+        if (activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement) {
             activeElement.blur();
         }
+
         setIsAnalyzing(true);
         setIsComplete(false);
         setAnalysisStep(0);
@@ -587,7 +603,7 @@ export default function Home() {
             console.log('Resume uploaded successfully\nPDF URL:', pdfUrl);
             console.log('Starting resume analysis...');
 
-            const response = await fetch(`${window.location.protocol}//${window.location.hostname}:3000/resume/analyze`, {
+            const response = await fetch('http://192.168.29.200:3000/resume/analyze', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -706,9 +722,9 @@ export default function Home() {
                         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                         role='status'
                         aria-live='polite'
-                        className={`fixed inset-0 z-100 flex h-screen max-[649.9px]:h-dvh w-full select-none flex-col items-center justify-between overflow-hidden px-4 sm:px-6 py-6 font-sans ${theme === 'dark' ? 'bg-black text-zinc-100' : 'bg-white text-zinc-900'}`}
+                        className={`fixed inset-0 z-100 flex h-screen w-full select-none flex-col items-center justify-between overflow-hidden px-4 sm:px-6 py-6 font-sans ${theme === 'dark' ? 'bg-black text-zinc-100' : 'bg-white text-zinc-900'}`}
                     >
-                        <div data-gsap='status' className='fixed left-3 top-3 z-20 flex items-center gap-2 max-[649.9px]:hidden'>
+                        <div data-gsap='status' className='relative z-20 flex w-full max-w-7xl items-center justify-start gap-2 pt-1 sm:pt-2'>
                             <span className='h-1.5 w-1.5 rounded-full bg-zinc-500 dark:bg-zinc-400' />
                             <span className='font-mono text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400'>Resume Intelligence</span>
                         </div>
@@ -800,15 +816,15 @@ export default function Home() {
                             />
                         </div>
 
-                        <div className='relative z-10 flex w-full max-w-2xl flex-1 flex-col items-center justify-center my-auto py-2 sm:py-6 max-[649.9px]:-translate-y-8'>
+                        <div className='relative z-10 flex w-full max-w-2xl flex-1 flex-col items-center justify-center my-auto py-2 sm:py-6'>
                             <div data-gsap='panel' className='relative flex w-full max-w-md flex-col items-center justify-center p-2 sm:p-6'>
-                                <div className='mx-auto relative h-[85] w-55 xs:h-[384px] xs:w-60 sm:h-104 sm:w-64'>
-                                    <div className='pointer-events-none absolute -left-3.5 -top-3.5 z-30 h-6 w-6 border-l-[1.5px] border-t-[1.5px] border-zinc-400/80 dark:border-zinc-500/80' />
-                                    <div className='pointer-events-none absolute -right-3.5 -top-3.5 z-30 h-6 w-6 border-r-[1.5px] border-t-[1.5px] border-zinc-400/80 dark:border-zinc-500/80' />
-                                    <div className='pointer-events-none absolute -bottom-3.5 -left-3.5 z-30 h-6 w-6 border-b-[1.5px] border-l-[1.5px] border-zinc-400/80 dark:border-zinc-500/80' />
-                                    <div className='pointer-events-none absolute -bottom-3.5 -right-3.5 z-30 h-6 w-6 border-b-[1.5px] border-r-[1.5px] border-zinc-400/80 dark:border-zinc-500/80' />
+                                <div className={`mx-auto relative h-85 w-55 xs:h-[384px] xs:w-60 sm:h-104 sm:w-64 rounded-none border transition-colors duration-300 ${theme === 'dark' ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+                                    <div ref={resumeViewportRef} className='absolute inset-0 rounded-xl overflow-hidden'>
+                                        <div className='absolute -left-3 -top-3 z-30 h-5 w-5 border-l-2 border-t-2 border-zinc-400/60' />
+                                        <div className='absolute -right-3 -top-3 z-30 h-5 w-5 border-r-2 border-t-2 border-zinc-400/60' />
+                                        <div className='absolute -bottom-3 -left-3 z-30 h-5 w-5 border-b-2 border-l-2 border-zinc-400/60' />
+                                        <div className='absolute -bottom-3 -right-3 z-30 h-5 w-5 border-b-2 border-r-2 border-zinc-400/60' />
 
-                                    <div ref={resumeViewportRef} className={`absolute inset-0 border overflow-hidden transition-colors duration-300 ${theme === 'dark' ? 'bg-zinc-950 border-zinc-700/80' : 'bg-white border-zinc-300'}`}>
                                         <div ref={resumeStageRef} className='relative h-full w-full px-4 xs:px-5 pb-6 sm:pb-8 pt-5 sm:pt-6 will-change-transform'>
                                             <ResumeDocument refs={{ nameRef, experienceBlockRef, experienceHeadingRef, projectsHeadingRef, educationHeadingRef, skillsHeadingRef }} />
                                         </div>
@@ -827,17 +843,13 @@ export default function Home() {
                                     </div>
 
                                     <div ref={lensRef} className='pointer-events-none absolute left-0 top-0 z-30 opacity-0 w-36 h-36 sm:w-44 sm:h-44'>
-                                        <div
-                                            ref={calloutRef}
-                                            className='absolute max-[1049.9px]:bottom-[calc(100%+12px)] max-[1049.9px]:left-1/2 max-[1049.9px]:-translate-x-1/2 min-[1050px]:left-[calc(100%+20px)] min-[1050px]:top-1/2 min-[1050px]:-translate-y-1/2 flex items-center whitespace-nowrap opacity-0 z-40 drop-shadow-lg'
-                                        >
-                                            <div className='relative flex items-center font-sans text-[11px] sm:text-[13px] font-medium tracking-wide text-black dark:text-white bg-white dark:bg-black px-2.5 py-1 sm:px-4 sm:py-2 rounded-full border border-zinc-300 dark:border-zinc-700 shadow-sm'>
-                                                <Bot className='mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-black dark:text-white' />
-                                                Analyzing resume
-                                            </div>
-                                            <svg width='32' height='20' viewBox='0 0 32 20' className='absolute max-[1049.9px]:top-[calc(100%-6px)] max-[1049.9px]:left-1/2 max-[1049.9px]:-translate-x-1/2 max-[1049.9px]:rotate-90 min-[1050px]:right-[calc(100%-1px)] text-zinc-400 dark:text-zinc-600'>
-                                                <path d='M32 10 L8 10' stroke='currentColor' strokeWidth='1' strokeLinecap='round' strokeDasharray='3 3' />
-                                                <circle cx='4' cy='10' r='2' fill='currentColor' />
+                                        <div ref={calloutRef} className='absolute -top-10 left-1/2 -translate-x-1/2 sm:left-[calc(100%+14px)] sm:top-1/2 sm:-translate-y-1/2 flex items-center whitespace-nowrap opacity-0 z-40 drop-shadow-md'>
+                                            <span className='font-sans text-[11px] sm:text-[13px] font-light tracking-wide text-zinc-700 dark:text-zinc-200 bg-white/80 dark:bg-zinc-900/80 sm:bg-transparent px-2 py-0.5 rounded-full border border-zinc-200/50 dark:border-zinc-800/50 sm:border-none backdrop-blur-xs sm:backdrop-blur-none'>
+                                                Let me analyze this resume
+                                            </span>
+
+                                            <svg width='28' height='20' viewBox='0 0 28 20' className='hidden sm:block absolute right-full mr-2 text-zinc-400/60 dark:text-zinc-500/50'>
+                                                <line x1='28' y1='10' x2='0' y2='10' stroke='currentColor' strokeWidth='1' />
                                             </svg>
                                         </div>
 
@@ -861,10 +873,11 @@ export default function Home() {
                                     </div>
                                 </div>
 
-                                <div className='mt-12 text-center min-h-16 sm:min-h-18 px-2'>
+                                <div className='mt-6 sm:mt-8 text-center min-h-16 sm:min-h-18 px-2'>
                                     <AnimatePresence mode='wait'>
                                         <motion.div key={messageIndex} initial={{ opacity: 0, y: 12, filter: 'blur(4px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, y: -12, filter: 'blur(4px)' }} transition={{ duration: 0.4, ease: 'easeOut' }}>
                                             <h2 className='text-base xs:text-lg sm:text-xl font-semibold tracking-tight text-zinc-900 dark:text-white'>{analysisMessages[messageIndex].title}</h2>
+
                                             <p className='mt-1.5 sm:mt-2 text-[11.5px] xs:text-[12.5px] sm:text-sm text-zinc-500 dark:text-zinc-400'>{analysisMessages[messageIndex].subtitle}</p>
                                         </motion.div>
                                     </AnimatePresence>
@@ -1249,7 +1262,7 @@ export default function Home() {
                     <div className='relative flex items-center justify-center lg:justify-end max-[1310px]:justify-center max-[1069.9px]:hidden'>
                         <div className='relative w-full max-w-md max-[1310px]:max-w-105'>
                             <div className='absolute -inset-10 -z-10 rounded-full bg-zinc-100 dark:bg-zinc-800/30 blur-3xl' />
-                            <div className='relative overflow-hidden border border-zinc-200 bg-white shadow-xl shadow-zinc-200/60 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/50'>
+                            <div className='relative overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl shadow-zinc-200/60 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-black/50'>
                                 <div className='flex items-center justify-between whitespace-nowrap border-b border-zinc-100 dark:border-zinc-800/80 px-4 py-3'>
                                     <div className='flex items-center gap-2'>
                                         <FileText className='h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500' />
