@@ -28,12 +28,7 @@ const storyTransitionVariants: Variants = {
         opacity: 1,
         rotateY: 0,
         filter: 'blur(0px)',
-        transition: {x: { duration: 0.55, ease: [0.16, 1, 0.3, 1] },
-            scale: { duration: 0.55, ease: [0.16, 1, 0.3, 1] },
-            rotateY: { duration: 0.55, ease: [0.16, 1, 0.3, 1] },
-            opacity: { duration: 0.3, ease: 'easeOut' },
-            filter: { duration: 0.35, ease: 'easeOut' },
-        },
+        transition: { x: { duration: 0.55, ease: [0.16, 1, 0.3, 1] }, scale: { duration: 0.55, ease: [0.16, 1, 0.3, 1] }, rotateY: { duration: 0.55, ease: [0.16, 1, 0.3, 1] }, opacity: { duration: 0.3, ease: 'easeOut' }, filter: { duration: 0.35, ease: 'easeOut' } },
     },
     wrapperExit: (direction: number) => ({
         x: direction > 0 ? '-12%' : '12%',
@@ -125,7 +120,7 @@ const StoryControls = () => {
                 type='button'
                 aria-label={paused ? 'Resume story' : 'Pause story'}
                 onClick={handlePlayPause}
-                className='group flex h-10 cursor-pointer items-center rounded-full bg-transparent px-2 text-zinc-700 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] min-[650px]:hover:scale-110 active:scale-95 max-[649.9px]:h-9 max-[649.9px]:px-1.5 dark:text-zinc-200'
+                className='group flex h-10 cursor-pointer items-center rounded-full bg-transparent px-2 text-zinc-700 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] min-[650px]:hover:scale-110 active:scale-95 max-[649.9px]:h-9 max-[649.9px]:px-1.5 dark:text-zinc-200 outline-none'
             >
                 {paused ? <PlayIcon /> : <PauseIcon />}
 
@@ -140,7 +135,7 @@ const StoryControls = () => {
                 type='button'
                 aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
                 onClick={handleThemeToggle}
-                className='group flex h-10 cursor-pointer items-center rounded-full bg-transparent px-2 text-zinc-700 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] min-[650px]:hover:scale-110 active:scale-95 max-[649.9px]:h-9 max-[649.9px]:px-1.5 dark:text-zinc-200'
+                className='group flex h-10 cursor-pointer items-center rounded-full bg-transparent px-2 text-zinc-700 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] min-[650px]:hover:scale-110 active:scale-95 max-[649.9px]:h-9 max-[649.9px]:px-1.5 dark:text-zinc-200 outline-none'
             >
                 {isDark ? <SunIcon /> : <MoonIcon />}
 
@@ -155,7 +150,7 @@ const StoryControls = () => {
                 type='button'
                 aria-label='Close stories'
                 onClick={handleClose}
-                className='group flex h-10 cursor-pointer items-center rounded-full bg-transparent px-2 text-zinc-700 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] min-[650px]:hover:scale-110 active:scale-95 max-[649.9px]:h-9 max-[649.9px]:px-1.5 dark:text-zinc-200'
+                className='group flex h-10 cursor-pointer items-center rounded-full bg-transparent px-2 text-zinc-700 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] min-[650px]:hover:scale-110 active:scale-95 max-[649.9px]:h-9 max-[649.9px]:px-1.5 dark:text-zinc-200 outline-none'
             >
                 <CloseIcon />
 

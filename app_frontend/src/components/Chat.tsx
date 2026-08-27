@@ -421,6 +421,24 @@ export default function Chat() {
     }, [selectedFile, isSending, listening, editingMessageId]);
 
     useEffect(() => {
+        const handleGlobalUploadShortcut = (event: KeyboardEvent) => {
+            if (!event.metaKey || event.key.toLowerCase() !== 'u' || event.repeat || isAnalyzingResume) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+            fileInputRef.current?.click();
+        };
+
+        window.addEventListener('keydown', handleGlobalUploadShortcut);
+
+        return () => {
+            window.removeEventListener('keydown', handleGlobalUploadShortcut);
+        };
+    }, [isAnalyzingResume]);
+
+    useEffect(() => {
         transcriptRef.current = transcript;
     }, [transcript]);
 
