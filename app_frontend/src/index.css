@@ -6,7 +6,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Geist Variable', sans-serif;
 }
 
 .font-display {
