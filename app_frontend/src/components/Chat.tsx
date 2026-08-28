@@ -328,6 +328,29 @@ export default function Chat() {
     }, [sessionId, selectedFile, pdfUrl, hasIndexedResume, messages]);
 
     useEffect(() => {
+        const lastMessage = messages[messages.length - 1];
+
+        if (!lastMessage) return;
+
+        if (lastMessage.role === 'assistant') {
+            requestAnimationFrame(() => {
+                const messageElement = document.getElementById(`message-${lastMessage.id}`);
+                if (!messageElement) return;
+
+                const container = chatScrollRef.current;
+                if (!container) return;
+
+                const top = messageElement.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop;
+
+                container.scrollTo({
+                    top: top - 30,
+                    behavior: 'smooth',
+                });
+            });
+
+            return;
+        }
+
         messagesEndRef.current?.scrollIntoView({
             behavior: 'smooth',
             block: 'end',
@@ -1581,7 +1604,14 @@ export default function Chat() {
                                         <>
                                             <div className='flex flex-col gap-3'>
                                                 {messages.map((message) => (
-                                                    <motion.div key={message.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className={message.role === 'user' ? 'flex justify-end' : 'group flex justify-start'}>
+                                                    <motion.div
+                                                        id={`message-${message.id}`}
+                                                        key={message.id}
+                                                        initial={{ opacity: 0, y: 8 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                                                        className={message.role === 'user' ? 'flex justify-end' : 'group flex justify-start'}
+                                                    >
                                                         {message.role === 'assistant' ? (
                                                             <div className='ml-1 max-w-[78%] max-[549.9px]:max-w-[88%] max-[449.9px]:max-w-[92%]'>
                                                                 <div className='whitespace-pre-wrap wrap-break-word text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 dark:text-zinc-200 max-[549.9px]:text-[15px] max-[549.9px]:leading-6.5 max-[449.9px]:text-[14px] max-[449.9px]:leading-6 max-[399.9px]:text-[13px] max-[399.9px]:leading-5.5'>
