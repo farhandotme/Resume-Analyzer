@@ -1869,8 +1869,13 @@ export default function Chat() {
                                                 >
                                                     <div className='relative w-full'>
                                                         {!input && messages.length === 1 && (
-                                                            <div aria-hidden='true' className='pointer-events-none absolute inset-y-0 left-0 z-0 flex items-center overflow-hidden'>
-                                                                <span className='whitespace-nowrap text-[16px] leading-7 text-zinc-400 dark:text-zinc-600 max-[549.9px]:text-[15px] max-[449.9px]:text-[14px] max-[399.9px]:text-[13px]'>{placeholderText}</span>
+                                                            <div aria-hidden='true' className='pointer-events-none select-none absolute inset-y-0 left-0 z-0 flex items-center overflow-hidden'>
+                                                                <span
+                                                                    className='whitespace-nowrap select-none text-[16px] leading-7 text-zinc-400 dark:text-zinc-600 max-[549.9px]:text-[15px] max-[449.9px]:text-[14px] max-[399.9px]:text-[13px]'
+                                                                    style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+                                                                >
+                                                                    {placeholderText}
+                                                                </span>
                                                             </div>
                                                         )}
 
@@ -1881,7 +1886,7 @@ export default function Chat() {
                                                             onKeyDown={handleKeyDown}
                                                             rows={1}
                                                             placeholder={messages.length > 1 ? 'Ask anything about your resume...' : ''}
-                                                            className='chat-composer-scrollbar relative z-10 block max-h-40 min-h-7 w-full translate-y-0.5 resize-none overflow-y-auto bg-transparent p-0 text-[16px] font-normal leading-5.75 text-zinc-900 outline-none placeholder:font-normal placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-600 disabled:cursor-not-allowed disabled:opacity-60 max-[549.9px]:text-[15px] max-[449.9px]:text-[14px] max-[399.9px]:text-[13px]'
+                                                            className={`chat-composer-scrollbar relative z-10 block max-h-40 min-h-7 w-full translate-y-0.5 resize-none overflow-y-auto bg-transparent p-0 text-[16px] font-normal leading-5.75 text-zinc-900 outline-none placeholder:font-normal placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-600 disabled:cursor-not-allowed disabled:opacity-60 max-[549.9px]:text-[15px] max-[449.9px]:text-[14px] max-[399.9px]:text-[13px] ${!input ? 'select-none' : ''}`}
                                                             disabled={editingMessageId !== null}
                                                         />
                                                     </div>
@@ -1952,7 +1957,7 @@ export default function Chat() {
                                     </div>
                                 </div>
 
-                                <p className='mt-2.5 text-center font-mono text-[9px] uppercase tracking-widest text-zinc-400 dark:text-zinc-600 max-[549.9px]:mt-2 max-[549.9px]:text-[8px] max-[399.9px]:text-[7.5px]'>AI can make mistakes · verify important information</p>
+                                <p className='mt-2.5 text-center font-mono text-[9px] uppercase tracking-wider text-zinc-400 dark:text-zinc-600 max-[549.9px]:mt-2 max-[549.9px]:text-[8px] max-[399.9px]:text-[7.5px]'>AI can make mistakes · verify important information</p>
                             </div>
                         </motion.div>
                     )}
