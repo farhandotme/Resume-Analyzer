@@ -925,7 +925,7 @@ export default function Home() {
                         </button>
 
                         <a
-                            href='https://github.com/faridhussain/Resume-Analyzer'
+                            href='https://github.com/farhandotme/Resume-Analyzer'
                             target='_blank'
                             rel='noopener noreferrer'
                             aria-label='GitHub Repository'
