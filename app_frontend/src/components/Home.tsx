@@ -1059,7 +1059,7 @@ export default function Home() {
                                         aria-hidden='true'
                                         animate={prefersReducedMotion ? {} : { rotate: 360 }}
                                         transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-                                        className='pointer-events-none absolute -inset-full z-0 transition-opacity duration-500'
+                                        className='pointer-events-none absolute left-1/2 top-1/2 z-0 h-[500%] w-[500%] -translate-x-1/2 -translate-y-1/2 transition-opacity duration-500'
                                         style={{
                                             background:
                                                 theme === 'light' ? 'conic-gradient(from 0deg, transparent 72%, rgba(82,82,91,0.88) 84%, rgba(39,39,42,0.72) 87%, transparent 98%)' : 'conic-gradient(from 0deg, transparent 72%, rgba(161,161,170,0.9) 84%, rgba(113,113,122,0.72) 87%, transparent 98%)',
@@ -1070,7 +1070,7 @@ export default function Home() {
                                         aria-hidden='true'
                                         animate={prefersReducedMotion ? {} : { rotate: -360 }}
                                         transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
-                                        className='pointer-events-none absolute -inset-full z-0 transition-opacity duration-500'
+                                        className='pointer-events-none absolute left-1/2 top-1/2 z-0 h-[500%] w-[500%] -translate-x-1/2 -translate-y-1/2 transition-opacity duration-500'
                                         style={{
                                             background:
                                                 theme === 'light'
