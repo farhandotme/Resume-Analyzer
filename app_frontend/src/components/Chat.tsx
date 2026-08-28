@@ -1294,7 +1294,7 @@ export default function Chat() {
                         initial={{ opacity: 0 }}
                         animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, x: [0, 40, -20, 0], y: [0, -24, 18, 0] }}
                         transition={prefersReducedMotion ? { duration: 1.2 } : { opacity: { duration: 1.2 }, x: { duration: 26, repeat: Infinity, ease: 'easeInOut' }, y: { duration: 26, repeat: Infinity, ease: 'easeInOut' } }}
-                        className='absolute left-1/2 top-[26%] h-155 w-225 -translate-x-1/2 -translate-y-1/2 rounded-full bg-zinc-300/10 blur-[130px] dark:bg-zinc-700/25'
+                        className='absolute left-1/2 top-[26%] h-155 w-225 -translate-x-1/2 -translate-y-1/2 rounded-full bg-zinc-300/10 blur-[130px] dark:bg-zinc-700/25 max-[639.9px]:bg-zinc-300/8 max-[639.9px]:dark:bg-zinc-700/20 max-[449.9px]:bg-zinc-300/6 max-[449.9px]:dark:bg-zinc-700/15'
                     />
                 </div>
             )}
@@ -1402,9 +1402,10 @@ export default function Chat() {
                                     initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: 0.22 }}
-                                    className='mx-auto mt-7 w-full max-w-xl text-[15px] font-thin md:font-light leading-7 tracking-wide text-zinc-500 sm:text-[16px] sm:leading-7 dark:text-zinc-500 max-[649.9px]:mt-5 max-[649.9px]:max-w-xl max-[649.9px]:text-[14px] max-[649.9px]:leading-6 max-[449.9px]:text-[13px] max-[449.9px]:leading-4.5 max-[399.9px]:text-[12px]'
+                                    className='mx-auto max-[649.9px]:mt-4 mt-7 w-full max-w-xl text-[17px] max-[1023.9px]:text-[16px] max-[639.9px]:text-[15px] max-[549.9px]:text-[16px] max-[449.9px]:text-[14px] max-[449.9px]:leading-6 font-light leading-7 tracking-wide text-zinc-500 dark:text-zinc-400'
                                 >
-                                    Upload your resume and let AI understand your experience, strengths, skills, and career direction before you start the conversation.
+                                    <span className='max-[549.9px]:hidden'>Upload your resume and let AI understand your experience, strengths, skills, and career direction before you start the conversation.</span>
+                                    <span className='hidden max-[549.9px]:inline'>Upload your resume to unlock your AI chat and get insights on your skills and career.</span>
                                 </motion.p>
 
                                 <motion.div initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.36 }} className='mx-auto mt-6 w-full max-w-xl max-[649.9px]:mt-5'>
@@ -1417,7 +1418,7 @@ export default function Chat() {
                                                     fileInputRef.current?.click();
                                                 }
                                             }}
-                                            className={`group relative z-10 mx-auto w-full max-w-xl cursor-pointer select-none overflow-hidden rounded-3xl border-2 border-dashed border-zinc-300 transition-all duration-300 hover:border-zinc-500 dark:border-zinc-800 dark:hover:border-zinc-600 ${
+                                            className={`group relative z-10 mx-auto w-full max-w-xl cursor-pointer select-none overflow-hidden rounded-3xl border-2 border-dashed border-zinc-300 transition-all duration-300 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-700 ${
                                                 isDragging ? 'scale-[1.01] border-zinc-600 dark:border-zinc-600' : ''
                                             } ${isAnalyzingResume ? 'cursor-wait' : ''}`}
                                         >
@@ -1452,9 +1453,7 @@ export default function Chat() {
                                             >
                                                 <div
                                                     aria-hidden='true'
-                                                    className={`pointer-events-none absolute inset-0 z-0 bg-size-[16px_16px] ${
-                                                        theme === 'light' ? 'bg-[radial-gradient(rgba(0,0,0,0.045)_1px,transparent_1px)] opacity-100' : 'bg-[radial-gradient(rgba(255,255,255,0.045)_1px,transparent_1px)] opacity-20 mix-blend-screen'
-                                                    }`}
+                                                    className={`pointer-events-none absolute inset-0 z-0 bg-size-[16px_16px] ${theme === 'light' ? 'bg-[radial-gradient(rgba(0,0,0,0.045)_1px,transparent_1px)]' : 'bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)]'}`}
                                                 />
 
                                                 <div className='relative z-20 flex flex-col items-center'>
