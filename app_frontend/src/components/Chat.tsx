@@ -26,7 +26,7 @@ const suggestions = [
 
 const suggestionLabels = ['Strongest skills?', 'Improve resume?', 'Job fit?', 'Make resume stronger?', 'Resume weaknesses?', 'ATS-friendly?', 'Improve experience?', 'Highlight skills?'];
 
-const inputPlaceholders = ['Ask anything about your resume...', 'What are my strongest skills?', 'How can I improve my resume?', 'What jobs am I a good fit for?', 'What should I highlight in your resume?'];
+const inputPlaceholders = ['Ask anything about your resume...', 'What are my strongest skills?', 'How can I improve my resume?', 'What jobs am I a good fit for?', 'What should I highlight in my resume?'];
 const heroWords = ['resume', 'experience', 'skills', 'story'];
 const CHAT_ANALYSIS_ROLE = 'General Resume Review';
 const CHAT_STORAGE_KEY = 'resume-analyzer-chat';
@@ -565,7 +565,7 @@ export default function Chat() {
                 setIsDeletingPlaceholder(false);
                 setPlaceholderIndex((current) => (current + 1) % inputPlaceholders.length);
             },
-            !isDeletingPlaceholder ? (placeholderText.length === currentPlaceholder.length ? 1100 : 50) : placeholderText.length === 0 ? 250 : 30,
+            !isDeletingPlaceholder ? (placeholderText.length === currentPlaceholder.length ? 1100 : 35) : placeholderText.length === 0 ? 250 : 25,
         );
 
         return () => window.clearTimeout(timeout);
