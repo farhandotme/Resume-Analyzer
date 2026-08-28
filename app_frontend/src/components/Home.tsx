@@ -1204,7 +1204,7 @@ export default function Home() {
                                                 event.stopPropagation();
                                                 fileInputRef.current?.click();
                                             }}
-                                            className='group/btn mx-auto mt-4 inline-flex h-12 w-full max-w-60 max-[1310px]:h-11 max-[1310px]:max-w-52 max-[549.9px]:mt-3 max-[549.9px]:h-10 max-[549.9px]:max-w-42 max-[549.9px]:px-5 max-[549.9px]:text-[13px] max-[449.9px]:text-[12px] cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-bold text-white transition-all duration-200 hover:bg-zinc-800 active:bg-zinc-700 focus:outline-none focus:ring-0 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 dark:active:bg-zinc-300'
+                                            className='group/btn mx-auto mt-4 inline-flex h-12 w-full max-w-60 max-[1310px]:h-11 max-[1310px]:max-w-52 max-[549.9px]:mt-3 max-[549.9px]:h-10 max-[549.9px]:max-w-42 max-[549.9px]:px-5 max-[549.9px]:text-[13px] max-[449.9px]:text-[12px] cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-medium text-white transition-all duration-200 hover:bg-zinc-800 active:bg-zinc-700 focus:outline-none focus:ring-0 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 dark:active:bg-zinc-300'
                                         >
                                             <span>Select PDF</span>
                                             <ChevronRight className='h-4 w-4 transition-transform duration-300 ease-out group-hover/btn:translate-x-1.5 group-active/btn:translate-x-1.5' />
@@ -1230,7 +1230,7 @@ export default function Home() {
                             </span>
                         </div>
 
-                        <div className='mt-4 max-[399.9px]:mt-3 hidden w-fit mx-auto items-center justify-center whitespace-nowrap text-[12px] max-[399.9px]:text-[11px] font-thin text-zinc-600 dark:text-zinc-400 max-[549.9px]:text-[12.5px] max-[549.9px]:flex'>
+                        <div className='mt-4 max-[399.9px]:mt-3 hidden w-fit mx-auto items-center justify-center whitespace-nowrap text-[12px] max-[399.9px]:text-[11px] font-light text-zinc-900 dark:text-zinc-300 max-[549.9px]:text-[12.5px] max-[549.9px]:flex'>
                             <span>Private by default</span>
                             <span className='mx-2 text-zinc-500 dark:text-zinc-400'>·</span>
                             <span>ATS-aware</span>
