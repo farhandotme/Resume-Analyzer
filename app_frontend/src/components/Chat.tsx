@@ -361,6 +361,11 @@ export default function Chat() {
         if (!selectedFile) return;
 
         const focusChatInput = () => {
+            // Prevent auto-focus on mobile and tablet devices
+            if (window.matchMedia('(max-width: 919.9px)').matches) {
+                return;
+            }
+
             const textarea = textareaRef.current;
             if (!textarea) return;
             textarea.focus();
@@ -1830,7 +1835,6 @@ export default function Chat() {
 
                                                         <textarea
                                                             ref={textareaRef}
-                                                            autoFocus
                                                             value={input}
                                                             onChange={handleInputChange}
                                                             onKeyDown={handleKeyDown}
