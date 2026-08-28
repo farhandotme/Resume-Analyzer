@@ -102,7 +102,6 @@ export default function Home() {
     const [analysisStep, setAnalysisStep] = useState(0);
     const [messageIndex, setMessageIndex] = useState(0);
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
-    const [headlineIndex, setHeadlineIndex] = useState(0);
     const [mobileHeadlineText, setMobileHeadlineText] = useState('resume.');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const mobileMenuRef = useRef<HTMLDivElement>(null);
@@ -144,7 +143,6 @@ export default function Home() {
     const calloutRef = useRef<HTMLDivElement>(null);
     const scanLineRef = useRef<HTMLDivElement>(null);
 
-    const headlinePhrases = ['resume.', 'interviews.', 'career.'];
     const analysisSteps = ['Reading your resume', 'Understanding your experience', 'Matching your target role', 'Building your analysis'];
 
     const analysisMessages = [
@@ -196,14 +194,6 @@ export default function Home() {
             document.removeEventListener('mousedown', handleOutsideClick);
         };
     }, [isMobileMenuOpen]);
-
-    useEffect(() => {
-        const interval = window.setInterval(() => {
-            setHeadlineIndex((current) => (current + 1) % headlinePhrases.length);
-        }, 3200);
-
-        return () => window.clearInterval(interval);
-    }, []);
 
     useEffect(() => {
         const words = ['resume.', 'interviews.', 'career.'];
@@ -1030,18 +1020,7 @@ export default function Home() {
                             <span className='whitespace-nowrap'>
                                 Better{' '}
                                 <span className='relative inline-block h-[1.08em] min-w-[10ch] overflow-hidden align-bottom whitespace-nowrap'>
-                                    <AnimatePresence mode='wait'>
-                                        <motion.span
-                                            key={headlinePhrases[headlineIndex]}
-                                            initial={{ opacity: 0, y: 18 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -18 }}
-                                            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                                            className='absolute left-0 top-0 whitespace-nowrap text-zinc-400 italic dark:text-zinc-500'
-                                        >
-                                            {headlinePhrases[headlineIndex]}
-                                        </motion.span>
-                                    </AnimatePresence>
+                                    <span className='absolute left-0 top-0 whitespace-nowrap text-zinc-400 italic dark:text-zinc-500'>{mobileHeadlineText}</span>
                                 </span>
                             </span>
                         </h1>
@@ -1055,7 +1034,7 @@ export default function Home() {
                             </span>
                         </h1>
                         <p
-                            className={`mt-4 max-w-122.5 text-[17px] leading-7 text-zinc-500 dark:text-zinc-400 max-[1310px]:text-[17px] max-[1069.9px]:mx-auto max-[1069.9px]:max-w-155 max-[1069.9px]:text-[17px] max-[1069.9px]:leading-7 max-[1069.9px]:tracking-[0.02em] max-[1069.9px]:text-center max-[649.9px]:text-[15.5px] ${selectedFile ? 'max-[549.9px]:mt-3 max-[449.9px]:text-[13.5px] max-[449.9px]:leading-5.5' : ''}`}
+                            className={`mt-4 max-w-122.5 text-[18px] leading-7 text-zinc-500 dark:text-zinc-400 max-[1310px]:text-[17px] max-[1069.9px]:mx-auto max-[1069.9px]:max-w-155 max-[1069.9px]:text-[17px] max-[1069.9px]:leading-7 max-[1069.9px]:tracking-[0.02em] max-[1069.9px]:text-center max-[649.9px]:text-[15.5px] ${selectedFile ? 'max-[549.9px]:mt-3 max-[449.9px]:text-[13.5px] max-[449.9px]:leading-5.5' : ''}`}
                         >
                             <span className='max-[549.9px]:hidden'>Upload your resume to receive an ATS score, recruiter feedback, and AI-powered recommendations that help you stand out before you apply.</span>
                             <span className='hidden max-[549.9px]:inline max-[449.9px]:inline-block max-[449.9px]:text-[14px] max-[399.9px]:text-[13px] max-[449.9px]:leading-6'>Upload your resume for an ATS score, recruiter feedback, and AI-powered recommendations.</span>
