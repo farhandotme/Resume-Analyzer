@@ -389,7 +389,6 @@ export default function Chat() {
         if (!selectedFile) return;
 
         const focusChatInput = () => {
-            // Prevent auto-focus on mobile and tablet devices
             if (window.matchMedia('(max-width: 919.9px)').matches) {
                 return;
             }
@@ -1100,12 +1099,9 @@ export default function Chat() {
             setIsSending(false);
 
             requestAnimationFrame(() => {
-                if (window.matchMedia('(max-width: 919.9px)').matches) {
-                    textareaRef.current?.blur();
-                    return;
+                if (!window.matchMedia('(max-width: 919.9px)').matches) {
+                    textareaRef.current?.focus();
                 }
-
-                textareaRef.current?.focus();
             });
         }
     };
@@ -1113,7 +1109,15 @@ export default function Chat() {
     const sendMessage = async (messageOverride?: string) => {
         const trimmed = (messageOverride ?? input).trim();
         if (!trimmed || !selectedFile || !pdfUrl || isSending) return;
-        textareaRef.current?.blur();
+
+        if (window.matchMedia('(max-width: 919.9px)').matches) {
+            textareaRef.current?.blur();
+        } else {
+            requestAnimationFrame(() => {
+                textareaRef.current?.focus();
+            });
+        }
+
         if (listening) {
             shouldCommitTranscriptRef.current = false;
             transcriptRef.current = '';
@@ -1172,7 +1176,10 @@ export default function Chat() {
             ]);
         } finally {
             setIsSending(false);
-            textareaRef.current?.blur();
+
+            if (!window.matchMedia('(max-width: 919.9px)').matches) {
+                textareaRef.current?.focus();
+            }
         }
     };
 
