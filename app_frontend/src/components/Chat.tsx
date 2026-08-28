@@ -177,6 +177,7 @@ export default function Chat() {
     const speechSynthesisRef = useRef<SpeechSynthesis | null>(null);
     const speechUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
     const [speakingMessageId, setSpeakingMessageId] = useState<number | null>(null);
+    const [loadingSpeechMessageId, setLoadingSpeechMessageId] = useState<number | null>(null);
 
     const cursorPositionRef = useRef(0);
     const pendingCursorPositionRef = useRef<number | null>(null);
@@ -241,6 +242,7 @@ export default function Chat() {
         }
 
         speechUtteranceRef.current = null;
+        setLoadingSpeechMessageId(null);
         setSpeakingMessageId(null);
     };
 
@@ -257,6 +259,7 @@ export default function Chat() {
         }
 
         synthesis.cancel();
+        setLoadingSpeechMessageId(message.id);
 
         const utterance = new SpeechSynthesisUtterance(message.content);
         const voice = getPreferredSpeechVoice();
@@ -272,12 +275,14 @@ export default function Chat() {
 
         utterance.onstart = () => {
             speechUtteranceRef.current = utterance;
+            setLoadingSpeechMessageId(null);
             setSpeakingMessageId(message.id);
         };
 
         utterance.onend = () => {
             if (speechUtteranceRef.current === utterance) {
                 speechUtteranceRef.current = null;
+                setLoadingSpeechMessageId(null);
                 setSpeakingMessageId(null);
             }
         };
@@ -285,12 +290,12 @@ export default function Chat() {
         utterance.onerror = () => {
             if (speechUtteranceRef.current === utterance) {
                 speechUtteranceRef.current = null;
+                setLoadingSpeechMessageId(null);
                 setSpeakingMessageId(null);
             }
         };
 
         speechUtteranceRef.current = utterance;
-        setSpeakingMessageId(message.id);
         synthesis.speak(utterance);
     };
 
@@ -1630,7 +1635,13 @@ export default function Chat() {
                                                                                     : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
                                                                             }`}
                                                                         >
-                                                                            {speakingMessageId === message.id ? <Square className='h-3.5 w-3.5 fill-current' strokeWidth={1.8} /> : <Volume2 className='h-3.5 w-3.5' strokeWidth={1.8} />}
+                                                                            {loadingSpeechMessageId === message.id ? (
+                                                                                <span className='h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-700 dark:border-zinc-700 dark:border-t-zinc-300' />
+                                                                            ) : speakingMessageId === message.id ? (
+                                                                                <Square className='h-3.5 w-3.5 fill-current' strokeWidth={1.8} />
+                                                                            ) : (
+                                                                                <Volume2 className='h-3.5 w-3.5' strokeWidth={1.8} />
+                                                                            )}
                                                                         </button>
                                                                     </Tooltip>
                                                                 </div>
