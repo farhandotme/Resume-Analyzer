@@ -1069,6 +1069,12 @@ export default function Chat() {
         setOriginalEditingContent('');
         setShowScrollToBottom(false);
 
+        if (!window.matchMedia('(max-width: 919.9px)').matches) {
+            requestAnimationFrame(() => {
+                textareaRef.current?.focus();
+            });
+        }
+
         try {
             const data = await sendChatMessage({
                 pdfUrl: hasIndexedResume ? undefined : pdfUrl,
@@ -1097,12 +1103,6 @@ export default function Chat() {
             ]);
         } finally {
             setIsSending(false);
-
-            requestAnimationFrame(() => {
-                if (!window.matchMedia('(max-width: 919.9px)').matches) {
-                    textareaRef.current?.focus();
-                }
-            });
         }
     };
 
