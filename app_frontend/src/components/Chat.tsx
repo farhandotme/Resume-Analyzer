@@ -26,7 +26,7 @@ const suggestions = [
 
 const suggestionLabels = ['Strongest skills?', 'Improve resume?', 'Job fit?', 'Make resume stronger?', 'Resume weaknesses?', 'ATS-friendly?', 'Improve experience?', 'Highlight skills?'];
 
-const inputPlaceholders = ['Ask anything about your resume...', 'What are my strongest skills?', 'How can I improve my resume?', 'What jobs am I a good fit for?', 'What should I highlight in your resume?'];
+const inputPlaceholders = ['Ask anything about your resume...', 'What are my strongest skills?', 'How can I improve my resume?', 'What jobs am I a good fit for?', 'What should I highlight in my resume?'];
 const heroWords = ['resume', 'experience', 'skills', 'story'];
 const CHAT_ANALYSIS_ROLE = 'General Resume Review';
 const CHAT_STORAGE_KEY = 'resume-analyzer-chat';
@@ -177,6 +177,7 @@ export default function Chat() {
     const speechSynthesisRef = useRef<SpeechSynthesis | null>(null);
     const speechUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
     const [speakingMessageId, setSpeakingMessageId] = useState<number | null>(null);
+    const [loadingSpeechMessageId, setLoadingSpeechMessageId] = useState<number | null>(null);
 
     const cursorPositionRef = useRef(0);
     const pendingCursorPositionRef = useRef<number | null>(null);
@@ -241,6 +242,7 @@ export default function Chat() {
         }
 
         speechUtteranceRef.current = null;
+        setLoadingSpeechMessageId(null);
         setSpeakingMessageId(null);
     };
 
@@ -257,6 +259,7 @@ export default function Chat() {
         }
 
         synthesis.cancel();
+        setLoadingSpeechMessageId(message.id);
 
         const utterance = new SpeechSynthesisUtterance(message.content);
         const voice = getPreferredSpeechVoice();
@@ -272,12 +275,14 @@ export default function Chat() {
 
         utterance.onstart = () => {
             speechUtteranceRef.current = utterance;
+            setLoadingSpeechMessageId(null);
             setSpeakingMessageId(message.id);
         };
 
         utterance.onend = () => {
             if (speechUtteranceRef.current === utterance) {
                 speechUtteranceRef.current = null;
+                setLoadingSpeechMessageId(null);
                 setSpeakingMessageId(null);
             }
         };
@@ -285,12 +290,12 @@ export default function Chat() {
         utterance.onerror = () => {
             if (speechUtteranceRef.current === utterance) {
                 speechUtteranceRef.current = null;
+                setLoadingSpeechMessageId(null);
                 setSpeakingMessageId(null);
             }
         };
 
         speechUtteranceRef.current = utterance;
-        setSpeakingMessageId(message.id);
         synthesis.speak(utterance);
     };
 
@@ -328,6 +333,29 @@ export default function Chat() {
     }, [sessionId, selectedFile, pdfUrl, hasIndexedResume, messages]);
 
     useEffect(() => {
+        const lastMessage = messages[messages.length - 1];
+
+        if (!lastMessage) return;
+
+        if (lastMessage.role === 'assistant') {
+            requestAnimationFrame(() => {
+                const messageElement = document.getElementById(`message-${lastMessage.id}`);
+                if (!messageElement) return;
+
+                const container = chatScrollRef.current;
+                if (!container) return;
+
+                const top = messageElement.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop;
+
+                container.scrollTo({
+                    top: top - 30,
+                    behavior: 'smooth',
+                });
+            });
+
+            return;
+        }
+
         messagesEndRef.current?.scrollIntoView({
             behavior: 'smooth',
             block: 'end',
@@ -361,6 +389,10 @@ export default function Chat() {
         if (!selectedFile) return;
 
         const focusChatInput = () => {
+            if (window.matchMedia('(max-width: 919.9px)').matches) {
+                return;
+            }
+
             const textarea = textareaRef.current;
             if (!textarea) return;
             textarea.focus();
@@ -560,7 +592,7 @@ export default function Chat() {
                 setIsDeletingPlaceholder(false);
                 setPlaceholderIndex((current) => (current + 1) % inputPlaceholders.length);
             },
-            !isDeletingPlaceholder ? (placeholderText.length === currentPlaceholder.length ? 1100 : 50) : placeholderText.length === 0 ? 250 : 30,
+            !isDeletingPlaceholder ? (placeholderText.length === currentPlaceholder.length ? 1100 : 35) : placeholderText.length === 0 ? 250 : 25,
         );
 
         return () => window.clearTimeout(timeout);
@@ -1037,6 +1069,12 @@ export default function Chat() {
         setOriginalEditingContent('');
         setShowScrollToBottom(false);
 
+        if (!window.matchMedia('(max-width: 919.9px)').matches) {
+            requestAnimationFrame(() => {
+                textareaRef.current?.focus();
+            });
+        }
+
         try {
             const data = await sendChatMessage({
                 pdfUrl: hasIndexedResume ? undefined : pdfUrl,
@@ -1065,22 +1103,21 @@ export default function Chat() {
             ]);
         } finally {
             setIsSending(false);
-
-            requestAnimationFrame(() => {
-                if (window.matchMedia('(max-width: 919.9px)').matches) {
-                    textareaRef.current?.blur();
-                    return;
-                }
-
-                textareaRef.current?.focus();
-            });
         }
     };
 
     const sendMessage = async (messageOverride?: string) => {
         const trimmed = (messageOverride ?? input).trim();
         if (!trimmed || !selectedFile || !pdfUrl || isSending) return;
-        textareaRef.current?.blur();
+
+        if (window.matchMedia('(max-width: 919.9px)').matches) {
+            textareaRef.current?.blur();
+        } else {
+            requestAnimationFrame(() => {
+                textareaRef.current?.focus();
+            });
+        }
+
         if (listening) {
             shouldCommitTranscriptRef.current = false;
             transcriptRef.current = '';
@@ -1139,7 +1176,10 @@ export default function Chat() {
             ]);
         } finally {
             setIsSending(false);
-            textareaRef.current?.blur();
+
+            if (!window.matchMedia('(max-width: 919.9px)').matches) {
+                textareaRef.current?.focus();
+            }
         }
     };
 
@@ -1294,7 +1334,7 @@ export default function Chat() {
                         initial={{ opacity: 0 }}
                         animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, x: [0, 40, -20, 0], y: [0, -24, 18, 0] }}
                         transition={prefersReducedMotion ? { duration: 1.2 } : { opacity: { duration: 1.2 }, x: { duration: 26, repeat: Infinity, ease: 'easeInOut' }, y: { duration: 26, repeat: Infinity, ease: 'easeInOut' } }}
-                        className='absolute left-1/2 top-[26%] h-155 w-225 -translate-x-1/2 -translate-y-1/2 rounded-full bg-zinc-300/10 blur-[130px] dark:bg-zinc-700/25'
+                        className='absolute left-1/2 top-[26%] h-155 w-225 -translate-x-1/2 -translate-y-1/2 rounded-full bg-zinc-300/10 blur-[130px] dark:bg-zinc-700/25 max-[639.9px]:bg-zinc-300/8 max-[639.9px]:dark:bg-zinc-700/20 max-[449.9px]:bg-zinc-300/6 max-[449.9px]:dark:bg-zinc-700/15'
                     />
                 </div>
             )}
@@ -1402,9 +1442,10 @@ export default function Chat() {
                                     initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: 0.22 }}
-                                    className='mx-auto mt-7 w-full max-w-xl text-[15px] font-thin md:font-light leading-7 tracking-wide text-zinc-500 sm:text-[16px] sm:leading-7 dark:text-zinc-500 max-[649.9px]:mt-5 max-[649.9px]:max-w-xl max-[649.9px]:text-[14px] max-[649.9px]:leading-6 max-[449.9px]:text-[13px] max-[449.9px]:leading-4.5 max-[399.9px]:text-[12px]'
+                                    className='mx-auto max-[649.9px]:mt-4 mt-7 w-full max-w-xl text-[17px] max-[1023.9px]:text-[16px] max-[639.9px]:text-[15px] max-[549.9px]:text-[16px] max-[449.9px]:text-[14px] max-[449.9px]:leading-6 font-light leading-7 tracking-wide text-zinc-500 dark:text-zinc-400'
                                 >
-                                    Upload your resume and let AI understand your experience, strengths, skills, and career direction before you start the conversation.
+                                    <span className='max-[549.9px]:hidden'>Upload your resume and let AI understand your experience, strengths, skills, and career direction before you start the conversation.</span>
+                                    <span className='hidden max-[549.9px]:inline'>Upload your resume to unlock your AI chat and get insights on your skills and career.</span>
                                 </motion.p>
 
                                 <motion.div initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.36 }} className='mx-auto mt-6 w-full max-w-xl max-[649.9px]:mt-5'>
@@ -1417,7 +1458,7 @@ export default function Chat() {
                                                     fileInputRef.current?.click();
                                                 }
                                             }}
-                                            className={`group relative z-10 mx-auto w-full max-w-xl cursor-pointer select-none overflow-hidden rounded-3xl border-2 border-dashed border-zinc-300 transition-all duration-300 hover:border-zinc-500 dark:border-zinc-800 dark:hover:border-zinc-600 ${
+                                            className={`group relative z-10 mx-auto w-full max-w-xl cursor-pointer select-none overflow-hidden rounded-3xl border-2 border-dashed border-zinc-300 transition-all duration-300 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-700 ${
                                                 isDragging ? 'scale-[1.01] border-zinc-600 dark:border-zinc-600' : ''
                                             } ${isAnalyzingResume ? 'cursor-wait' : ''}`}
                                         >
@@ -1452,9 +1493,7 @@ export default function Chat() {
                                             >
                                                 <div
                                                     aria-hidden='true'
-                                                    className={`pointer-events-none absolute inset-0 z-0 bg-size-[16px_16px] ${
-                                                        theme === 'light' ? 'bg-[radial-gradient(rgba(0,0,0,0.045)_1px,transparent_1px)] opacity-100' : 'bg-[radial-gradient(rgba(255,255,255,0.045)_1px,transparent_1px)] opacity-20 mix-blend-screen'
-                                                    }`}
+                                                    className={`pointer-events-none absolute inset-0 z-0 bg-size-[16px_16px] ${theme === 'light' ? 'bg-[radial-gradient(rgba(0,0,0,0.045)_1px,transparent_1px)]' : 'bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)]'}`}
                                                 />
 
                                                 <div className='relative z-20 flex flex-col items-center'>
@@ -1577,7 +1616,14 @@ export default function Chat() {
                                         <>
                                             <div className='flex flex-col gap-3'>
                                                 {messages.map((message) => (
-                                                    <motion.div key={message.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className={message.role === 'user' ? 'flex justify-end' : 'group flex justify-start'}>
+                                                    <motion.div
+                                                        id={`message-${message.id}`}
+                                                        key={message.id}
+                                                        initial={{ opacity: 0, y: 8 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                                                        className={message.role === 'user' ? 'flex justify-end' : 'group flex justify-start'}
+                                                    >
                                                         {message.role === 'assistant' ? (
                                                             <div className='ml-1 max-w-[78%] max-[549.9px]:max-w-[88%] max-[449.9px]:max-w-[92%]'>
                                                                 <div className='whitespace-pre-wrap wrap-break-word text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 dark:text-zinc-200 max-[549.9px]:text-[15px] max-[549.9px]:leading-6.5 max-[449.9px]:text-[14px] max-[449.9px]:leading-6 max-[399.9px]:text-[13px] max-[399.9px]:leading-5.5'>
@@ -1596,7 +1642,13 @@ export default function Chat() {
                                                                                     : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-300'
                                                                             }`}
                                                                         >
-                                                                            {speakingMessageId === message.id ? <Square className='h-3.5 w-3.5 fill-current' strokeWidth={1.8} /> : <Volume2 className='h-3.5 w-3.5' strokeWidth={1.8} />}
+                                                                            {loadingSpeechMessageId === message.id ? (
+                                                                                <span className='h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-700 dark:border-zinc-700 dark:border-t-zinc-300' />
+                                                                            ) : speakingMessageId === message.id ? (
+                                                                                <Square className='h-3.5 w-3.5 fill-current' strokeWidth={1.8} />
+                                                                            ) : (
+                                                                                <Volume2 className='h-3.5 w-3.5' strokeWidth={1.8} />
+                                                                            )}
                                                                         </button>
                                                                     </Tooltip>
                                                                 </div>
@@ -1824,20 +1876,24 @@ export default function Chat() {
                                                 >
                                                     <div className='relative w-full'>
                                                         {!input && messages.length === 1 && (
-                                                            <div aria-hidden='true' className='pointer-events-none absolute inset-y-0 left-0 z-0 flex items-center overflow-hidden'>
-                                                                <span className='whitespace-nowrap text-[16px] leading-7 text-zinc-400 dark:text-zinc-600 max-[549.9px]:text-[15px] max-[449.9px]:text-[14px] max-[399.9px]:text-[13px]'>{placeholderText}</span>
+                                                            <div aria-hidden='true' className='pointer-events-none select-none absolute inset-y-0 left-0 z-0 flex items-center overflow-hidden'>
+                                                                <span
+                                                                    className='whitespace-nowrap select-none text-[16px] leading-7 text-zinc-400 dark:text-zinc-600 max-[549.9px]:text-[15px] max-[449.9px]:text-[14px] max-[399.9px]:text-[13px]'
+                                                                    style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+                                                                >
+                                                                    {placeholderText}
+                                                                </span>
                                                             </div>
                                                         )}
 
                                                         <textarea
                                                             ref={textareaRef}
-                                                            autoFocus
                                                             value={input}
                                                             onChange={handleInputChange}
                                                             onKeyDown={handleKeyDown}
                                                             rows={1}
                                                             placeholder={messages.length > 1 ? 'Ask anything about your resume...' : ''}
-                                                            className='chat-composer-scrollbar relative z-10 block max-h-40 min-h-7 w-full translate-y-0.5 resize-none overflow-y-auto bg-transparent p-0 text-[16px] font-normal leading-5.75 text-zinc-900 outline-none placeholder:font-normal placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-600 disabled:cursor-not-allowed disabled:opacity-60 max-[549.9px]:text-[15px] max-[449.9px]:text-[14px] max-[399.9px]:text-[13px]'
+                                                            className={`chat-composer-scrollbar relative z-10 block max-h-40 min-h-7 w-full translate-y-0.5 resize-none overflow-y-auto bg-transparent p-0 text-[16px] font-normal leading-5.75 text-zinc-900 outline-none placeholder:font-normal placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-600 disabled:cursor-not-allowed disabled:opacity-60 max-[549.9px]:text-[15px] max-[449.9px]:text-[14px] max-[399.9px]:text-[13px] ${!input ? 'select-none' : ''}`}
                                                             disabled={editingMessageId !== null}
                                                         />
                                                     </div>
@@ -1908,7 +1964,7 @@ export default function Chat() {
                                     </div>
                                 </div>
 
-                                <p className='mt-2.5 text-center font-mono text-[9px] uppercase tracking-widest text-zinc-400 dark:text-zinc-600 max-[549.9px]:mt-2 max-[549.9px]:text-[8px] max-[399.9px]:text-[7.5px]'>AI can make mistakes · verify important information</p>
+                                <p className='mt-2.5 text-center font-mono text-[9px] uppercase tracking-wider text-zinc-400 dark:text-zinc-600 max-[549.9px]:mt-2 max-[549.9px]:text-[8px] max-[399.9px]:text-[7.5px]'>AI can make mistakes · verify important information</p>
                             </div>
                         </motion.div>
                     )}

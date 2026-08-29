@@ -168,6 +168,11 @@ export default function TargetRoleSelector({ value, onChange, onSelectionChange,
                                 <button
                                     type='button'
                                     onMouseDown={(event) => {
+                                        if (window.matchMedia('(max-width: 1023.9px)').matches) {
+                                            (document.activeElement as HTMLElement)?.blur();
+                                            return;
+                                        }
+
                                         event.preventDefault();
                                     }}
                                     onClick={() => {

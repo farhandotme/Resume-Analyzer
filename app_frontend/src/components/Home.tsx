@@ -102,7 +102,6 @@ export default function Home() {
     const [analysisStep, setAnalysisStep] = useState(0);
     const [messageIndex, setMessageIndex] = useState(0);
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
-    const [headlineIndex, setHeadlineIndex] = useState(0);
     const [mobileHeadlineText, setMobileHeadlineText] = useState('resume.');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const mobileMenuRef = useRef<HTMLDivElement>(null);
@@ -144,7 +143,6 @@ export default function Home() {
     const calloutRef = useRef<HTMLDivElement>(null);
     const scanLineRef = useRef<HTMLDivElement>(null);
 
-    const headlinePhrases = ['resume.', 'interviews.', 'career.'];
     const analysisSteps = ['Reading your resume', 'Understanding your experience', 'Matching your target role', 'Building your analysis'];
 
     const analysisMessages = [
@@ -196,14 +194,6 @@ export default function Home() {
             document.removeEventListener('mousedown', handleOutsideClick);
         };
     }, [isMobileMenuOpen]);
-
-    useEffect(() => {
-        const interval = window.setInterval(() => {
-            setHeadlineIndex((current) => (current + 1) % headlinePhrases.length);
-        }, 3200);
-
-        return () => window.clearInterval(interval);
-    }, []);
 
     useEffect(() => {
         const words = ['resume.', 'interviews.', 'career.'];
@@ -300,10 +290,10 @@ export default function Home() {
         }
         if (isComplete) return;
 
-        let delay = 3000;
-        if (messageIndex === 0) delay = 3000;
-        else if (messageIndex === 1) delay = 3000;
-        else if (messageIndex === 2) delay = 3000;
+        let delay = 4000;
+        if (messageIndex === 0) delay = 4000;
+        else if (messageIndex === 1) delay = 4000;
+        else if (messageIndex === 2) delay = 4000;
 
         const timeoutId = window.setTimeout(() => {
             setMessageIndex((current) => (current + 1) % analysisMessages.length);
@@ -417,7 +407,9 @@ export default function Home() {
                 height: viewportRect.height,
             });
 
-            const startX = viewportRect.width + halfX + 24;
+            const isMobile = window.innerWidth < 1050;
+
+            const startX = isMobile ? viewportRect.width / 2 : viewportRect.width + halfX + 24;
             const startY = Math.min(140, viewportRect.height / 2);
 
             gsap.set(lens, {
@@ -603,7 +595,7 @@ export default function Home() {
             console.log('Resume uploaded successfully\nPDF URL:', pdfUrl);
             console.log('Starting resume analysis...');
 
-            const response = await fetch('http://192.168.29.200:3000/resume/analyze', {
+            const response = await fetch('http://192.168.29.100:3000/resume/analyze', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -722,9 +714,9 @@ export default function Home() {
                         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                         role='status'
                         aria-live='polite'
-                        className={`fixed inset-0 z-100 flex h-screen w-full select-none flex-col items-center justify-between overflow-hidden px-4 sm:px-6 py-6 font-sans ${theme === 'dark' ? 'bg-black text-zinc-100' : 'bg-white text-zinc-900'}`}
+                        className={`fixed inset-0 z-100 flex h-screen max-[649.9px]:h-dvh w-full select-none flex-col items-center justify-between overflow-hidden px-4 sm:px-6 py-6 font-[Geist_Variable] ${theme === 'dark' ? 'bg-black text-zinc-100' : 'bg-white text-zinc-900'}`}
                     >
-                        <div data-gsap='status' className='relative z-20 flex w-full max-w-7xl items-center justify-start gap-2 pt-1 sm:pt-2'>
+                        <div data-gsap='status' className='fixed left-3 top-3 z-20 flex items-center gap-2 max-[649.9px]:hidden'>
                             <span className='h-1.5 w-1.5 rounded-full bg-zinc-500 dark:bg-zinc-400' />
                             <span className='font-mono text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400'>Resume Intelligence</span>
                         </div>
@@ -816,15 +808,15 @@ export default function Home() {
                             />
                         </div>
 
-                        <div className='relative z-10 flex w-full max-w-2xl flex-1 flex-col items-center justify-center my-auto py-2 sm:py-6'>
+                        <div className='relative z-10 flex w-full max-w-2xl flex-1 flex-col items-center justify-center my-auto py-2 sm:py-6 max-[649.9px]:-translate-y-8'>
                             <div data-gsap='panel' className='relative flex w-full max-w-md flex-col items-center justify-center p-2 sm:p-6'>
-                                <div className={`mx-auto relative h-85 w-55 xs:h-[384px] xs:w-60 sm:h-104 sm:w-64 rounded-none border transition-colors duration-300 ${theme === 'dark' ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-200'}`}>
-                                    <div ref={resumeViewportRef} className='absolute inset-0 rounded-xl overflow-hidden'>
-                                        <div className='absolute -left-3 -top-3 z-30 h-5 w-5 border-l-2 border-t-2 border-zinc-400/60' />
-                                        <div className='absolute -right-3 -top-3 z-30 h-5 w-5 border-r-2 border-t-2 border-zinc-400/60' />
-                                        <div className='absolute -bottom-3 -left-3 z-30 h-5 w-5 border-b-2 border-l-2 border-zinc-400/60' />
-                                        <div className='absolute -bottom-3 -right-3 z-30 h-5 w-5 border-b-2 border-r-2 border-zinc-400/60' />
+                                <div className='mx-auto relative h-96 w-55 max-[549.9px]:h-85 max-[549.9px]:w-50 xs:h-[384px] xs:w-60 sm:h-104 sm:w-64'>
+                                    <div className='pointer-events-none absolute -left-3.5 -top-3.5 z-30 h-6 w-6 border-l-[1.5px] border-t-[1.5px] border-zinc-400/80 dark:border-zinc-500/80' />
+                                    <div className='pointer-events-none absolute -right-3.5 -top-3.5 z-30 h-6 w-6 border-r-[1.5px] border-t-[1.5px] border-zinc-400/80 dark:border-zinc-500/80' />
+                                    <div className='pointer-events-none absolute -bottom-3.5 -left-3.5 z-30 h-6 w-6 border-b-[1.5px] border-l-[1.5px] border-zinc-400/80 dark:border-zinc-500/80' />
+                                    <div className='pointer-events-none absolute -bottom-3.5 -right-3.5 z-30 h-6 w-6 border-b-[1.5px] border-r-[1.5px] border-zinc-400/80 dark:border-zinc-500/80' />
 
+                                    <div ref={resumeViewportRef} className={`absolute inset-0 border overflow-hidden transition-colors duration-300 ${theme === 'dark' ? 'bg-zinc-950 border-zinc-700/80' : 'bg-white border-zinc-300'}`}>
                                         <div ref={resumeStageRef} className='relative h-full w-full px-4 xs:px-5 pb-6 sm:pb-8 pt-5 sm:pt-6 will-change-transform'>
                                             <ResumeDocument refs={{ nameRef, experienceBlockRef, experienceHeadingRef, projectsHeadingRef, educationHeadingRef, skillsHeadingRef }} />
                                         </div>
@@ -842,14 +834,18 @@ export default function Home() {
                                         <div className={`pointer-events-none absolute inset-x-0 bottom-0 z-20 h-8 bg-linear-to-t ${theme === 'dark' ? 'from-zinc-950' : 'from-white'} to-transparent`} />
                                     </div>
 
-                                    <div ref={lensRef} className='pointer-events-none absolute left-0 top-0 z-30 opacity-0 w-36 h-36 sm:w-44 sm:h-44'>
-                                        <div ref={calloutRef} className='absolute -top-10 left-1/2 -translate-x-1/2 sm:left-[calc(100%+14px)] sm:top-1/2 sm:-translate-y-1/2 flex items-center whitespace-nowrap opacity-0 z-40 drop-shadow-md'>
-                                            <span className='font-sans text-[11px] sm:text-[13px] font-light tracking-wide text-zinc-700 dark:text-zinc-200 bg-white/80 dark:bg-zinc-900/80 sm:bg-transparent px-2 py-0.5 rounded-full border border-zinc-200/50 dark:border-zinc-800/50 sm:border-none backdrop-blur-xs sm:backdrop-blur-none'>
-                                                Let me analyze this resume
-                                            </span>
-
-                                            <svg width='28' height='20' viewBox='0 0 28 20' className='hidden sm:block absolute right-full mr-2 text-zinc-400/60 dark:text-zinc-500/50'>
-                                                <line x1='28' y1='10' x2='0' y2='10' stroke='currentColor' strokeWidth='1' />
+                                    <div ref={lensRef} className='pointer-events-none absolute left-0 top-0 z-30 opacity-0 w-36 h-36 max-[549.9px]:w-36 max-[549.9px]:h-36 sm:w-44 sm:h-44'>
+                                        <div
+                                            ref={calloutRef}
+                                            className='absolute max-[1049.9px]:bottom-[calc(100%+12px)] max-[1049.9px]:left-1/2 max-[1049.9px]:-translate-x-1/2 min-[1050px]:left-[calc(100%+20px)] min-[1050px]:top-1/2 min-[1050px]:-translate-y-1/2 flex items-center whitespace-nowrap opacity-0 z-40 drop-shadow-lg'
+                                        >
+                                            <div className='relative flex items-center font-[Geist_Variable] text-[11px] sm:text-[13px] font-medium tracking-wide text-black dark:text-white bg-white dark:bg-black px-2.5 py-1 sm:px-4 sm:py-2 rounded-full border border-zinc-300 dark:border-zinc-700 shadow-sm'>
+                                                <Bot className='mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-black dark:text-white' />
+                                                Analyzing resume
+                                            </div>
+                                            <svg width='32' height='20' viewBox='0 0 32 20' className='absolute max-[1049.9px]:top-[calc(100%-6px)] max-[1049.9px]:left-1/2 max-[1049.9px]:-translate-x-1/2 max-[1049.9px]:rotate-90 min-[1050px]:right-[calc(100%-1px)] text-zinc-400 dark:text-zinc-600'>
+                                                <path d='M32 10 L8 10' stroke='currentColor' strokeWidth='1' strokeLinecap='round' strokeDasharray='3 3' />
+                                                <circle cx='4' cy='10' r='2' fill='currentColor' />
                                             </svg>
                                         </div>
 
@@ -873,7 +869,7 @@ export default function Home() {
                                     </div>
                                 </div>
 
-                                <div className='mt-6 sm:mt-8 text-center min-h-16 sm:min-h-18 px-2'>
+                                <div className='mt-12 text-center min-h-16 sm:min-h-18 px-2'>
                                     <AnimatePresence mode='wait'>
                                         <motion.div key={messageIndex} initial={{ opacity: 0, y: 12, filter: 'blur(4px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, y: -12, filter: 'blur(4px)' }} transition={{ duration: 0.4, ease: 'easeOut' }}>
                                             <h2 className='text-base xs:text-lg sm:text-xl font-semibold tracking-tight text-zinc-900 dark:text-white'>{analysisMessages[messageIndex].title}</h2>
@@ -883,7 +879,7 @@ export default function Home() {
                                     </AnimatePresence>
                                 </div>
                             </div>
-                            <div data-gsap='role' className='mt-1 sm:mt-2 flex items-center justify-center gap-2 text-center px-4'>
+                            <div data-gsap='role' className='mt-1 sm:mt-2 flex items-center justify-center gap-2 text-center px-4 max-[549.9px]:hidden'>
                                 <span className='text-[10px] sm:text-[12px] font-mono uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500 shrink-0'>Tailoring for</span>
                                 <span className='text-[12px] sm:text-[14px] font-medium text-zinc-700 dark:text-zinc-300 truncate max-w-48 sm:max-w-xs'>{targetRole}</span>
                             </div>
@@ -935,7 +931,7 @@ export default function Home() {
                         </button>
 
                         <a
-                            href='https://github.com/faridhussain/Resume-Analyzer'
+                            href='https://github.com/farhandotme/Resume-Analyzer'
                             target='_blank'
                             rel='noopener noreferrer'
                             aria-label='GitHub Repository'
@@ -1030,18 +1026,7 @@ export default function Home() {
                             <span className='whitespace-nowrap'>
                                 Better{' '}
                                 <span className='relative inline-block h-[1.08em] min-w-[10ch] overflow-hidden align-bottom whitespace-nowrap'>
-                                    <AnimatePresence mode='wait'>
-                                        <motion.span
-                                            key={headlinePhrases[headlineIndex]}
-                                            initial={{ opacity: 0, y: 18 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -18 }}
-                                            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                                            className='absolute left-0 top-0 whitespace-nowrap text-zinc-400 italic dark:text-zinc-500'
-                                        >
-                                            {headlinePhrases[headlineIndex]}
-                                        </motion.span>
-                                    </AnimatePresence>
+                                    <span className='absolute left-0 top-0 whitespace-nowrap text-zinc-400 italic dark:text-zinc-500'>{mobileHeadlineText}</span>
                                 </span>
                             </span>
                         </h1>
@@ -1055,7 +1040,7 @@ export default function Home() {
                             </span>
                         </h1>
                         <p
-                            className={`mt-4 max-w-122.5 text-[17px] leading-7 text-zinc-500 dark:text-zinc-400 max-[1310px]:text-[17px] max-[1069.9px]:mx-auto max-[1069.9px]:max-w-155 max-[1069.9px]:text-[17px] max-[1069.9px]:leading-7 max-[1069.9px]:tracking-[0.02em] max-[1069.9px]:text-center max-[649.9px]:text-[15.5px] ${selectedFile ? 'max-[549.9px]:mt-3 max-[449.9px]:text-[13.5px] max-[449.9px]:leading-5.5' : ''}`}
+                            className={`mt-4 max-w-122.5 text-[18px] leading-7 text-zinc-500 dark:text-zinc-400 max-[1310px]:text-[17px] max-[1069.9px]:mx-auto max-[1069.9px]:max-w-155 max-[1069.9px]:text-[17px] max-[1069.9px]:leading-7 max-[1069.9px]:tracking-[0.02em] max-[1069.9px]:text-center max-[649.9px]:text-[15.5px] ${selectedFile ? 'max-[549.9px]:mt-3 max-[449.9px]:text-[13.5px] max-[449.9px]:leading-5.5' : ''}`}
                         >
                             <span className='max-[549.9px]:hidden'>Upload your resume to receive an ATS score, recruiter feedback, and AI-powered recommendations that help you stand out before you apply.</span>
                             <span className='hidden max-[549.9px]:inline max-[449.9px]:inline-block max-[449.9px]:text-[14px] max-[399.9px]:text-[13px] max-[449.9px]:leading-6'>Upload your resume for an ATS score, recruiter feedback, and AI-powered recommendations.</span>
@@ -1080,7 +1065,7 @@ export default function Home() {
                                         aria-hidden='true'
                                         animate={prefersReducedMotion ? {} : { rotate: 360 }}
                                         transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-                                        className='pointer-events-none absolute -inset-full z-0 transition-opacity duration-500'
+                                        className='pointer-events-none absolute left-1/2 top-1/2 z-0 h-[500%] w-[500%] -translate-x-1/2 -translate-y-1/2 transition-opacity duration-500'
                                         style={{
                                             background:
                                                 theme === 'light' ? 'conic-gradient(from 0deg, transparent 72%, rgba(82,82,91,0.88) 84%, rgba(39,39,42,0.72) 87%, transparent 98%)' : 'conic-gradient(from 0deg, transparent 72%, rgba(161,161,170,0.9) 84%, rgba(113,113,122,0.72) 87%, transparent 98%)',
@@ -1091,7 +1076,7 @@ export default function Home() {
                                         aria-hidden='true'
                                         animate={prefersReducedMotion ? {} : { rotate: -360 }}
                                         transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
-                                        className='pointer-events-none absolute -inset-full z-0 transition-opacity duration-500'
+                                        className='pointer-events-none absolute left-1/2 top-1/2 z-0 h-[500%] w-[500%] -translate-x-1/2 -translate-y-1/2 transition-opacity duration-500'
                                         style={{
                                             background:
                                                 theme === 'light'
@@ -1193,6 +1178,9 @@ export default function Home() {
                                                     <button
                                                         type='button'
                                                         disabled={!isRoleSelected}
+                                                        onMouseDown={(event) => {
+                                                            event.currentTarget.blur();
+                                                        }}
                                                         onClick={(event) => {
                                                             event.stopPropagation();
                                                             handleAnalyze();
@@ -1225,7 +1213,7 @@ export default function Home() {
                                                 event.stopPropagation();
                                                 fileInputRef.current?.click();
                                             }}
-                                            className='group/btn mx-auto mt-4 inline-flex h-12 w-full max-w-60 max-[1310px]:h-11 max-[1310px]:max-w-52 max-[549.9px]:mt-3 max-[549.9px]:h-10 max-[549.9px]:max-w-42 max-[549.9px]:px-5 max-[549.9px]:text-[13px] max-[449.9px]:text-[12px] cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-bold text-white transition-all duration-200 hover:bg-zinc-800 active:bg-zinc-700 focus:outline-none focus:ring-0 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 dark:active:bg-zinc-300'
+                                            className='group/btn mx-auto mt-4 inline-flex h-12 w-full max-w-60 max-[1310px]:h-11 max-[1310px]:max-w-52 max-[549.9px]:mt-3 max-[549.9px]:h-10 max-[549.9px]:max-w-42 max-[549.9px]:px-5 max-[549.9px]:text-[13px] max-[449.9px]:text-[12px] cursor-pointer items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 font-medium text-white transition-all duration-200 hover:bg-zinc-800 active:bg-zinc-700 focus:outline-none focus:ring-0 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 dark:active:bg-zinc-300'
                                         >
                                             <span>Select PDF</span>
                                             <ChevronRight className='h-4 w-4 transition-transform duration-300 ease-out group-hover/btn:translate-x-1.5 group-active/btn:translate-x-1.5' />
@@ -1251,7 +1239,7 @@ export default function Home() {
                             </span>
                         </div>
 
-                        <div className='mt-4 max-[399.9px]:mt-3 hidden w-fit mx-auto items-center justify-center whitespace-nowrap text-[12px] max-[399.9px]:text-[11px] font-thin text-zinc-600 dark:text-zinc-400 max-[549.9px]:text-[12.5px] max-[549.9px]:flex'>
+                        <div className='mt-4 max-[399.9px]:mt-3 hidden w-fit mx-auto items-center justify-center whitespace-nowrap text-[12px] max-[399.9px]:text-[11px] font-light text-zinc-900 dark:text-zinc-300 max-[549.9px]:text-[12.5px] max-[549.9px]:flex'>
                             <span>Private by default</span>
                             <span className='mx-2 text-zinc-500 dark:text-zinc-400'>·</span>
                             <span>ATS-aware</span>

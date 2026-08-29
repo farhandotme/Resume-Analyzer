@@ -12,7 +12,7 @@ import Story5 from './Story5';
 import Story6 from './Story6';
 import Story7 from './Story7';
 
-const STORY_DURATIONS = [8000, 5000, 6000, 6000, 10000, 6000, 8000];
+const STORY_DURATIONS = [10000, 5000, 6000, 6000, 10000, 6000, 8000];
 
 const storyTransitionVariants: Variants = {
     wrapperEnter: (direction: number) => ({
