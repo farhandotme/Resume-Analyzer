@@ -1,7 +1,7 @@
 import { UploadCloud, CheckCircle2, FileText, Gauge, ChevronRight, SunMedium, Moon, ShieldCheck, Loader2, AlertCircle, Bot } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { useTheme } from '../hooks/useTheme.ts';
 import { uploadResume } from '../services/uploadResume.ts';
@@ -106,12 +106,37 @@ export default function Home() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const mobileMenuRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
+    const location = useLocation();
     const prefersReducedMotion = Boolean(useReducedMotion());
+    const [storyToast, setStoryToast] = useState('');
     const overlayRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         document.title = 'Resume Intelligence';
     }, []);
+
+    useEffect(() => {
+        const message = location.state?.storyToast;
+
+        if (!message) return;
+
+        setStoryToast(message);
+
+        navigate(location.pathname, {
+            replace: true,
+            state: null,
+        });
+    }, [location, navigate]);
+
+    useEffect(() => {
+        if (!storyToast) return;
+
+        const timeoutId = window.setTimeout(() => {
+            setStoryToast('');
+        }, 4000);
+
+        return () => window.clearTimeout(timeoutId);
+    }, [storyToast]);
 
     useEffect(() => {
         const handleGlobalUploadShortcut = (event: KeyboardEvent) => {
@@ -675,6 +700,24 @@ export default function Home() {
             onDragLeave={!selectedFile && !isAnalyzing ? handleDragLeave : undefined}
             onDrop={!selectedFile && !isAnalyzing ? handleDrop : undefined}
         >
+            <AnimatePresence>
+                {storyToast && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -12, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{
+                            opacity: 0,
+                            y: window.matchMedia('(max-width: 649.9px)').matches ? 12 : -8,
+                            scale: 0.98,
+                        }}
+                        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                        className='fixed left-1/2 top-6 z-200 flex w-fit max-w-[calc(100%-2rem)] -translate-x-1/2 items-center gap-2.5 rounded-xl border border-rose-200/70 bg-rose-50/85 px-4 py-3 text-center shadow-[0_12px_40px_-18px_rgba(0,0,0,0.3)] backdrop-blur-xl dark:border-rose-900/40 dark:bg-rose-950/30 dark:shadow-[0_12px_40px_-18px_rgba(0,0,0,0.8)] max-[849.9px]:top-auto max-[849.9px]:bottom-6 max-[649.9px]:px-3.5 max-[649.9px]:py-2.5 max-[449.9px]:bottom-4 max-[449.9px]:px-3 max-[449.9px]:py-2'
+                    >
+                        <AlertCircle className='h-3.5 w-3.5 shrink-0 text-rose-500 dark:text-rose-400' />
+                        <p className='whitespace-nowrap text-sm font-medium leading-5.5 text-zinc-800 dark:text-zinc-100 max-[549.9px]:text-[13px] max-[449.9px]:text-[12px] max-[449.9px]:leading-5'>{storyToast}</p>
+                    </motion.div>
+                )}
+            </AnimatePresence>
             <div aria-hidden='true' className={`pointer-events-none absolute inset-0 z-0 select-none overflow-hidden transition-opacity duration-300 ${isAnalyzing ? 'opacity-0' : 'opacity-100'}`}>
                 <div
                     className='absolute inset-0 opacity-[0.08] dark:opacity-[0.08]'

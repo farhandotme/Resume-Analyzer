@@ -379,11 +379,29 @@ const StoryContent = () => {
 
 const Story = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const analysisResult = location.state?.analysisResult;
+
+    useEffect(() => {
+        if (!analysisResult) {
+            sessionStorage.removeItem('story-current');
+
+            navigate('/', {
+                replace: true,
+                state: {
+                    storyToast: 'Upload your resume first to explore your story',
+                },
+            });
+        }
+    }, [analysisResult, navigate]);
 
     const [isRestored, setIsRestored] = useState(() => {
         return sessionStorage.getItem('story-current') !== null;
     });
+
+    if (!analysisResult) {
+        return null;
+    }
 
     return (
         <StoryProvider initialAnalysisResult={analysisResult} isRestored={isRestored} setIsRestored={setIsRestored}>
