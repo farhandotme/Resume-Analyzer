@@ -1646,7 +1646,7 @@ export default function Chat() {
                                                     >
                                                         {message.role === 'assistant' ? (
                                                             <div className='ml-1 max-w-[78%] max-[549.9px]:max-w-[88%] max-[449.9px]:max-w-[92%]'>
-                                                                <div className='whitespace-pre-wrap wrap-break-word text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 dark:text-zinc-200 max-[549.9px]:text-[15px] max-[549.9px]:leading-6.5 max-[449.9px]:text-[14px] max-[449.9px]:leading-6 max-[399.9px]:text-[13px] max-[399.9px]:leading-5.5'>
+                                                                <div className='whitespace-pre-wrap wrap-break-word text-[16px] leading-7 tracking-[-0.005em] text-zinc-800 dark:text-zinc-200 max-[549.9px]:text-[15px] max-[549.9px]:leading-6.5 max-[449.9px]:text-[14px] max-[449.9px]:leading-6 max-[399.9px]:text-[13px] max-[399.9px]:leading-5.5'>
                                                                     {message.content}
                                                                 </div>
 
@@ -1742,7 +1742,7 @@ export default function Chat() {
                                                                 ) : (
                                                                     <>
                                                                         <div className='group flex flex-col items-end gap-2'>
-                                                                            <div className='rounded-[18px] rounded-br-md border border-zinc-200/80 bg-zinc-100 px-4.5 py-3 text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 shadow-[0_2px_10px_-5px_rgba(0,0,0,0.18)] dark:border-zinc-800/80 dark:bg-zinc-900 dark:text-zinc-100 dark:shadow-[0_2px_12px_-5px_rgba(0,0,0,0.5)] max-[549.9px]:px-4 max-[549.9px]:py-2.5 max-[549.9px]:text-[15px] max-[549.9px]:leading-6.5 max-[449.9px]:px-3.5 max-[449.9px]:py-2 max-[449.9px]:text-[14px] max-[449.9px]:leading-6 max-[399.9px]:text-[13px] max-[399.9px]:leading-5.5'>
+                                                                            <div className='rounded-[18px] rounded-br-md border border-zinc-200/80 bg-zinc-100 px-4.5 py-3 text-[16px] leading-7 tracking-[-0.005em] text-zinc-800 shadow-[0_2px_10px_-5px_rgba(0,0,0,0.18)] dark:border-zinc-800/80 dark:bg-zinc-900 dark:text-zinc-100 dark:shadow-[0_2px_12px_-5px_rgba(0,0,0,0.5)] max-[549.9px]:px-4 max-[549.9px]:py-2.5 max-[549.9px]:text-[15px] max-[549.9px]:leading-6.5 max-[449.9px]:px-3.5 max-[449.9px]:py-2 max-[449.9px]:text-[14px] max-[449.9px]:leading-6 max-[399.9px]:text-[13px] max-[399.9px]:leading-5.5'>
                                                                                 {message.content}
                                                                             </div>
 
@@ -1892,7 +1892,7 @@ export default function Chat() {
                                                     animate={{ opacity: 1, y: 0 }}
                                                     exit={{ opacity: 0, y: 4 }}
                                                     transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                                                    className={`relative flex min-h-7 items-center pl-3 ${isComposerMultiline ? 'w-full flex-none' : 'min-w-0 flex-1'}`}
+                                                    className={`relative flex min-h-7 items-center max-[549.9px]:pl-2 pl-3 ${isComposerMultiline ? 'w-full flex-none' : 'min-w-0 flex-1'}`}
                                                 >
                                                     <div className='relative w-full'>
                                                         {!input && messages.length === 1 && (
