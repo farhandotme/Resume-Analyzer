@@ -196,7 +196,7 @@ const PremiumCard = ({ improvement, index, reduceMotion, hasStarted }: { improve
                         }}
                     />
 
-                    <div className='relative z-10 flex flex-col'>
+                    <div className='relative z-10 flex h-full flex-col'>
                         <div className='hidden items-center justify-between border-b border-zinc-200 pb-2.5 min-[768px]:flex dark:border-zinc-800/80 sm:pb-3' style={{ transform: 'translateZ(20px)' }}>
                             <motion.span
                                 className='hidden font-mono text-[8px] uppercase tracking-[0.24em] text-zinc-500 min-[768px]:block sm:text-[10px] sm:tracking-[0.3em] dark:text-zinc-500'
