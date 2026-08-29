@@ -110,6 +110,10 @@ export default function Home() {
     const overlayRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
+        document.title = 'Resume Intelligence';
+    }, []);
+
+    useEffect(() => {
         const handleGlobalUploadShortcut = (event: KeyboardEvent) => {
             if (!event.metaKey || event.key.toLowerCase() !== 'u' || event.repeat || isAnalyzing) {
                 return;
