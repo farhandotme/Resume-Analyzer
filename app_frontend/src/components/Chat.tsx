@@ -215,6 +215,10 @@ export default function Chat() {
     };
 
     useEffect(() => {
+        document.title = 'Chat | Resume Intelligence';
+    }, []);
+
+    useEffect(() => {
         if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
         const synthesis = window.speechSynthesis;

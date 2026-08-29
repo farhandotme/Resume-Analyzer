@@ -225,6 +225,10 @@ const StoryContent = () => {
         };
     }, [currentStory, paused, totalStories]);
 
+    useEffect(() => {
+        document.title = 'Story | Resume Intelligence';
+    }, []);
+
     const clearHoldTimer = () => {
         if (holdTimer.current !== null) {
             window.clearTimeout(holdTimer.current);
