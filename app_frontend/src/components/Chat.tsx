@@ -169,13 +169,14 @@ export default function Chat() {
     const [originalEditingContent, setOriginalEditingContent] = useState('');
     const [editValidationMessage, setEditValidationMessage] = useState('');
     const [isComposerMultiline, setIsComposerMultiline] = useState(false);
-    const { transcript, listening, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
+    const { transcript, listening, resetTranscript, browserSupportsSpeechRecognition, browserSupportsContinuousListening } = useSpeechRecognition();
     const transcriptRef = useRef('');
     const shouldCommitTranscriptRef = useRef(false);
     const commitTranscriptTimeoutRef = useRef<number | null>(null);
     const isLeavingChatRef = useRef(false);
     const speechSynthesisRef = useRef<SpeechSynthesis | null>(null);
     const speechUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+    const androidListeningRef = useRef(false);
     const [speakingMessageId, setSpeakingMessageId] = useState<number | null>(null);
     const [loadingSpeechMessageId, setLoadingSpeechMessageId] = useState<number | null>(null);
 
@@ -508,7 +509,10 @@ export default function Chat() {
 
                         textarea.style.height = `${nextHeight}px`;
                         updateComposerHeight(textarea);
-                        textarea.focus();
+
+                        if (!window.matchMedia('(max-width: 919.9px)').matches) {
+                            textarea.focus();
+                        }
 
                         const pos = pendingCursorPositionRef.current ?? textarea.value.length;
                         textarea.setSelectionRange(pos, pos);
@@ -542,7 +546,10 @@ export default function Chat() {
             pendingCancelRef.current = false;
 
             withRemountedTextarea((textarea) => {
-                textarea.focus();
+                if (!window.matchMedia('(max-width: 919.9px)').matches) {
+                    textarea.focus();
+                }
+
                 const pos = Math.min(Math.max(cursorPositionRef.current, 0), textarea.value.length);
                 textarea.setSelectionRange(pos, pos);
             });
@@ -683,7 +690,7 @@ export default function Chat() {
             console.log('Resume uploaded successfully');
             console.log('Starting resume validation/analysis...');
 
-            const response = await fetch('http://192.168.29.100:3000/resume/analyze', {
+            const response = await fetch('/api/resume/analyze', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -914,6 +921,7 @@ export default function Chat() {
         }
 
         if (listening) {
+            androidListeningRef.current = false;
             shouldCommitTranscriptRef.current = true;
 
             try {
@@ -935,19 +943,31 @@ export default function Chat() {
         cursorPositionRef.current = textarea ? (textarea.selectionStart ?? textarea.value.length) : input.length;
 
         setMicError('');
+
+        if (window.matchMedia('(max-width: 919.9px)').matches) {
+            textareaRef.current?.blur();
+        }
+
         shouldCommitTranscriptRef.current = false;
         transcriptRef.current = '';
         resetTranscript();
 
         try {
+            const isAndroid = /Android/i.test(navigator.userAgent);
+
+            androidListeningRef.current = isAndroid;
+
             await SpeechRecognition.startListening({
-                continuous: true,
-                language: navigator.language || 'en-US',
+                continuous: isAndroid ? false : browserSupportsContinuousListening,
+                language: isAndroid ? 'en-US' : navigator.language || 'en-US',
             });
         } catch (error) {
             console.error('Unable to start speech recognition:', error);
+            androidListeningRef.current = false;
             shouldCommitTranscriptRef.current = false;
-            showMicErrorMessage('Unable to start voice input. Please allow microphone access and try again.');
+
+            const message = error instanceof Error ? error.message : 'Unable to start voice input.';
+            showMicErrorMessage(message);
         }
     };
 
