@@ -10,7 +10,10 @@ COPY . .
 
 # Vite bakes VITE_* env vars into the static bundle at build time, so they
 # must be supplied as build args (docker-compose.yml wires these up).
-ARG VITE_NODE_BACKEND_URL
+# VITE_NODE_BACKEND_URL defaults to "/api" — same-origin, proxied by nginx
+# to the Node backend (see nginx.conf) — so it works from any IP/domain
+# with zero per-deployment config.
+ARG VITE_NODE_BACKEND_URL=/api
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_PUBLISHABLE_KEY
 ENV VITE_NODE_BACKEND_URL=$VITE_NODE_BACKEND_URL \

@@ -30,6 +30,10 @@ services:
             retries: 5
 
     # ─── AI Backend ───────────────────────────────────
+    # No custom "command" here on purpose — the image's own Dockerfile CMD
+    # (uv run fastapi run main.py) is the production entrypoint. Don't
+    # override it here; that's what previously caused this service to run
+    # a bare `python3` REPL and crash-loop.
 
     fastapi:
         build:
@@ -52,9 +56,7 @@ services:
             interval: 15s
             timeout: 5s
             retries: 5
-            start_period: 15s
-        # Dockerfile CMD already runs the production server
-        # (uv run fastapi run main.py). No override needed here.
+            start_period: 30s
 
     # ─── Celery Worker ────────────────────────────────
 
@@ -77,6 +79,8 @@ services:
         command: uv run celery -A config.celery_app worker --loglevel=info
 
     # ─── Node.js Backend ──────────────────────────────
+    # Not published to the host — only reachable from other containers
+    # (the "frontend" nginx proxies /api/ to it internally).
 
     node:
         build:
@@ -84,8 +88,6 @@ services:
             dockerfile: Dockerfile
         container_name: resume_node
         restart: unless-stopped
-        ports:
-            - '3000:3000'
         environment:
             PORT: 3000
             JWT_SECRET: ${JWT_SECRET}
@@ -104,24 +106,26 @@ services:
             retries: 5
             start_period: 10s
 
-    # ─── Frontend ──────────────────────────────────────
-    # Static React/Vite build served by nginx. VITE_* vars are baked in at
-    # build time, so they're passed as build args, not runtime environment.
+    # ─── Frontend + reverse proxy ──────────────────────
+    # Single public entrypoint. Serves the built static frontend and proxies
+    # /api/* to the Node backend, so the whole app is reachable at just
+    # http://<server-ip>/ with no CORS setup and no extra ports to open.
 
     frontend:
         build:
             context: ./app_frontend
             dockerfile: Dockerfile
             args:
-                VITE_NODE_BACKEND_URL: ${VITE_NODE_BACKEND_URL}
+                VITE_NODE_BACKEND_URL: ${VITE_NODE_BACKEND_URL:-/api}
                 VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
                 VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY}
         container_name: resume_frontend
         restart: unless-stopped
         ports:
-            - '8080:80'
+            - '80:80'
         depends_on:
-            - node
+            node:
+                condition: service_healthy
 
 # ─── Persistent Volumes ────────────────────────────
 volumes:
