@@ -2,22 +2,25 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        libgl1 \
-        libglib2.0-0 \
-        curl \
-    && rm -rf /var/lib/apt/lists/*
+# install uv
+RUN pip install --no-cache-dir uv
 
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+# copy dependency files first for caching
+COPY pyproject.toml .
+COPY uv.lock .
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-RUN python -c "from sentence_transformers import SentenceTransformer; \
-SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')"
+# install dependencies
+RUN uv sync --frozen --no-dev
+RUN uv pip install "fastapi[standard]"
 
+# copy source code
 COPY . .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health', timeout=3).status==200 else 1)"
+
+# Production ASGI server: multiple workers, no auto-reload.
+# (docker-compose.yml overrides this command for the "celery" service.)
+CMD ["uv", "run", "fastapi", "run", "main.py", "--host", "0.0.0.0", "--port", "8000"]

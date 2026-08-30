@@ -1,13 +1,4 @@
-__pycache__/
+.venv
+__pycache__
 *.pyc
-*.pyo
-.venv/
-venv/
 .env
-.git/
-.gitignore
-*.md
-uv.lock
-pyproject.toml
-.pytest_cache/
-.mypy_cache/

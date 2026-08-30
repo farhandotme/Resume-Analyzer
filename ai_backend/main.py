@@ -11,3 +11,9 @@ app.include_router(analizeRouter)
 @app.get("/")
 def read_root():
     return {"message": "Hello, this is AI RESUME CHECKER"}
+
+
+@app.get("/health")
+def health():
+    # Liveness/readiness probe for Docker healthcheck / load balancers.
+    return {"status": "ok"}
