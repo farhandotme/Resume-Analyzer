@@ -1,98 +1,137 @@
-aiodns==3.1.1
-aiohttp==3.9.1
-aiosignal==1.3.1
-async-timeout==4.0.3
-attrs==23.2.0
-Babel==2.10.3
-bcc==0.29.1
-bcrypt==3.2.2
-blinker==1.7.0
-Brlapi==0.8.5
-certifi==2023.11.17
-chardet==5.2.0
-click==8.1.6
-cloud-init==25.3
-colorama==0.4.6
-command-not-found==0.3
-compizconfig-python==0.9.14.2
-configobj==5.0.8
-cryptography==41.0.7
-cupshelpers==1.0
-dbus-fast==2.44.1
-dbus-python==1.3.2
-defer==1.0.6
+# =============================================================================
+# ai_backend/requirements.txt
+# Pinned & trimmed to ONLY what the code actually imports (verified against
+# main.py, routes/, services/, config/, prompts/).
+#
+# Removed vs. the old pyproject.toml (unused by the code, was slowing every
+# install and bloating the image): chromadb, langchain (top-level meta pkg),
+# langchain-google-genai, langchain-openai, openai, pypdf.
+# -> The app uses Qdrant (not Chroma) and Mistral (not OpenAI/Gemini), and
+#    PyMuPDF (not pypdf) for PDF parsing.
+#
+# NOTE ON TORCH: sentence-transformers (used by langchain-huggingface for
+# embeddings) depends on torch. Do NOT `pip install -r requirements.txt`
+# blindly on a fresh image — install CPU-only torch FIRST (see Dockerfile),
+# or pip will pull the full CUDA/NVIDIA GPU stack (multiple GB of unused
+# downloads on a normal server with no GPU). This is almost certainly why
+# your installs have felt slow.
+# =============================================================================
+
+# --- Web framework / server ---
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+starlette==1.6.0
+pydantic==2.13.5
+pydantic-settings==2.15.0
+python-multipart==0.0.32
+python-dotenv==1.2.3
+
+# --- Background jobs (Celery + Redis) ---
+celery==5.6.3
+redis==8.1.0
+kombu==5.6.2
+billiard==4.2.4
+amqp==5.3.1
+vine==5.1.0
+click-didyoumean==0.3.1
+click-plugins==1.1.1.2
+click-repl==0.3.0
+prompt_toolkit==3.0.53
+
+# --- LLM orchestration (LangChain, Mistral, Qdrant, HF embeddings) ---
+langchain-core==1.6.1
+langchain-community==0.4.2
+langchain-classic==1.0.8
+langchain-protocol==0.0.19
+langchain-text-splitters==1.1.2
+langchain-qdrant==1.1.0
+langchain-huggingface==1.2.2
+langchain-mistralai==1.1.6
+langsmith==0.11.2
+qdrant-client==1.19.0
+
+# --- Embeddings model runtime (torch installed separately as CPU-only) ---
+sentence-transformers==6.0.0
+transformers==5.16.1
+tokenizers==0.23.1
+safetensors==0.8.0
+huggingface_hub==1.29.0
+hf-xet==1.6.0
+scikit-learn==1.9.0
+scipy==1.18.1
+numpy==2.5.2
+joblib==1.5.3
+
+# --- PDF parsing ---
+pymupdf==1.28.2
+
+# --- Web search for live market data ---
+tavily-python==0.8.0
+
+# --- Robust JSON parsing of LLM output ---
+json_repair==0.63.4
+
+# --- Shared/transitive deps pinned for fast, deterministic installs ---
+SQLAlchemy==2.0.52
+aiohappyeyeballs==2.7.1
+aiohttp==3.14.3
+aiosignal==1.4.0
+annotated-doc==0.0.5
+annotated-types==0.8.0
+anyio==4.14.2
+attrs==26.1.0
+certifi==2026.7.22
+charset-normalizer==3.5.1
+click==8.5.0
 distro==1.9.0
-distro-info==1.7+build1
-fido2==1.1.2
-frozenlist==1.4.0
-httplib2==0.20.4
-idna==3.6
-importlib-metadata==4.12.0
-jaraco.classes==3.2.1
-jeepney==0.8.0
-Jinja2==3.1.2
-jsonpatch==1.32
-jsonpointer==2.0
-jsonschema==4.10.3
-keyring==24.3.1
-language-selector==0.1
-launchpadlib==1.11.0
-lazr.restfulclient==0.14.6
-lazr.uri==1.0.6
-louis==3.29.0
-markdown-it-py==3.0.0
-MarkupSafe==2.1.5
+filelock==3.32.4
+frozenlist==1.8.0
+fsspec==2026.7.0
+greenlet==3.5.5
+grpcio==1.83.1
+h11==0.16.0
+h2==4.4.1
+hpack==4.2.0
+httpcore==1.0.9
+httpx==0.28.1
+httpx-sse==0.4.3
+hyperframe==6.1.0
+idna==3.19
+jsonpatch==1.33
+jsonpointer==3.1.1
+markdown-it-py==4.2.0
 mdurl==0.1.2
-more-itertools==10.2.0
-multidict==6.0.4
-netaddr==0.8.0
-netifaces==0.11.0
-oauthlib==3.2.2
-olefile==0.46
-packaging==24.0
-pexpect==4.9.0
-pillow==10.2.0
-proton-core==0.7.4
-proton-keyring-linux==0.2.1
-proton-vpn-api-core==5.1.2
-proton-vpn-daemon==0.13.7
-proton-vpn-gtk-app==4.16.2
-psutil==5.9.8
-ptyprocess==0.7.0
-pycairo==1.25.1
-pycares==4.4.0
-pycups==2.0.1
-Pygments==2.17.2
-PyGObject==3.48.2
-PyJWT==2.7.0
-PyNaCl==1.5.0
-pyOpenSSL==23.2.0
-pyparsing==3.1.1
-pyrsistent==0.20.0
-pyserial==3.5
-python-apt==2.7.7+ubuntu5.2
-python-dateutil==2.8.2
-python-debian==0.1.49+ubuntu2
-python-gnupg==0.5.2
-pytz==2024.1
-pyxdg==0.28
-PyYAML==6.0.1
-requests==2.31.0
-rich==13.7.1
-SecretStorage==3.3.3
-sentry-sdk==1.39.2
-setuptools==68.1.2
-six==1.16.0
-systemd-python==235
-typing_extensions==4.10.0
-ubuntu-drivers-common==0.0.0
-ubuntu-pro-client==8001
-ufw==0.36.2
-unattended-upgrades==0.1
-urllib3==2.0.7
-wadllib==1.3.6
-wheel==0.42.0
-xdg==5
-xkit==0.0.0
-yarl==1.8.2
-zipp==1.0.0
+multidict==6.7.1
+narwhals==2.25.0
+orjson==3.12.0
+packaging==26.3
+portalocker==3.2.0
+propcache==0.5.2
+protobuf==7.36.0
+pydantic_core==2.46.5
+Pygments==2.21.0
+python-dateutil==2.9.0.post0
+PyYAML==6.0.3
+regex==2026.7.19
+requests==2.34.2
+requests-toolbelt==1.0.0
+rich==15.0.0
+setuptools==84.0.0
+shellingham==1.5.4
+six==1.17.0
+sniffio==1.3.1
+tenacity==9.1.4
+threadpoolctl==3.6.0
+tiktoken==0.14.0
+typer==0.27.2
+typing-inspection==0.4.4
+typing_extensions==4.16.0
+tzdata==2026.3
+tzlocal==5.4.4
+urllib3==2.7.0
+uuid_utils==0.17.0
+wcwidth==0.8.3
+websockets==17.1
+xxhash==4.0.1
+yarl==1.24.5
+zstandard==0.25.0
