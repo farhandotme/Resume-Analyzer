@@ -3,8 +3,14 @@ import Home from './components/Home';
 import Story from './components/Story';
 import Chat from './components/Chat';
 import NotFound from './components/NotFound';
+import { useEffect } from 'react';
+import { trackVisit } from './services/analytics';
 
 function App() {
+    useEffect(() => {
+        trackVisit();
+    }, []);
+
     return (
         <Routes>
             <Route path='/' element={<Home />} />

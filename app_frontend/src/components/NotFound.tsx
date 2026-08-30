@@ -19,6 +19,10 @@ export default function NotFound() {
     }, []);
 
     useEffect(() => {
+        document.title = 'Page Not Found | Resume Intelligence';
+    }, []);
+
+    useEffect(() => {
         const html = document.documentElement;
         const body = document.body;
 

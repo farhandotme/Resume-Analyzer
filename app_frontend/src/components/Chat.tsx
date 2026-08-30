@@ -169,13 +169,14 @@ export default function Chat() {
     const [originalEditingContent, setOriginalEditingContent] = useState('');
     const [editValidationMessage, setEditValidationMessage] = useState('');
     const [isComposerMultiline, setIsComposerMultiline] = useState(false);
-    const { transcript, listening, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
+    const { transcript, listening, resetTranscript, browserSupportsSpeechRecognition, browserSupportsContinuousListening } = useSpeechRecognition();
     const transcriptRef = useRef('');
     const shouldCommitTranscriptRef = useRef(false);
     const commitTranscriptTimeoutRef = useRef<number | null>(null);
     const isLeavingChatRef = useRef(false);
     const speechSynthesisRef = useRef<SpeechSynthesis | null>(null);
     const speechUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+    const androidListeningRef = useRef(false);
     const [speakingMessageId, setSpeakingMessageId] = useState<number | null>(null);
     const [loadingSpeechMessageId, setLoadingSpeechMessageId] = useState<number | null>(null);
 
@@ -212,6 +213,10 @@ export default function Chat() {
             null
         );
     };
+
+    useEffect(() => {
+        document.title = 'Chat | Resume Intelligence';
+    }, []);
 
     useEffect(() => {
         if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
@@ -508,7 +513,10 @@ export default function Chat() {
 
                         textarea.style.height = `${nextHeight}px`;
                         updateComposerHeight(textarea);
-                        textarea.focus();
+
+                        if (!window.matchMedia('(max-width: 919.9px)').matches) {
+                            textarea.focus();
+                        }
 
                         const pos = pendingCursorPositionRef.current ?? textarea.value.length;
                         textarea.setSelectionRange(pos, pos);
@@ -542,7 +550,10 @@ export default function Chat() {
             pendingCancelRef.current = false;
 
             withRemountedTextarea((textarea) => {
-                textarea.focus();
+                if (!window.matchMedia('(max-width: 919.9px)').matches) {
+                    textarea.focus();
+                }
+
                 const pos = Math.min(Math.max(cursorPositionRef.current, 0), textarea.value.length);
                 textarea.setSelectionRange(pos, pos);
             });
@@ -683,7 +694,7 @@ export default function Chat() {
             console.log('Resume uploaded successfully');
             console.log('Starting resume validation/analysis...');
 
-            const response = await fetch('http://192.168.29.100:3000/resume/analyze', {
+            const response = await fetch('/api/resume/analyze', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -914,6 +925,7 @@ export default function Chat() {
         }
 
         if (listening) {
+            androidListeningRef.current = false;
             shouldCommitTranscriptRef.current = true;
 
             try {
@@ -935,19 +947,31 @@ export default function Chat() {
         cursorPositionRef.current = textarea ? (textarea.selectionStart ?? textarea.value.length) : input.length;
 
         setMicError('');
+
+        if (window.matchMedia('(max-width: 919.9px)').matches) {
+            textareaRef.current?.blur();
+        }
+
         shouldCommitTranscriptRef.current = false;
         transcriptRef.current = '';
         resetTranscript();
 
         try {
+            const isAndroid = /Android/i.test(navigator.userAgent);
+
+            androidListeningRef.current = isAndroid;
+
             await SpeechRecognition.startListening({
-                continuous: true,
-                language: navigator.language || 'en-US',
+                continuous: isAndroid ? false : browserSupportsContinuousListening,
+                language: isAndroid ? 'en-US' : navigator.language || 'en-US',
             });
         } catch (error) {
             console.error('Unable to start speech recognition:', error);
+            androidListeningRef.current = false;
             shouldCommitTranscriptRef.current = false;
-            showMicErrorMessage('Unable to start voice input. Please allow microphone access and try again.');
+
+            const message = error instanceof Error ? error.message : 'Unable to start voice input.';
+            showMicErrorMessage(message);
         }
     };
 
@@ -1626,7 +1650,7 @@ export default function Chat() {
                                                     >
                                                         {message.role === 'assistant' ? (
                                                             <div className='ml-1 max-w-[78%] max-[549.9px]:max-w-[88%] max-[449.9px]:max-w-[92%]'>
-                                                                <div className='whitespace-pre-wrap wrap-break-word text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 dark:text-zinc-200 max-[549.9px]:text-[15px] max-[549.9px]:leading-6.5 max-[449.9px]:text-[14px] max-[449.9px]:leading-6 max-[399.9px]:text-[13px] max-[399.9px]:leading-5.5'>
+                                                                <div className='whitespace-pre-wrap wrap-break-word text-[16px] leading-7 tracking-[-0.005em] text-zinc-800 dark:text-zinc-200 max-[549.9px]:text-[15px] max-[549.9px]:leading-6.5 max-[449.9px]:text-[14px] max-[449.9px]:leading-6 max-[399.9px]:text-[13px] max-[399.9px]:leading-5.5'>
                                                                     {message.content}
                                                                 </div>
 
@@ -1722,7 +1746,7 @@ export default function Chat() {
                                                                 ) : (
                                                                     <>
                                                                         <div className='group flex flex-col items-end gap-2'>
-                                                                            <div className='rounded-[18px] rounded-br-md border border-zinc-200/80 bg-zinc-100 px-4.5 py-3 text-[15px] leading-7 tracking-[-0.005em] text-zinc-800 shadow-[0_2px_10px_-5px_rgba(0,0,0,0.18)] dark:border-zinc-800/80 dark:bg-zinc-900 dark:text-zinc-100 dark:shadow-[0_2px_12px_-5px_rgba(0,0,0,0.5)] max-[549.9px]:px-4 max-[549.9px]:py-2.5 max-[549.9px]:text-[15px] max-[549.9px]:leading-6.5 max-[449.9px]:px-3.5 max-[449.9px]:py-2 max-[449.9px]:text-[14px] max-[449.9px]:leading-6 max-[399.9px]:text-[13px] max-[399.9px]:leading-5.5'>
+                                                                            <div className='rounded-[18px] rounded-br-md border border-zinc-200/80 bg-zinc-100 px-4.5 py-3 text-[16px] leading-7 tracking-[-0.005em] text-zinc-800 shadow-[0_2px_10px_-5px_rgba(0,0,0,0.18)] dark:border-zinc-800/80 dark:bg-zinc-900 dark:text-zinc-100 dark:shadow-[0_2px_12px_-5px_rgba(0,0,0,0.5)] max-[549.9px]:px-4 max-[549.9px]:py-2.5 max-[549.9px]:text-[15px] max-[549.9px]:leading-6.5 max-[449.9px]:px-3.5 max-[449.9px]:py-2 max-[449.9px]:text-[14px] max-[449.9px]:leading-6 max-[399.9px]:text-[13px] max-[399.9px]:leading-5.5'>
                                                                                 {message.content}
                                                                             </div>
 
@@ -1872,7 +1896,7 @@ export default function Chat() {
                                                     animate={{ opacity: 1, y: 0 }}
                                                     exit={{ opacity: 0, y: 4 }}
                                                     transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                                                    className={`relative flex min-h-7 items-center pl-3 ${isComposerMultiline ? 'w-full flex-none' : 'min-w-0 flex-1'}`}
+                                                    className={`relative flex min-h-7 items-center max-[549.9px]:pl-2 pl-3 ${isComposerMultiline ? 'w-full flex-none' : 'min-w-0 flex-1'}`}
                                                 >
                                                     <div className='relative w-full'>
                                                         {!input && messages.length === 1 && (
