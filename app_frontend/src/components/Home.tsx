@@ -623,8 +623,9 @@ export default function Home() {
 
             console.log('Resume uploaded successfully\nPDF URL:', pdfUrl);
             console.log('Starting resume analysis...');
+            console.log();
 
-            const response = await fetch('http://192.168.29.100:3000/resume/analyze', {
+            const response = await fetch(`${import.meta.env.VITE_NODE_BACKEND_URL}/resume/analyze`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
