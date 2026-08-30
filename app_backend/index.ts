@@ -6,7 +6,7 @@ import cors from 'cors';
 
 const app = express();
 
-const allowedOrigins = ['https://localhost:5173', 'http://127.0.0.1:5173', 'https://192.168.29.100:5173', 'http://192.168.29.200:5173', 'http://localhost:4173', 'http://127.0.0.1:4173', 'http://192.168.29.100:4173', 'http://192.168.29.200:4173'];
+const allowedOrigins = ['https://localhost:5173'];
 
 app.use(
     cors({
@@ -15,7 +15,6 @@ app.use(
                 callback(null, true);
                 return;
             }
-
             callback(new Error('Not allowed by CORS'));
         },
         credentials: true,
