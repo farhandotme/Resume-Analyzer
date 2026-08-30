@@ -6,7 +6,13 @@ import cors from 'cors';
 
 const app = express();
 
-const allowedOrigins = ['https://localhost:5173'];
+// Comma-separated list of allowed frontend origins, e.g.
+// ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+// Falls back to the local dev origin if not set.
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'https://localhost:5173')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 
 app.use(
     cors({

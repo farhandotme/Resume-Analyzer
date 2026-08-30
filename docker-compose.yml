@@ -1,23 +1,24 @@
 services:
     # ─── Infrastructure ───────────────────────────────
+    # No PostgreSQL here — this project has no relational database.
+    # Resume files live in Supabase Storage (frontend-side) and vector
+    # embeddings live in Qdrant below.
 
     redis:
         image: redis:7
         container_name: resume_redis
         restart: always
-        ports:
-            - '6379:6379'
         volumes:
             - redis_data:/data
+        # Internal only — not reachable from outside the docker network.
 
     qdrant:
         image: qdrant/qdrant
         container_name: resume_qdrant
         restart: always
-        ports:
-            - '6333:6333'
         volumes:
             - qdrant_data:/qdrant/storage
+        # Internal only — not reachable from outside the docker network.
 
     # ─── AI Backend ───────────────────────────────────
 
@@ -27,8 +28,6 @@ services:
             dockerfile: Dockerfile
         container_name: resume_fastapi
         restart: always
-        ports:
-            - '8000:8000'
         environment:
             MISTRAL_API_KEY: ${MISTRAL_API_KEY}
             TAVILY_API_KEY: ${TAVILY_API_KEY}
@@ -37,7 +36,10 @@ services:
         depends_on:
             - redis
             - qdrant
-        command: uv run fastapi dev main.py --host 0.0.0.0 --port 8000
+        # Production ASGI server (no --reload / dev watcher).
+        command: uv run fastapi run main.py --host 0.0.0.0 --port 8000
+        # Internal only — the node backend talks to this over the docker
+        # network; browsers never call it directly.
 
     # ─── Celery Worker ────────────────────────────────
 
@@ -65,19 +67,37 @@ services:
             dockerfile: Dockerfile
         container_name: resume_node
         restart: always
-        ports:
-            - '3000:3000'
         environment:
             JWT_SECRET: ${JWT_SECRET}
             FASTAPI_URL: http://fastapi:8000
             REDIS_URL: redis://redis:6379
+            ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
         depends_on:
             - fastapi
             - redis
-        command: sh -c "bun index.ts"
+        # Internal only — the frontend's nginx proxies /api/* to this
+        # service; it is not published to the host/internet directly.
+
+    # ─── Frontend (nginx + built SPA) ─────────────────
+    # This is the single public entrypoint for the whole app.
+
+    frontend:
+        build:
+            context: ./app_frontend
+            dockerfile: Dockerfile
+            args:
+                VITE_NODE_BACKEND_URL: /api
+                VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+                VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY}
+        container_name: resume_frontend
+        restart: always
+        ports:
+            - '80:80'
+            # - '443:443'   # uncomment if this container also terminates TLS
+        depends_on:
+            - node
 
 # ─── Persistent Volumes ────────────────────────────
-
 volumes:
     redis_data:
     qdrant_data:
