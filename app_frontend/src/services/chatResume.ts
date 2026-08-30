@@ -32,7 +32,7 @@ export const sendChatMessage = async ({ pdfUrl, message, sessionId }: SendChatMe
         sessionId,
     };
 
-    const response = await fetch(`/resume/chat`, {
+    const response = await fetch(`${import.meta.env.VITE_NODE_BACKEND_URL}/resume/chat`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

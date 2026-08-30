@@ -1,62 +1,43 @@
 services:
     # ─── Infrastructure ───────────────────────────────
-    # Redis and Qdrant are internal-only: no ports are published to the host
-    # so they aren't reachable from outside the Docker network. If you need
-    # to inspect them locally, bind to 127.0.0.1 instead of exposing publicly,
-    # e.g. "127.0.0.1:6379:6379".
 
     redis:
         image: redis:7
         container_name: resume_redis
-        restart: unless-stopped
+        restart: always
+        ports:
+            - '6379:6379'
         volumes:
             - redis_data:/data
-        healthcheck:
-            test: ['CMD', 'redis-cli', 'ping']
-            interval: 10s
-            timeout: 5s
-            retries: 5
 
     qdrant:
         image: qdrant/qdrant
         container_name: resume_qdrant
-        restart: unless-stopped
+        restart: always
+        ports:
+            - '6333:6333'
         volumes:
             - qdrant_data:/qdrant/storage
-        healthcheck:
-            test: ['CMD-SHELL', 'bash -c "exec 3<>/dev/tcp/127.0.0.1/6333" || exit 1']
-            interval: 10s
-            timeout: 5s
-            retries: 5
 
     # ─── AI Backend ───────────────────────────────────
-    # No custom "command" here on purpose — the image's own Dockerfile CMD
-    # (uv run fastapi run main.py) is the production entrypoint. Don't
-    # override it here; that's what previously caused this service to run
-    # a bare `python3` REPL and crash-loop.
 
     fastapi:
         build:
             context: ./ai_backend
             dockerfile: Dockerfile
         container_name: resume_fastapi
-        restart: unless-stopped
+        restart: always
+        ports:
+            - '8000:8000'
         environment:
             MISTRAL_API_KEY: ${MISTRAL_API_KEY}
             TAVILY_API_KEY: ${TAVILY_API_KEY}
             QDRANT_URL: http://qdrant:6333
             REDIS_URL: redis://redis:6379/0
         depends_on:
-            redis:
-                condition: service_healthy
-            qdrant:
-                condition: service_healthy
-        healthcheck:
-            test: ['CMD', 'python', '-c', "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health', timeout=3).status==200 else 1)"]
-            interval: 15s
-            timeout: 5s
-            retries: 5
-            start_period: 30s
+            - redis
+            - qdrant
+        command: uv run fastapi dev main.py --host 0.0.0.0 --port 8000
 
     # ─── Celery Worker ────────────────────────────────
 
@@ -65,69 +46,38 @@ services:
             context: ./ai_backend
             dockerfile: Dockerfile
         container_name: resume_celery
-        restart: unless-stopped
+        restart: always
         environment:
             MISTRAL_API_KEY: ${MISTRAL_API_KEY}
             TAVILY_API_KEY: ${TAVILY_API_KEY}
             QDRANT_URL: http://qdrant:6333
             REDIS_URL: redis://redis:6379/0
         depends_on:
-            redis:
-                condition: service_healthy
-            qdrant:
-                condition: service_healthy
+            - redis
+            - qdrant
         command: uv run celery -A config.celery_app worker --loglevel=info
 
     # ─── Node.js Backend ──────────────────────────────
-    # Not published to the host — only reachable from other containers
-    # (the "frontend" nginx proxies /api/ to it internally).
 
     node:
         build:
             context: ./app_backend
             dockerfile: Dockerfile
         container_name: resume_node
-        restart: unless-stopped
+        restart: always
+        ports:
+            - '3000:3000'
         environment:
-            PORT: 3000
             JWT_SECRET: ${JWT_SECRET}
             FASTAPI_URL: http://fastapi:8000
             REDIS_URL: redis://redis:6379
-            FRONTEND_URL: ${FRONTEND_URL}
         depends_on:
-            fastapi:
-                condition: service_healthy
-            redis:
-                condition: service_healthy
-        healthcheck:
-            test: ['CMD', 'bun', '-e', "fetch('http://localhost:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
-            interval: 15s
-            timeout: 5s
-            retries: 5
-            start_period: 10s
-
-    # ─── Frontend + reverse proxy ──────────────────────
-    # Single public entrypoint. Serves the built static frontend and proxies
-    # /api/* to the Node backend, so the whole app is reachable at just
-    # http://<server-ip>/ with no CORS setup and no extra ports to open.
-
-    frontend:
-        build:
-            context: ./app_frontend
-            dockerfile: Dockerfile
-            args:
-                VITE_NODE_BACKEND_URL: ${VITE_NODE_BACKEND_URL:-/api}
-                VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
-                VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY}
-        container_name: resume_frontend
-        restart: unless-stopped
-        ports:
-            - '80:80'
-        depends_on:
-            node:
-                condition: service_healthy
+            - fastapi
+            - redis
+        command: sh -c "bun index.ts"
 
 # ─── Persistent Volumes ────────────────────────────
+
 volumes:
     redis_data:
     qdrant_data:
