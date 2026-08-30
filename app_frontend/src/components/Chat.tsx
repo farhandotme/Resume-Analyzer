@@ -694,7 +694,7 @@ export default function Chat() {
             console.log('Resume uploaded successfully');
             console.log('Starting resume validation/analysis...');
 
-            const response = await fetch('/api/resume/analyze', {
+            const response = await fetch('/resume/analyze', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
