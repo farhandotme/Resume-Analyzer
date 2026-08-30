@@ -1,4 +1,3 @@
-const API_BASE_URL = 'http://192.168.29.100:3000';
 
 type ChatApiData = {
     success?: boolean;
@@ -33,7 +32,7 @@ export const sendChatMessage = async ({ pdfUrl, message, sessionId }: SendChatMe
         sessionId,
     };
 
-    const response = await fetch(`${API_BASE_URL}/resume/chat`, {
+    const response = await fetch(`${import.meta.env.VITE_NODE_BACKEND_URL}/resume/chat`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
