@@ -616,16 +616,9 @@ export default function Home() {
         const animationStartTime = Date.now();
 
         try {
-            console.log('Uploading resume...');
             setAnalysisStep(0);
-
             const pdfUrl = await uploadResume(selectedFile);
-
-            console.log('Resume uploaded successfully\nPDF URL:', pdfUrl);
-            console.log('Starting resume analysis...');
-            console.log();
-
-            const response = await fetch(`${import.meta.env.VITE_NODE_BACKEND_URL}/resume/analyze`, {
+            const response = await fetch('http://192.168.29.100:3000/resume/analyze', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -644,14 +637,10 @@ export default function Home() {
 
             const result = responseData;
 
-            console.log('Resume analysis completed\nAnalysis result:', JSON.stringify(result, null, 2));
-
             const elapsedTime = Date.now() - animationStartTime;
             const remainingAnimationTime = Math.max(0, ANALYSIS_ANIMATION_DURATION - elapsedTime);
 
             if (remainingAnimationTime > 0) {
-                console.log(`AI finished early. Waiting ${remainingAnimationTime}ms for animation.`);
-
                 await new Promise<void>((resolve) => {
                     window.setTimeout(resolve, remainingAnimationTime);
                 });

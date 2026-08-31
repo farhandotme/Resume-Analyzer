@@ -687,12 +687,7 @@ export default function Chat() {
         }
 
         try {
-            console.log('Uploading resume for chat validation...');
-
             const uploadedPdfUrl = await uploadResume(file);
-
-            console.log('Resume uploaded successfully');
-            console.log('Starting resume validation/analysis...');
 
             const response = await fetch('/api/resume/analyze', {
                 method: 'POST',
@@ -710,8 +705,6 @@ export default function Chat() {
             if (!response.ok) {
                 throw new Error(responseData?.message || responseData?.error || responseData?.detail || 'Unable to analyze this resume');
             }
-
-            console.log('Resume validated successfully');
 
             const nextSessionId = createSessionId();
 
