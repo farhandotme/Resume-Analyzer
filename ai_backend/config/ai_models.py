@@ -1,7 +1,26 @@
+import os
+
+from dotenv import load_dotenv
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_mistralai import ChatMistralAI
+from langchain_openrouter import ChatOpenRouter
 
-embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+# Load environment variables from .env
+load_dotenv()
 
-# llm
-llm = ChatMistralAI(model="mistral-small")
+# Make sure the API key exists
+if not os.getenv("OPENROUTER_API_KEY"):
+    raise ValueError(
+        "OPENROUTER_API_KEY is not set. "
+        "Add it to your .env file."
+    )
+
+# Embeddings
+embeddings = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
+)
+
+# LLM - OpenRouter FREE model router
+llm = ChatOpenRouter(
+    model="openai/gpt-4o-mini",
+    temperature=0,
+)
