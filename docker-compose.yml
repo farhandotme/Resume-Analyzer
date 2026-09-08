@@ -10,7 +10,7 @@ services:
         restart: always
         volumes:
             - redis_data:/data
-        # Internal only — not reachable from outside the docker network.
+        # Internal only — not reachable from outside the Docker network.
 
     qdrant:
         image: qdrant/qdrant
@@ -18,7 +18,7 @@ services:
         restart: always
         volumes:
             - qdrant_data:/qdrant/storage
-        # Internal only — not reachable from outside the docker network.
+        # Internal only — not reachable from outside the Docker network.
 
     # ─── AI Backend ───────────────────────────────────
 
@@ -29,17 +29,19 @@ services:
         container_name: resume_fastapi
         restart: always
         environment:
-            MISTRAL_API_KEY: ${MISTRAL_API_KEY}
+            OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
             TAVILY_API_KEY: ${TAVILY_API_KEY}
             QDRANT_URL: http://qdrant:6333
             REDIS_URL: redis://redis:6379/0
         depends_on:
             - redis
             - qdrant
-        # Production ASGI server (no --reload / dev watcher).
+
+        # Production ASGI server
         command: uv run fastapi run main.py --host 0.0.0.0 --port 8000
-        # Internal only — the node backend talks to this over the docker
-        # network; browsers never call it directly.
+
+        # Internal only — the Node backend talks to this over
+        # the Docker network. Browsers never call it directly.
 
     # ─── Celery Worker ────────────────────────────────
 
@@ -50,13 +52,14 @@ services:
         container_name: resume_celery
         restart: always
         environment:
-            MISTRAL_API_KEY: ${MISTRAL_API_KEY}
+            OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
             TAVILY_API_KEY: ${TAVILY_API_KEY}
             QDRANT_URL: http://qdrant:6333
             REDIS_URL: redis://redis:6379/0
         depends_on:
             - redis
             - qdrant
+
         command: uv run celery -A config.celery_app worker --loglevel=info
 
     # ─── Node.js Backend ──────────────────────────────
@@ -75,10 +78,12 @@ services:
         depends_on:
             - fastapi
             - redis
-        # Internal only — the frontend's nginx proxies /api/* to this
-        # service; it is not published to the host/internet directly.
+
+        # Internal only — the frontend's nginx proxies /api/*
+        # to this service.
 
     # ─── Frontend (nginx + built SPA) ─────────────────
+
     # This is the single public entrypoint for the whole app.
 
     frontend:
@@ -92,12 +97,14 @@ services:
         container_name: resume_frontend
         restart: always
         ports:
-            - '80:80'
-            # - '443:443'   # uncomment if this container also terminates TLS
+            - "80:80"
+            # - '127.0.0.1:8080:80'
+            # - "443:443"   # Uncomment if nginx terminates TLS
         depends_on:
             - node
 
-# ─── Persistent Volumes ────────────────────────────
+# ─── Persistent Volumes ──────────────────────────────
+
 volumes:
     redis_data:
     qdrant_data:

@@ -23,3 +23,5 @@ redis>=7.4.0
 sentence-transformers>=5.5.0
 tavily-python>=0.7.26
 uvicorn>=0.46.0
+
+langchain_openrouter

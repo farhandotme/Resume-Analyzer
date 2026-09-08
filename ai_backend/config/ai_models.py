@@ -19,8 +19,8 @@ embeddings = HuggingFaceEmbeddings(
     model_name="sentence-transformers/all-MiniLM-L6-v2"
 )
 
-# LLM - OpenRouter FREE model router
+# LLM - OpenRouter FREE model
 llm = ChatOpenRouter(
-    model="openai/gpt-4o-mini",
+    model="openai/gpt-oss-20b",
     temperature=0,
 )
