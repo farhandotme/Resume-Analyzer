@@ -9,22 +9,30 @@ const app = express();
 // Comma-separated list of allowed frontend origins, e.g.
 // ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
 // Falls back to the local dev origin if not set.
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'https://localhost:5173')
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean);
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 app.use(
-    cors({
-        origin: (origin, callback) => {
-            if (!origin || allowedOrigins.includes(origin)) {
-                callback(null, true);
-                return;
-            }
-            callback(new Error('Not allowed by CORS'));
-        },
-        credentials: true,
-    }),
+  cors({
+    origin: (origin, callback) => {
+      console.log("CORS request origin:", origin);
+      console.log("Allowed origins:", allowedOrigins);
+
+      // Allow requests without Origin
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  })
 );
 
 app.use(express.json());
